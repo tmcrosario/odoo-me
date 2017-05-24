@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- TREE VIEW -->
+    <record id="view_raa_range_tree"
+            model="ir.ui.view">
+        <field name="name">raa.range.tree</field>
+        <field name="model">raa.range</field>
+        <field name="arch"
+               type="xml">
+            <tree string="Document Range"
+                  editable="bottom">
+                <field name="number_from" />
+                <field name="number_to" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record model="ir.ui.view"
+            id="entry_wizard_form_view">
+        <field name="name">entry.wizard.form</field>
+        <field name="model">raa.entry.wizard</field>
+        <field name="arch"
+               type="xml">
+            <form string="Administrative Acts Entry">
+                <group string="Enter Document Information">
+                    <group>
+                        <field name="entry_date" />
+                    </group>
+                    <group>
+                        <field name="period" />
+                        <field name="dependence_id"
+                               context="{'search_default_filter_actual_nomenclator': True}"
+                               default_focus="1"
+                               options="{'no_create': True}" />
+                        <!-- domain="[('raa', '=', True)]" -->
+                        <field name="document_type_id"
+                               attrs="{'invisible':[('dependence_id','=',False)]}"
+                               options="{'no_create': True}" />
+                    </group>
+                </group>
+                <group string="Specify Document Ranges">
+                    <field name="range_ids" />
+                </group>
+                <footer>
+                    <button name="create_registry_aa"
+                            type="object"
+                            string="Load"
+                            class="oe_highlight" />
+                    <button special="cancel"
+                            string="Cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record model="ir.ui.view"
+            id="search_missing_wizard_form_view">
+        <field name="name">search_missing.wizard.form</field>
+        <field name="model">raa.entry.wizard</field>
+        <field name="arch"
+               type="xml">
+            <form string="Search for Missing">
+                <group>
+                    <separator string="Enter Document Information" />
+                    <group colspan="2"
+                           col="2">
+                        <field name="period" />
+                        <field name="dependence_id"
+                               options="{'no_create': True}" />
+                        <!-- domain="[('raa', '=', True)]" -->
+                        <field name="document_type_id"
+                               attrs="{'invisible':[('dependence_id','=',False)]}"
+                               options="{'no_create': True}" />
+                    </group>
+                    <separator string="Search for Maximum Numbering" />
+                    <group colspan="2"
+                           col="2">
+                        <field name="specify_maximum" />
+                        <field name="maximum"
+                               attrs="{'invisible':[('specify_maximum','=',False)]}" />
+                    </group>
+                </group>
+                <footer>
+                    <button name="show_window_message"
+                            type="object"
+                            string="Search"
+                            icon="fa-search"
+                            class="oe_highlight" />
+                    <button name="generate_report"
+                            type="object"
+                            string="_Print"
+                            icon="fa-file-text-o"
+                            class="oe_highlight" />
+                    <button special="cancel"
+                            string="Cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- WINDOW ACTION -->
+    <act_window id="raa_entry_wizard"
+                name="Administrative Acts Entry"
+                res_model="raa.entry.wizard"
+                view_mode="form"
+                target="new"
+                key2="client_action_multi" />
+
+    <act_window id="raa_search_missing_wizard"
+                name="Search for Missing Administrative Acts"
+                res_model="raa.entry.wizard"
+                view_id="search_missing_wizard_form_view"
+                view_mode="form"
+                target="new"
+                key2="client_action_multi" />
+
+</odoo>

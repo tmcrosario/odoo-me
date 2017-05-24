@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- WINDOW ACTION -->
+    <record model="ir.actions.act_window"
+            id="registry_aa_list_action">
+        <field name="name">Administrative Act Registries</field>
+        <field name="res_model">raa.registry_aa</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- TREE VIEW -->
+    <record id="view_raa_registry_aa_tree"
+            model="ir.ui.view">
+        <field name="name">raa.registry_aa.tree</field>
+        <field name="model">raa.registry_aa</field>
+        <field name="arch"
+               type="xml">
+            <tree string="Document"
+                  default_order="entry_date desc">
+                <field name="document_id" />
+                <field name="entry_date" />
+                <field name="dependence_id"
+                       string="Dependence" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- FORM VIEW -->
+    <record id="view_raa_registry_aa_form"
+            model="ir.ui.view">
+        <field name="name">raa.documentregistry_aa.form</field>
+        <field name="model">raa.registry_aa</field>
+        <field name="arch"
+               type="xml">
+            <form duplicate="0">
+                <sheet>
+                    <h2>
+                        <field name="document_id" options="{'no_create': True}"/>
+                    </h2>
+                    <group>
+                        <group>
+                            <field name="entry_date" />
+                        </group>
+                        <group>
+                            <field name="create_date" />
+                            <!-- groups="raa.group_manager" /> -->
+                            <field name="create_uid" />
+                            <!-- groups="raa.group_manager" /> -->
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- SEARCH VIEW -->
+    <record model="ir.ui.view"
+            id="registry_aa_search_view">
+        <field name="name">registry_aa.search</field>
+        <field name="model">raa.registry_aa</field>
+        <field name="arch"
+               type="xml">
+            <search string="Document">
+                <field name="document_type_id"
+                       search_domain="['|', ('document_type_id', '=', self)]" />
+                <field name="number"
+                       string="Number"
+                       search_domain="['|', ('number', '=', self" />
+                <field name="period"
+                       search_domain="['|', ('period', '=', self" />
+                <field name="dependence_id"
+                       filter_domain="[('dependence_id', 'ilike', self)]" />
+                <field name="entry_date"
+                       search_domain="['|'('entry_date', '>=', self)]" />
+                <!-- <group expand="1">
+                    <filter name="group_by_period_per_dependence"
+                            string="Period per Dependence"
+                            context="{'group_by': ['dependence_id', 'period']}" />
+                    <filter name="group_by_dependence"
+                            string="Dependence"
+                            context="{'group_by':'dependence_id'}" />
+                    <filter name="group_by_period"
+                            string="Period"
+                            context="{'group_by':'period'}" />
+                </group> -->
+            </search>
+        </field>
+    </record>
+
+</odoo>
