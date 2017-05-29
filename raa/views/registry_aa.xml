@@ -17,12 +17,10 @@
         <field name="model">raa.registry_aa</field>
         <field name="arch"
                type="xml">
-            <tree string="Document"
-                  default_order="entry_date desc">
+            <tree default_order="entry_date desc">
                 <field name="document_id" />
                 <field name="entry_date" />
-                <field name="dependence_id"
-                       string="Dependence" />
+                <field name="dependence_id" />
             </tree>
         </field>
     </record>
@@ -61,15 +59,14 @@
     <!-- SEARCH VIEW -->
     <record model="ir.ui.view"
             id="registry_aa_search_view">
-        <field name="name">registry_aa.search</field>
+        <field name="name">raa.registry_aa.search</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
                type="xml">
-            <search string="Document">
+            <search>
                 <field name="document_type_id"
                        search_domain="['|', ('document_type_id', '=', self)]" />
                 <field name="number"
-                       string="Number"
                        search_domain="['|', ('number', '=', self" />
                 <field name="period"
                        search_domain="['|', ('period', '=', self" />
