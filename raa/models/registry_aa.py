@@ -24,7 +24,9 @@ class RegistryAA(models.Model):
     dependence_id = fields.Many2one(
         related='document_id.dependence_id',
         readonly=True,
-        # store=True
+        domain=[('document_type_ids', '!=', False),
+                ('system_ids', 'ilike', u'RAA')],
+        store=True
     )
 
     number = fields.Integer(
@@ -35,7 +37,7 @@ class RegistryAA(models.Model):
     period = fields.Integer(
         related='document_id.period',
         readonly=True,
-        # store=True
+        store=True
     )
 
     @api.multi
