@@ -3,8 +3,8 @@
 
     <menuitem id="main_raa_menu"
               name="RAA"
-              sequence="10" />
-    <!-- groups="raa.group_manager,raa.group_user"/> -->
+              sequence="10"
+              groups="raa.group_manager,raa.group_user" />
 
     <menuitem id="main_raa_raa_menu"
               name="Administrative Acts"
@@ -21,8 +21,8 @@
               name="Entry Wizard"
               parent="main_raa_raa_menu"
               sequence="10"
-              action="raa_entry_wizard" /> -->
-    <!-- groups="raa.group_manager"/> -->
+              action="raa_entry_wizard"
+              groups="raa.group_manager" />
 
     <menuitem id="main_raa_search_missing_wizard"
               name="Search for Missing"

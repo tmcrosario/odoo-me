@@ -34,7 +34,6 @@
                                context="{'search_default_filter_actual_nomenclator': True}"
                                default_focus="1"
                                options="{'no_create': True}" />
-                        <!-- domain="[('raa', '=', True)]" -->
                         <field name="document_type_id"
                                attrs="{'invisible':[('dependence_id','=',False)]}"
                                options="{'no_create': True}" />
@@ -68,8 +67,8 @@
                            col="2">
                         <field name="period" />
                         <field name="dependence_id"
+                               context="{'search_default_filter_actual_nomenclator': True}"
                                options="{'no_create': True}" />
-                        <!-- domain="[('raa', '=', True)]" -->
                         <field name="document_type_id"
                                attrs="{'invisible':[('dependence_id','=',False)]}"
                                options="{'no_create': True}" />

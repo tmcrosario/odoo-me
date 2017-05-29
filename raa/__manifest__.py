@@ -12,8 +12,8 @@
         'report_py3o'
     ],
     'data': [
-        # 'security/raa_group.xml',
-        # 'security/ir.model.access.csv',
+        'security/groups.xml',
+        'security/ir.model.access.csv',
         'views/registry_aa.xml',
         'views/wizards.xml',
         'views/menu.xml',
