@@ -156,23 +156,24 @@ class Entry_Wizard(models.TransientModel):
                 'message': _('Administrative acts registries already exist')
             }
 
-    # @api.multi
-    # def prepare_report(self):
-    #     context = self._context.copy()
-    #     res = self.search_missing()
-    #     context['last'] = str(res['last']).zfill(6) if res['last'] else None
-    #     context['maximum'] = str(res['maximum']).zfill(6) if res[
-    #         'maximum'] else None
-    #     context['missing'] = [str(x).zfill(6) for x in res['missing']] if res[
-    #         'missing'] else None
-    #     return self.with_context(context)
+    @api.multi
+    def prepare_report(self):
+        context = self._context.copy()
+        res = self.search_missing()
+        context['last'] = str(res['last']).zfill(6) if res['last'] else None
+        context['maximum'] = str(res['maximum']).zfill(6) if res[
+            'maximum'] else None
+        context['missing'] = [str(x).zfill(6) for x in res['missing']] if res[
+            'missing'] else None
+        context['date'] = date.today().strftime('%d/%m/%Y')
+        return self.with_context(context)
 
-    # @api.multi
-    # def generate_report(self):
-    #     self.ensure_one()
-    #     self = self.prepare_report()
-    #     return self.env['report'].get_action(
-    #         self, 'missing_raa_report')
+    @api.multi
+    def generate_report(self):
+        self.ensure_one()
+        self = self.prepare_report()
+        return self.env['report'].get_action(
+            self, 'missing_raa_report')
 
     @api.multi
     @api.onchange('dependence_id')

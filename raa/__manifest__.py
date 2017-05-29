@@ -7,17 +7,20 @@
     'author': 'Tribunal Municipal de Cuentas - Municipalidad de Rosario',
     'website': 'https://www.tmcrosario.gob.ar',
     'license': 'AGPL-3',
-    'depends': ['tmc'],
+    'depends': [
+        'tmc',
+        'report_py3o'
+    ],
     'data': [
         # 'security/raa_group.xml',
         # 'security/ir.model.access.csv',
         'views/registry_aa.xml',
         'views/wizards.xml',
-        # 'report/report_missing_raa.xml',
-        'views/menu.xml'
+        'views/menu.xml',
+        'report/missing_raa.xml'
     ],
     'demo': [],
     'installable': True,
     'application': True,
-    'qweb': [],
+    'qweb': []
 }
