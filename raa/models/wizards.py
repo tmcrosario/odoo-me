@@ -173,7 +173,7 @@ class Entry_Wizard(models.TransientModel):
         self.ensure_one()
         self = self.prepare_report()
         return self.env['report'].get_action(
-            self, 'missing_raa_report')
+            self, 'missing_raa')
 
     @api.multi
     @api.onchange('dependence_id')
