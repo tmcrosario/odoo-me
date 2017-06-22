@@ -7,7 +7,9 @@ from odoo import _, api, exceptions, fields, models
 
 
 class Entry_Wizard(models.TransientModel):
+
     _name = 'raa.entry.wizard'
+    _inherit = ['tmc.report']
 
     entry_date = fields.Date(
         required=True,
@@ -157,7 +159,7 @@ class Entry_Wizard(models.TransientModel):
             }
 
     @api.multi
-    def prepare_report(self):
+    def _prepare_report(self):
         context = self._context.copy()
         res = self.search_missing()
         context['last'] = str(res['last']).zfill(6) if res['last'] else None
@@ -166,13 +168,6 @@ class Entry_Wizard(models.TransientModel):
         context['missing'] = [str(x).zfill(6) for x in res['missing']] if res[
             'missing'] else None
         return self.with_context(context)
-
-    @api.multi
-    def generate_report(self):
-        self.ensure_one()
-        self = self.prepare_report()
-        return self.env['report'].get_action(
-            self, 'missing_raa')
 
     @api.multi
     @api.onchange('dependence_id')
