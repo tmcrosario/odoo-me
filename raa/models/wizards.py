@@ -165,7 +165,6 @@ class Entry_Wizard(models.TransientModel):
             'maximum'] else None
         context['missing'] = [str(x).zfill(6) for x in res['missing']] if res[
             'missing'] else None
-        context['date'] = date.today().strftime('%d/%m/%Y')
         return self.with_context(context)
 
     @api.multi
