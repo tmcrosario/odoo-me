@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_raa_registry_aa_manager,raa.registry_aa.manager,model_raa_registry_aa,group_manager,1,1,1,1
 access_raa_registry_aa_user,raa.registry_aa.user,model_raa_registry_aa,group_user,1,0,0,0
+access_raa_registry_aa_read_only,raa.registry_aa.read_only,model_raa_registry_aa,group_read_only,1,0,0,0

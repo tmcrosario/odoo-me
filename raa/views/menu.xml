@@ -4,7 +4,7 @@
     <menuitem id="main_raa_menu"
               name="RAA"
               sequence="10"
-              groups="raa.group_manager,raa.group_user" />
+              groups="raa.group_manager,raa.group_user,raa.group_read_only" />
 
     <menuitem id="main_raa_raa_menu"
               name="Administrative Acts"
