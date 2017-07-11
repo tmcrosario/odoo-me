@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-29 20:40+0000\n"
-"PO-Revision-Date: 2017-05-29 20:40+0000\n"
+"POT-Creation-Date: 2017-07-11 11:48+0000\n"
+"PO-Revision-Date: 2017-07-11 11:48+0000\n"
 "Last-Translator: Liso <lisandrogallo@tmcrosario.gov.ar>, 2017\n"
 "Language-Team: Spanish (Argentina) (https://www.transifex.com/tmcrosario/teams/73663/es_AR/)\n"
 "MIME-Version: 1.0\n"
@@ -35,7 +35,7 @@ msgid "Administrative Acts Entry"
 msgstr "Ingreso de Actos Administrativos"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:156
+#: code:addons/raa/models/wizards.py:158
 #, python-format
 msgid "Administrative acts registries already exist"
 msgstr "Los registros de actos administrativos ya existen"
@@ -67,10 +67,14 @@ msgstr "Ingresado el"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_dependence_id
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_dependence_id
 #: model:ir.ui.view,arch_db:raa.registry_aa_search_view
 msgid "Dependence"
 msgstr "Dependencia"
+
+#. module: raa
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_dependence_id
+msgid "Dependence id"
+msgstr ""
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_display_name
@@ -85,17 +89,13 @@ msgid "Document Range"
 msgstr "Rango"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_type_id
-msgid "Document Type"
-msgstr "Tipo de Documento"
-
-#. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_id
 msgid "Document id"
 msgstr "Documento"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_document_type_id
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_type_id
 msgid "Document type id"
 msgstr "Tipo de Documento"
 
@@ -124,7 +124,7 @@ msgid "ID"
 msgstr ""
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:155
+#: code:addons/raa/models/wizards.py:157
 #, python-format
 msgid "Information"
 msgstr "Información"
@@ -166,7 +166,7 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:198 code:addons/raa/models/wizards.py:228
+#: code:addons/raa/models/wizards.py:192 code:addons/raa/models/wizards.py:222
 #, python-format
 msgid "Maximum number allowed has been exceeded"
 msgstr "Se ha excedido la numeración máxima permitida"
@@ -177,25 +177,25 @@ msgid "Missing Administrative Acts Report"
 msgstr "Reporte de Actos Administrativos Faltantes"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:64
+#: code:addons/raa/models/wizards.py:66
 #, python-format
 msgid "Missing administrative acts: %s"
 msgstr "Actos administrativos faltantes: %s"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:68
+#: code:addons/raa/models/wizards.py:70
 #, python-format
 msgid "No existing registries matching criteria"
 msgstr "No existen registros que coincidan con el criterio de búsqueda"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:66
+#: code:addons/raa/models/wizards.py:68
 #, python-format
 msgid "No missing administrative acts"
 msgstr "No existen actos administrativos faltantes"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:109
+#: code:addons/raa/models/wizards.py:111
 #, python-format
 msgid "No ranges were specified"
 msgstr "No se expecificaron rangos"
@@ -237,6 +237,11 @@ msgstr ""
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_range_ids
 msgid "Range ids"
 msgstr "Rangos"
+
+#. module: raa
+#: model:res.groups,name:raa.group_read_only
+msgid "Read Only"
+msgstr "Sólo Lectura"
 
 #. module: raa
 #: code:addons/raa/models/registry_aa.py:54 sql_constraint:raa.registry_aa:0
@@ -286,13 +291,13 @@ msgid "Specify maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:144
+#: code:addons/raa/models/wizards.py:146
 #, python-format
 msgid "The following registries were created"
 msgstr "Los siguientes registros fueron creados"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:222
+#: code:addons/raa/models/wizards.py:216
 #, python-format
 msgid "There are values in conflict"
 msgstr "Existen rangos en conflicto"
@@ -303,7 +308,7 @@ msgid "User"
 msgstr "Usuario"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:225
+#: code:addons/raa/models/wizards.py:219
 #, python-format
 msgid "You must enter values greater than 0 (zero)"
 msgstr "Debe ingresar valores mayores a 0 (cero)"
