@@ -63,13 +63,20 @@ class Entry_Wizard(models.TransientModel):
                         c=count(): n - next(c)
                     )
                 )
-                message = _('Missing administrative acts: %s') % missing
+                message = _(
+                    '<p>Missing administrative acts: <b>%s</b></p>') % missing
             else:
                 message = _('No missing administrative acts')
         else:
             message = _('No existing registries matching criteria')
 
-        raise exceptions.Warning(message)
+        return {
+            'type': 'ir.actions.act_window.message',
+            'title': _('Search Results'),
+            'is_html_message': True,
+            'message': message,
+            'close_button_title': False,
+        }
 
     @api.multi
     def search_missing(self):

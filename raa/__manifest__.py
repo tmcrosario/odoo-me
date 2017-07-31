@@ -10,7 +10,8 @@
     'sequence': 150,
     'depends': [
         'tmc',
-        'report_py3o'
+        'report_py3o',
+        'web_ir_actions_act_window_message'
     ],
     'data': [
         'security/groups.xml',
