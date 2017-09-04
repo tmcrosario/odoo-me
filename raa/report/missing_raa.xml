@@ -6,7 +6,7 @@
         <field name="url">http://localhost:8765/form</field>
     </record>
 
-    <record id="raa.missing_raa_report"
+    <record id="raa_missing_raa_report"
             model="ir.actions.report.xml">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry.wizard</field>

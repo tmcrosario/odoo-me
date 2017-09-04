@@ -3,10 +3,10 @@
 from datetime import date
 from itertools import count, groupby
 
-from odoo import _, api, exceptions, fields, models
+from odoo import _, api, fields, models
 
 
-class Entry_Wizard(models.TransientModel):
+class EntryWizard(models.TransientModel):
 
     _name = 'raa.entry.wizard'
     _inherit = ['tmc.report']
@@ -215,9 +215,10 @@ class Range(models.TransientModel):
         required=True
     )
 
-    @api.one
+    @api.multi
     @api.constrains('number_from', 'number_to')
     def _check_ranges(self):
+        self.ensure_one()
         if self.number_from > self.number_to:
             raise Warning(
                 _('There are values in conflict'))
