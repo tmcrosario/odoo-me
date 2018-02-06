@@ -11,6 +11,7 @@
     'depends': [
         'tmc',
         'report_py3o',
+        'report_py3o_fusion_server',
         'web_ir_actions_act_window_message'
     ],
     'data': [
