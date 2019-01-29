@@ -49,6 +49,22 @@ class RegistryAA(models.Model):
             result.append((aa.id, document_name))
         return result
 
+    @api.multi
+    def unlink(self):
+        for raa_obj in self:
+            document_obj = raa_obj.document_id
+
+            if  not document_obj.date and \
+                not document_obj.document_object and \
+                not document_obj.main_topic_ids and \
+                not document_obj.related_document_ids and \
+                not document_obj.highlight_ids:
+
+                super(RegistryAA, raa_obj).unlink()
+                document_obj.unlink()
+            else:
+                super(RegistryAA, raa_obj).unlink()
+
     _sql_constraints = [
         ('document_id_unique',
          'UNIQUE(document_id)',
