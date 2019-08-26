@@ -1,22 +1,19 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-# * raa
-# 
-# Translators:
-# Liso <lisandrogallo@tmcrosario.gov.ar>, 2017
+#	* raa
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 10.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-31 12:30+0000\n"
-"PO-Revision-Date: 2017-07-31 12:30+0000\n"
-"Last-Translator: Liso <lisandrogallo@tmcrosario.gov.ar>, 2017\n"
-"Language-Team: Spanish (Argentina) (https://www.transifex.com/tmcrosario/teams/73663/es_AR/)\n"
+"POT-Creation-Date: 2019-01-29 17:48+0000\n"
+"PO-Revision-Date: 2019-01-29 17:48+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Language: es_AR\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: \n"
 
 #. module: raa
 #: code:addons/raa/models/wizards.py:66
@@ -62,14 +59,14 @@ msgstr "Cancelar"
 #: model:ir.model.fields,field_description:raa.field_raa_range_create_uid
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_create_uid
 msgid "Created by"
-msgstr "Ingresado por"
+msgstr "Creado por"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_create_date
 #: model:ir.model.fields,field_description:raa.field_raa_range_create_date
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_create_date
 msgid "Created on"
-msgstr "Ingresado el"
+msgstr "Creado en"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_dependence_id
@@ -87,7 +84,7 @@ msgstr "Dependencia"
 #: model:ir.model.fields,field_description:raa.field_raa_range_display_name
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_display_name
 msgid "Display Name"
-msgstr "Nombre"
+msgstr "Mostrar Nombre"
 
 #. module: raa
 #: model:ir.ui.view,arch_db:raa.view_raa_range_tree
@@ -97,7 +94,7 @@ msgstr "Rango"
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_id
 msgid "Document id"
-msgstr "Documento"
+msgstr "Documento Asociado"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_document_type_id
@@ -127,7 +124,7 @@ msgstr "Fecha de Entrada"
 #: model:ir.model.fields,field_description:raa.field_raa_range_id
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_id
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #. module: raa
 #: code:addons/raa/models/wizards.py:164
@@ -140,21 +137,21 @@ msgstr "Información"
 #: model:ir.model.fields,field_description:raa.field_raa_range___last_update
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa___last_update
 msgid "Last Modified on"
-msgstr ""
+msgstr "Última modificación en"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_write_uid
 #: model:ir.model.fields,field_description:raa.field_raa_range_write_uid
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_write_uid
 msgid "Last Updated by"
-msgstr ""
+msgstr "Última actualización realizada por"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_write_date
 #: model:ir.model.fields,field_description:raa.field_raa_range_write_date
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa_write_date
 msgid "Last Updated on"
-msgstr ""
+msgstr "Última actualización el"
 
 #. module: raa
 #: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
@@ -172,15 +169,16 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:199 code:addons/raa/models/wizards.py:229
+#: code:addons/raa/models/wizards.py:199
+#: code:addons/raa/models/wizards.py:230
 #, python-format
 msgid "Maximum number allowed has been exceeded"
 msgstr "Se ha excedido la numeración máxima permitida"
 
 #. module: raa
-#: model:ir.actions.report.xml,name:raa.missing_raa_report
+#: model:ir.actions.report.xml,name:raa.raa_missing_raa_report
 msgid "Missing Administrative Acts Report"
-msgstr "Reporte de Actos Administrativos Faltantes"
+msgstr "Actos Administrativos Faltantes"
 
 #. module: raa
 #: code:addons/raa/models/wizards.py:71
@@ -231,7 +229,7 @@ msgstr "Período por Dependencia"
 #: model:ir.module.category,name:raa.module_category_raa
 #: model:ir.ui.menu,name:raa.main_raa_menu
 msgid "RAA"
-msgstr ""
+msgstr "RAA"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_range_ids
@@ -244,7 +242,8 @@ msgid "Read Only"
 msgstr "Sólo Lectura"
 
 #. module: raa
-#: code:addons/raa/models/registry_aa.py:55 sql_constraint:raa.registry_aa:0
+#: code:addons/raa/models/registry_aa.py:71
+#: sql_constraint:raa.registry_aa:0
 #, python-format
 msgid "Record already exists"
 msgstr "El registro ya existe"
@@ -303,7 +302,7 @@ msgid "The following registries were created"
 msgstr "Los siguientes registros fueron creados"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:223
+#: code:addons/raa/models/wizards.py:224
 #, python-format
 msgid "There are values in conflict"
 msgstr "Existen rangos en conflicto"
@@ -314,7 +313,7 @@ msgid "User"
 msgstr "Usuario"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:226
+#: code:addons/raa/models/wizards.py:227
 #, python-format
 msgid "You must enter values greater than 0 (zero)"
 msgstr "Debe ingresar valores mayores a 0 (cero)"
@@ -327,14 +326,15 @@ msgstr "Reporte"
 #. module: raa
 #: model:ir.model,name:raa.model_raa_entry_wizard
 msgid "raa.entry.wizard"
-msgstr ""
+msgstr "raa.entry.wizard"
 
 #. module: raa
 #: model:ir.model,name:raa.model_raa_range
 msgid "raa.range"
-msgstr ""
+msgstr "raa.range"
 
 #. module: raa
 #: model:ir.model,name:raa.model_raa_registry_aa
 msgid "raa.registry_aa"
-msgstr ""
+msgstr "raa.registry_aa"
+
