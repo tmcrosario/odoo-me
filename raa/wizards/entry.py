@@ -50,7 +50,6 @@ class EntryWizard(models.TransientModel):
         else:
             return '{0}'.format(l[0])
 
-    @api.multi
     def show_window_message(self):
         res = self.search_missing()
         if res['maximum']:
@@ -77,7 +76,6 @@ class EntryWizard(models.TransientModel):
             'close_button_title': False,
         }
 
-    @api.multi
     def search_missing(self):
         domain = [
             ('document_id.document_type_id', '=', self.document_type_id.id),
@@ -109,7 +107,6 @@ class EntryWizard(models.TransientModel):
             'missing': missing
         }
 
-    @api.multi
     def create_registry_aa(self):
         raa_ids = []
 
@@ -133,7 +130,7 @@ class EntryWizard(models.TransientModel):
                         'number': number,
                         'period': self.period
                     }
-                    document = doc_model.sudo().create(vals)
+                    document = doc_model.with_user(admin).create(vals)
 
                 raa_model = self.env['raa.registry_aa']
                 domain = [('document_id', '=', document.id)]
@@ -164,7 +161,6 @@ class EntryWizard(models.TransientModel):
                 'message': _('Administrative acts registries already exist')
             }
 
-    @api.multi
     def _prepare_report(self):
         context = self._context.copy()
         res = self.search_missing()
@@ -175,7 +171,6 @@ class EntryWizard(models.TransientModel):
             'missing'] else None
         return self.with_context(context)
 
-    @api.multi
     @api.onchange('dependence_id')
     def _onchange_dependence(self):
         document_types = self.dependence_id.document_type_ids
@@ -187,7 +182,6 @@ class EntryWizard(models.TransientModel):
             'document_type_id': [('id', 'in', document_types.ids)]
         }}
 
-    @api.multi
     @api.onchange('specify_maximum')
     def _onchange_specify_maximum(self):
         self.maximum = False
@@ -196,35 +190,3 @@ class EntryWizard(models.TransientModel):
     def _check_maximum(self):
         if self.maximum > 6000:
             raise Warning(_('Maximum number allowed has been exceeded'))
-
-
-class Range(models.TransientModel):
-    _name = 'raa.range'
-
-    registry_aa_id = fields.Many2one(
-        comodel_name='raa.entry.wizard',
-        required=True
-    )
-
-    number_from = fields.Integer(
-        required=True
-    )
-
-    number_to = fields.Integer(
-        required=True
-    )
-
-    @api.multi
-    @api.constrains('number_from', 'number_to')
-    def _check_ranges(self):
-        self.ensure_one()
-        if self.number_from > self.number_to:
-            raise Warning(
-                _('There are values in conflict'))
-        elif self.number_from < 1 or self.number_to < 1:
-            raise Warning(
-                _('You must enter values greater than 0 (zero)'))
-        elif self.number_to > 6000:
-            raise Warning(
-                _('Maximum number allowed has been exceeded'))
-        return True

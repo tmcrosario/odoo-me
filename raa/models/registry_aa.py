@@ -1,4 +1,3 @@
-
 from odoo import _, api, fields, models
 
 
@@ -6,7 +5,7 @@ class RegistryAA(models.Model):
     _name = 'raa.registry_aa'
 
     document_id = fields.Many2one(
-        'tmc.document',
+        comodel_name='tmc.document',
         required=True
     )
 
@@ -40,7 +39,6 @@ class RegistryAA(models.Model):
         store=True
     )
 
-    @api.multi
     def name_get(self):
         result = []
         for aa in self:
@@ -48,16 +46,15 @@ class RegistryAA(models.Model):
             result.append((aa.id, document_name))
         return result
 
-    @api.multi
     def unlink(self):
         for raa_obj in self:
             document_obj = raa_obj.document_id
 
-            if  not document_obj.date and \
-                not document_obj.document_object and \
-                not document_obj.main_topic_ids and \
-                not document_obj.related_document_ids and \
-                not document_obj.highlight_ids:
+            if not document_obj.date and \
+                    not document_obj.document_object and \
+                    not document_obj.main_topic_ids and \
+                    not document_obj.related_document_ids and \
+                    not document_obj.highlight_ids:
 
                 super(RegistryAA, raa_obj).unlink()
                 document_obj.unlink()

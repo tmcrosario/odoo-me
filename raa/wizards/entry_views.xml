@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- FORM VIEW -->
+    <record id="entry_wizard_view_form"
+            model="ir.ui.view">
+        <field name="name">raa.entry.wizard.view.form</field>
+        <field name="model">raa.entry.wizard</field>
+        <field name="arch"
+               type="xml">
+            <form string="Administrative Acts Entry">
+                <group string="Enter Document Information">
+                    <group>
+                        <field name="entry_date" />
+                    </group>
+                    <group>
+                        <field name="period" />
+                        <field name="dependence_id"
+                               context="{'search_default_filter_actual_nomenclator': True}"
+                               default_focus="1"
+                               options="{'no_create': True}" />
+                        <field name="document_type_id"
+                               attrs="{'invisible':[('dependence_id','=',False)]}"
+                               options="{'no_create': True}" />
+                    </group>
+                </group>
+                <group string="Specify Document Ranges">
+                    <field name="range_ids" />
+                </group>
+                <footer>
+                    <button name="create_registry_aa"
+                            type="object"
+                            string="Load"
+                            class="oe_highlight" />
+                    <button special="cancel"
+                            string="Cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- WINDOW ACTION -->
+    <act_window id="entry_wizard_action_form"
+                name="Administrative Acts Entry"
+                res_model="raa.entry.wizard"
+                view_mode="form"
+                target="new" />
+    <!-- key2="client_action_multi" /> -->
+
+</odoo>

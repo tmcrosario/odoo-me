@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <menuitem id="raa_menu_entry_wizard"
+              name="Entry Wizard"
+              parent="raa_menu_root"
+              sequence="10"
+              action="entry_wizard_action_form"
+              groups="raa.group_manager" />
+
+</odoo>

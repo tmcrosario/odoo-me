@@ -2,18 +2,15 @@
 <odoo>
 
     <!-- WINDOW ACTION -->
-    <record model="ir.actions.act_window"
-            id="registry_aa_list_action">
-        <field name="name">Administrative Act Registries</field>
-        <field name="res_model">raa.registry_aa</field>
-        <field name="view_type">form</field>
-        <field name="view_mode">tree,form</field>
-    </record>
+    <act_window id="registry_aa_action_form"
+                name="Administrative Act Registries"
+                res_model="raa.registry_aa"
+                view_mode="form" />
 
     <!-- TREE VIEW -->
-    <record id="view_raa_registry_aa_tree"
+    <record id="registry_aa_view_tree"
             model="ir.ui.view">
-        <field name="name">raa.registry_aa.tree</field>
+        <field name="name">raa.registry_aa.view.tree</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
                type="xml">
@@ -26,9 +23,9 @@
     </record>
 
     <!-- FORM VIEW -->
-    <record id="view_raa_registry_aa_form"
+    <record id="registry_aa_view_form"
             model="ir.ui.view">
-        <field name="name">raa.registry_aa.form</field>
+        <field name="name">raa.registry_aa.view.form</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
                type="xml">
@@ -57,23 +54,23 @@
     </record>
 
     <!-- SEARCH VIEW -->
-    <record model="ir.ui.view"
-            id="registry_aa_search_view">
-        <field name="name">raa.registry_aa.search</field>
+    <record id="registry_aa_view_search"
+            model="ir.ui.view">
+        <field name="name">raa.registry_aa.view.search</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
                type="xml">
             <search>
                 <field name="document_type_id"
-                       search_domain="['|', ('document_type_id', '=', self)]" />
+                       filter_domain="['|', ('document_type_id', '=', self)]" />
                 <field name="number"
-                       search_domain="['|', ('number', '=', self" />
+                       filter_domain="['|', ('number', '=', self" />
                 <field name="period"
-                       search_domain="['|', ('period', '=', self" />
+                       filter_domain="['|', ('period', '=', self" />
                 <field name="dependence_id"
                        filter_domain="[('dependence_id', 'ilike', self)]" />
                 <field name="entry_date"
-                       search_domain="['|'('entry_date', '>=', self)]" />
+                       filter_domain="['|'('entry_date', '>=', self)]" />
                 <group expand="1">
                     <filter name="group_by_period_per_dependence"
                             string="Period per Dependence"

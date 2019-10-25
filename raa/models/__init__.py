@@ -1,3 +1,1 @@
-
-import registry_aa
-import wizards
+from . import registry_aa
