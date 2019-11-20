@@ -1,7 +1,7 @@
 from datetime import date
 from itertools import count, groupby
 
-from odoo import _, api, fields, models, SUPERUSER_ID
+from odoo import _, api, fields, models, SUPERUSER_ID, exceptions
 
 
 class EntryWizard(models.TransientModel):
@@ -98,7 +98,7 @@ class EntryWizard(models.TransientModel):
         raa_ids = []
 
         if not self.range_ids:
-            raise Warning(_('No ranges were specified'))
+            raise exceptions.UserError(_('No ranges were specified'))
 
         for aa_range in self.range_ids:
             for number in range(aa_range.number_from, aa_range.number_to + 1):
@@ -189,4 +189,5 @@ class EntryWizard(models.TransientModel):
     @api.constrains('maximum')
     def _check_maximum(self):
         if self.maximum > 6000:
-            raise Warning(_('Maximum number allowed has been exceeded'))
+            raise exceptions.UserError(
+                _('Maximum number allowed has been exceeded'))
