@@ -1,7 +1,7 @@
 from datetime import date
 from itertools import count, groupby
 
-from odoo import _, api, fields, models
+from odoo import _, api, fields, models, SUPERUSER_ID
 
 
 class EntryWizard(models.TransientModel):
@@ -16,7 +16,7 @@ class EntryWizard(models.TransientModel):
     dependence_id = fields.Many2one(comodel_name='tmc.dependence',
                                     string='Dependence',
                                     domain=[('document_type_ids', '!=', False),
-                                            ('system_ids', 'ilike', u'RAA')],
+                                            ('system_ids', 'ilike', 'RAA')],
                                     required=True)
 
     document_type_id = fields.Many2one(comodel_name='tmc.document_type',
@@ -115,7 +115,7 @@ class EntryWizard(models.TransientModel):
                         'number': number,
                         'period': self.period
                     }
-                    document = doc_model.with_user(admin).create(vals)
+                    document = doc_model.with_user(SUPERUSER_ID).create(vals)
 
                 raa_model = self.env['raa.registry_aa']
                 domain = [('document_id', '=', document.id)]
