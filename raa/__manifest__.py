@@ -1,4 +1,3 @@
-
 {
     'name': "TMC RAA",
     'version': '13.0.1.0.0',
@@ -18,7 +17,7 @@
         'security/ir.model.access.csv',
         'views/raa_menu.xml',
         'views/registry_aa_views.xml',
-        'views/registry_aa_menu.xml',
+        'views/registry_aa_menus.xml',
         'wizards/entry_views.xml',
         'wizards/entry_menu.xml',
         'wizards/number_range_views.xml',
@@ -30,4 +29,4 @@
     'installable': True,
     'application': True,
     'qweb': []
-}
+} # yapf: disable

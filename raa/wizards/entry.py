@@ -1,4 +1,3 @@
-
 from datetime import date
 from itertools import count, groupby
 
@@ -10,57 +9,42 @@ class EntryWizard(models.TransientModel):
     _name = 'raa.entry.wizard'
     _inherit = ['tmc.report']
 
-    entry_date = fields.Date(
-        required=True,
-        default=fields.Date.context_today
-    )
+    entry_date = fields.Date(required=True, default=fields.Date.context_today)
 
-    period = fields.Integer(
-        required=True,
-        default=int(date.today().year)
-    )
+    period = fields.Integer(required=True, default=int(date.today().year))
 
-    dependence_id = fields.Many2one(
-        comodel_name='tmc.dependence',
-        string='Dependence',
-        domain=[('document_type_ids', '!=', False),
-                ('system_ids', 'ilike', u'RAA')],
-        required=True
-    )
+    dependence_id = fields.Many2one(comodel_name='tmc.dependence',
+                                    string='Dependence',
+                                    domain=[('document_type_ids', '!=', False),
+                                            ('system_ids', 'ilike', u'RAA')],
+                                    required=True)
 
-    document_type_id = fields.Many2one(
-        comodel_name='tmc.document_type',
-        required=True
-    )
+    document_type_id = fields.Many2one(comodel_name='tmc.document_type',
+                                       required=True)
 
     specify_maximum = fields.Boolean()
 
     maximum = fields.Integer()
 
-    range_ids = fields.One2many(
-        comodel_name='raa.range',
-        inverse_name='registry_aa_id',
-        required=True
-    )
+    range_ids = fields.One2many(comodel_name='raa.range',
+                                inverse_name='registry_aa_id',
+                                required=True)
 
     def as_range(self, iterable):
-        l = list(iterable)
-        if len(l) > 1:
-            return '{0} a {1}'.format(l[0], l[-1])
+        range_list = list(iterable)
+        if len(range_list) > 1:
+            return '{0} a {1}'.format(range_list[0], range_list[-1])
         else:
-            return '{0}'.format(l[0])
+            return '{0}'.format(range_list[0])
 
     def show_window_message(self):
         res = self.search_missing()
         if res['maximum']:
             if res['missing']:
                 missing = ', '.join(
-                    self.as_range(g) for _, g in groupby(
-                        res['missing'],
-                        key=lambda n,
-                        c=count(): n - next(c)
-                    )
-                )
+                    self.as_range(g)
+                    for _, g in groupby(res['missing'],
+                                        key=lambda n, c=count(): n - next(c)))
                 message = _(
                     '<p>Missing administrative acts: <b>%s</b></p>') % missing
             else:
@@ -77,11 +61,10 @@ class EntryWizard(models.TransientModel):
         }
 
     def search_missing(self):
-        domain = [
-            ('document_id.document_type_id', '=', self.document_type_id.id),
-            ('document_id.dependence_id', '=', self.dependence_id.id),
-            ('document_id.period', '=', self.period)
-        ]
+        domain = [('document_id.document_type_id', '=',
+                   self.document_type_id.id),
+                  ('document_id.dependence_id', '=', self.dependence_id.id),
+                  ('document_id.period', '=', self.period)]
 
         registries = self.env['raa.registry_aa'].search(domain)
 
@@ -97,15 +80,11 @@ class EntryWizard(models.TransientModel):
                 maximum = self.maximum
 
             missing = []
-            for x in range(1, maximum + 1):
-                if x not in document_numbers:
-                    missing.append(x)
+            for numbers in range(1, maximum + 1):
+                if numbers not in document_numbers:
+                    missing.append(numbers)
 
-        return {
-            'last': last,
-            'maximum': maximum,
-            'missing': missing
-        }
+        return {'last': last, 'maximum': maximum, 'missing': missing}
 
     def create_registry_aa(self):
         raa_ids = []
@@ -116,12 +95,10 @@ class EntryWizard(models.TransientModel):
         for aa_range in self.range_ids:
             for number in range(aa_range.number_from, aa_range.number_to + 1):
                 doc_model = self.env['tmc.document']
-                domain = [
-                    ('document_type_id', '=', self.document_type_id.id),
-                    ('dependence_id', '=', self.dependence_id.id),
-                    ('number', '=', number),
-                    ('period', '=', self.period)
-                ]
+                domain = [('document_type_id', '=', self.document_type_id.id),
+                          ('dependence_id', '=', self.dependence_id.id),
+                          ('number', '=', number),
+                          ('period', '=', self.period)]
                 document = doc_model.search(domain, limit=1)
                 if not document:
                     vals = {
@@ -165,10 +142,10 @@ class EntryWizard(models.TransientModel):
         context = self._context.copy()
         res = self.search_missing()
         context['last'] = str(res['last']).zfill(6) if res['last'] else None
-        context['maximum'] = str(res['maximum']).zfill(6) if res[
-            'maximum'] else None
-        context['missing'] = [str(x).zfill(6) for x in res['missing']] if res[
-            'missing'] else None
+        context['maximum'] = str(
+            res['maximum']).zfill(6) if res['maximum'] else None
+        context['missing'] = [str(x).zfill(6) for x in res['missing']
+                              ] if res['missing'] else None
         return self.with_context(context)
 
     @api.onchange('dependence_id')
@@ -178,9 +155,11 @@ class EntryWizard(models.TransientModel):
             self.document_type_id = document_types.ids[0]
         else:
             self.document_type_id = False
-        return {'domain': {
-            'document_type_id': [('id', 'in', document_types.ids)]
-        }}
+        return {
+            'domain': {
+                'document_type_id': [('id', 'in', document_types.ids)]
+            }
+        }
 
     @api.onchange('specify_maximum')
     def _onchange_specify_maximum(self):

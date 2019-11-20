@@ -2,10 +2,12 @@
 <odoo>
 
     <!-- WINDOW ACTION -->
-    <act_window id="registry_aa_action_form"
-                name="Administrative Act Registries"
-                res_model="raa.registry_aa"
-                view_mode="form" />
+    <record id="registry_aa_action_form"
+            model="ir.actions.act_window">
+        <field name="name">Administrative Act Registries</field>
+        <field name="res_model">raa.registry_aa</field>
+        <field name="view_mode">tree,form</field>
+    </record>
 
     <!-- TREE VIEW -->
     <record id="registry_aa_view_tree"
@@ -71,16 +73,16 @@
                        filter_domain="[('dependence_id', 'ilike', self)]" />
                 <field name="entry_date"
                        filter_domain="['|'('entry_date', '>=', self)]" />
-                <group expand="1">
-                    <filter name="group_by_period_per_dependence"
-                            string="Period per Dependence"
-                            context="{'group_by': ['dependence_id', 'period']}" />
+                <group expand="True">
                     <filter name="group_by_dependence"
                             string="Dependence"
                             context="{'group_by':'dependence_id'}" />
                     <filter name="group_by_period"
                             string="Period"
                             context="{'group_by':'period'}" />
+                    <!-- <filter name="group_by_period_per_dependence"
+                            string="Period per Dependence"
+                            context="{'group_by': ['dependence_id', 'period']}" /> -->
                 </group>
             </search>
         </field>
