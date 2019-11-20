@@ -52,13 +52,21 @@ class EntryWizard(models.TransientModel):
         else:
             message = _('No existing registries matching criteria')
 
-        return {
-            'type': 'ir.actions.act_window.message',
-            'title': _('Search Results'),
-            'is_html_message': True,
-            'message': message,
-            'close_button_title': False,
-        }
+        context = dict(self._context or {})
+        context['message'] = message
+        context['is_html'] = True
+        res = {
+            'name': _('Success'),
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'popup.message',
+            'view_id': self.env['ir.model.data'].xmlid_to_res_id(
+                'popup_message_view_form'),
+            'target': 'new',
+            'context': context
+        }  # yapf: disable
+
+        return res
 
     def search_missing(self):
         domain = [('document_id.document_type_id', '=',
@@ -121,22 +129,35 @@ class EntryWizard(models.TransientModel):
                     raa_ids.append(raa.id)
 
         if raa_ids:
-            return {
+            message = _('Registries were created successfully')
+            context = dict(self._context or {})
+            context['message'] = message
+            res = {
+                'name': _('Success'),
                 'type': 'ir.actions.act_window',
-                'name': _('The following registries were created'),
-                'res_model': 'raa.registry_aa',
-                'view_type': 'form',
-                'view_mode': 'tree,form',
-                'domain': [('id', 'in', raa_ids)],
+                'view_mode': 'form',
+                'res_model': 'popup.message',
+                'view_id': self.env['ir.model.data'].xmlid_to_res_id(
+                    'popup_message_view_form'),
                 'target': 'new',
-                'nodestroy': True,
-            }
+                'context': context
+            }  # yapf: disable
         else:
-            return {
-                'type': 'ir.actions.act_window.message',
-                'title': _('Information'),
-                'message': _('Administrative acts registries already exist')
-            }
+            message = _('No new registries were created. They already exist.')
+            context = dict(self._context or {})
+            context['message'] = message
+            res = {
+                'name': _('Success'),
+                'type': 'ir.actions.act_window',
+                'view_mode': 'form',
+                'res_model': 'popup.message',
+                'view_id': self.env['ir.model.data'].xmlid_to_res_id(
+                    'popup_message_view_form'),
+                'target': 'new',
+                'context': context
+            }  # yapf: disable
+
+        return res
 
     def _prepare_report(self):
         context = self._context.copy()
