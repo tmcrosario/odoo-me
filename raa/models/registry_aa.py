@@ -2,7 +2,9 @@ from odoo import _, api, fields, models
 
 
 class RegistryAA(models.Model):
+
     _name = 'raa.registry_aa'
+    _description = 'Administrative Act Registry'
 
     document_id = fields.Many2one(
         comodel_name='tmc.document',

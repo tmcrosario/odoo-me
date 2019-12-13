@@ -7,6 +7,7 @@ from odoo import _, api, fields, models, SUPERUSER_ID, exceptions
 class EntryWizard(models.TransientModel):
 
     _name = 'raa.entry.wizard'
+    _description = 'Wizard to load administrative acts'
     _inherit = ['tmc.report']
 
     entry_date = fields.Date(required=True, default=fields.Date.context_today)

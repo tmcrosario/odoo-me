@@ -2,7 +2,9 @@ from odoo import _, api, fields, models
 
 
 class Range(models.TransientModel):
+
     _name = 'raa.range'
+    _description = 'Administrative Acts Ranges'
 
     registry_aa_id = fields.Many2one(comodel_name='raa.entry.wizard',
                                      required=True)
