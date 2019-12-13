@@ -6,46 +6,31 @@ class RegistryAA(models.Model):
     _name = 'raa.registry_aa'
     _description = 'Administrative Act Registry'
 
-    document_id = fields.Many2one(
-        comodel_name='tmc.document',
-        required=True
-    )
+    document_id = fields.Many2one(comodel_name='tmc.document', required=True)
 
-    entry_date = fields.Date(
-        default=fields.Date.context_today,
-        required=True
-    )
+    entry_date = fields.Date(default=fields.Date.context_today, required=True)
 
-    document_type_id = fields.Many2one(
-        related='document_id.document_type_id',
-        readonly=True
-    )
+    document_type_id = fields.Many2one(related='document_id.document_type_id',
+                                       readonly=True)
 
-    dependence_id = fields.Many2one(
-        related='document_id.dependence_id',
-        readonly=True,
-        domain=[('document_type_ids', '!=', False),
-                ('system_ids', 'ilike', u'RAA')],
-        store=True,
-        translate=True
-    )
+    dependence_id = fields.Many2one(related='document_id.dependence_id',
+                                    readonly=True,
+                                    domain=[('document_type_ids', '!=', False),
+                                            ('system_ids', 'ilike', u'RAA')],
+                                    store=True,
+                                    translate=True)
 
-    number = fields.Integer(
-        related="document_id.number",
-        readonly=True
-    )
+    number = fields.Integer(related="document_id.number", readonly=True)
 
-    period = fields.Integer(
-        related='document_id.period',
-        readonly=True,
-        store=True
-    )
+    period = fields.Integer(related='document_id.period',
+                            readonly=True,
+                            store=True)
 
     def name_get(self):
         result = []
-        for aa in self:
-            document_name = aa.document_id.name_get()[0][1]
-            result.append((aa.id, document_name))
+        for raa_obj in self:
+            document_name = raa_obj.document_id.name_get()[0][1]
+            result.append((raa_obj.id, document_name))
         return result
 
     def unlink(self):
@@ -62,9 +47,7 @@ class RegistryAA(models.Model):
                 document_obj.unlink()
             else:
                 super(RegistryAA, raa_obj).unlink()
+        return True
 
-    _sql_constraints = [
-        ('document_id_unique',
-         'UNIQUE(document_id)',
-         _('Record already exists'))
-    ]
+    _sql_constraints = [('document_id_unique', 'UNIQUE(document_id)',
+                         _('Record already exists'))]

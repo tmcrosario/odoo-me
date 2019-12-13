@@ -5,13 +5,11 @@
     'author': 'Tribunal Municipal de Cuentas - Municipalidad de Rosario',
     'website': 'https://www.tmcrosario.gob.ar',
     'license': 'AGPL-3',
-    'sequence': 150,
     'depends': [
         'tmc',
         'popup_message_dialog_box'
         # 'report_py3o',
         # 'report_py3o_fusion_server',
-        # 'web_ir_actions_act_window_message'
     ],
     'data': [
         'security/groups.xml',
