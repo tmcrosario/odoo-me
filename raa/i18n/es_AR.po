@@ -1,160 +1,156 @@
 # Translation of Odoo Server.
 # This file contains the translation of the following modules:
-#	* raa
+# 	* raa
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 10.0\n"
+"Project-Id-Version: Odoo Server 13.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-29 17:48+0000\n"
-"PO-Revision-Date: 2019-01-29 17:48+0000\n"
-"Last-Translator: <>\n"
+"POT-Creation-Date: 2019-12-13 16:06+0000\n"
+"PO-Revision-Date: 2019-12-13 13:08-0300\n"
+"Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: \n"
+"Language: es_AR\n"
+"X-Generator: Poedit 2.2.4\n"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:66
+#: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "<p>Missing administrative acts: <b>%s</b></p>"
 msgstr "<p>Actos administrativos faltantes: <b>%s</b></p>"
 
 #. module: raa
-#: model:ir.actions.act_window,name:raa.registry_aa_list_action
+#: model:ir.actions.act_window,name:raa.registry_aa_action_form
 msgid "Administrative Act Registries"
 msgstr "Registros"
 
 #. module: raa
-#: model:ir.ui.menu,name:raa.main_raa_raa_menu
-msgid "Administrative Acts"
-msgstr "Actos Administrativos"
+#: model:ir.model,name:raa.model_raa_registry_aa
+msgid "Administrative Act Registry"
+msgstr "Registro de Acto Administrativo"
 
 #. module: raa
-#: model:ir.actions.act_window,name:raa.raa_entry_wizard
-#: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
+#: model:ir.actions.act_window,name:raa.entry_wizard_action_form
+#: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
 msgid "Administrative Acts Entry"
 msgstr "Ingreso de Actos Administrativos"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:165
-#, python-format
-msgid "Administrative acts registries already exist"
-msgstr "Los registros de actos administrativos ya existen"
+#: model:ir.model,name:raa.model_raa_range
+msgid "Administrative Acts Ranges"
+msgstr "Rangos de Actos Administrativos"
 
 #. module: raa
-#: model:ir.ui.menu,name:raa.main_raa_raa_admitted
+#: model:ir.ui.menu,name:raa.raa_menu_admitted_list
 msgid "Admitted List"
 msgstr "Listado de Recibidos"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
+#: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
 msgid "Cancel"
 msgstr "Cancelar"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_create_uid
-#: model:ir.model.fields,field_description:raa.field_raa_range_create_uid
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_create_uid
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__create_uid
+#: model:ir.model.fields,field_description:raa.field_raa_range__create_uid
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__create_uid
 msgid "Created by"
 msgstr "Creado por"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_create_date
-#: model:ir.model.fields,field_description:raa.field_raa_range_create_date
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_create_date
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__create_date
+#: model:ir.model.fields,field_description:raa.field_raa_range__create_date
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__create_date
 msgid "Created on"
 msgstr "Creado en"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_dependence_id
-#: model:ir.ui.view,arch_db:raa.registry_aa_search_view
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__dependence_id
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__dependence_id
+#: model_terms:ir.ui.view,arch_db:raa.registry_aa_view_search
 msgid "Dependence"
 msgstr "Dependencia"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_dependence_id
-msgid "Dependence id"
-msgstr "Dependencia"
-
-#. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_display_name
-#: model:ir.model.fields,field_description:raa.field_raa_range_display_name
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_display_name
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__display_name
+#: model:ir.model.fields,field_description:raa.field_raa_range__display_name
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__display_name
 msgid "Display Name"
 msgstr "Mostrar Nombre"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_range_tree
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__document_id
+msgid "Document"
+msgstr "Documento"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.range_view_tree
 msgid "Document Range"
 msgstr "Rango"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_id
-msgid "Document id"
-msgstr "Documento Asociado"
-
-#. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_document_type_id
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_document_type_id
-msgid "Document type id"
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__document_type_id
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__document_type_id
+msgid "Document Type"
 msgstr "Tipo de Documento"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
+#: model:ir.model.constraint,message:raa.constraint_raa_registry_aa_document_id_unique
+msgid "El registro ya existe"
+msgstr "El registro ya existe"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
 msgid "Enter Document Information"
 msgstr "Ingrese Datos del Documento"
 
 #. module: raa
-#: model:ir.ui.menu,name:raa.main_raa_registry_aa_entry_wizard
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__entry_date
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__entry_date
+msgid "Entry Date"
+msgstr "Fecha de Entrada"
+
+#. module: raa
+#: model:ir.ui.menu,name:raa.raa_menu_entry_wizard
 msgid "Entry Wizard"
 msgstr "Asistente de Carga"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_entry_date
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_entry_date
-msgid "Entry date"
-msgstr "Fecha de Entrada"
-
-#. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_id
-#: model:ir.model.fields,field_description:raa.field_raa_range_id
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_id
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__id
+#: model:ir.model.fields,field_description:raa.field_raa_range__id
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__id
 msgid "ID"
-msgstr "ID"
+msgstr ""
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:164
-#, python-format
-msgid "Information"
-msgstr "Información"
-
-#. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard___last_update
-#: model:ir.model.fields,field_description:raa.field_raa_range___last_update
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa___last_update
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard____last_update
+#: model:ir.model.fields,field_description:raa.field_raa_range____last_update
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa____last_update
 msgid "Last Modified on"
 msgstr "Última modificación en"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_write_uid
-#: model:ir.model.fields,field_description:raa.field_raa_range_write_uid
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_write_uid
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__write_uid
+#: model:ir.model.fields,field_description:raa.field_raa_range__write_uid
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__write_uid
 msgid "Last Updated by"
 msgstr "Última actualización realizada por"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_write_date
-#: model:ir.model.fields,field_description:raa.field_raa_range_write_date
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_write_date
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__write_date
+#: model:ir.model.fields,field_description:raa.field_raa_range__write_date
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__write_date
 msgid "Last Updated on"
 msgstr "Última actualización el"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
+#: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
 msgid "Load"
 msgstr "Carga"
 
@@ -164,77 +160,82 @@ msgid "Manager"
 msgstr "Responsable"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_maximum
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__maximum
 msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:199
-#: code:addons/raa/models/wizards.py:230
+#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "Maximum number allowed has been exceeded"
 msgstr "Se ha excedido la numeración máxima permitida"
 
 #. module: raa
-#: model:ir.actions.report.xml,name:raa.raa_missing_raa_report
+#: model:ir.actions.report,name:raa.raa_missing_raa_report
 msgid "Missing Administrative Acts Report"
 msgstr "Actos Administrativos Faltantes"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:71
+#: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No existing registries matching criteria"
 msgstr "No existen registros que coincidan con el criterio de búsqueda"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:69
+#: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No missing administrative acts"
 msgstr "No existen actos administrativos faltantes"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:118
+#: code:addons/raa/wizards/entry.py:0
+#, python-format
+msgid "No new registries were created. They already exist."
+msgstr "Los registros que se intentan crear ya existen."
+
+#. module: raa
+#: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No ranges were specified"
 msgstr "No se expecificaron rangos"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_number
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__number
 msgid "Number"
 msgstr "Número"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_range_number_from
-msgid "Number from"
+#: model:ir.model.fields,field_description:raa.field_raa_range__number_from
+msgid "Number From"
 msgstr "Desde"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_range_number_to
-msgid "Number to"
+#: model:ir.model.fields,field_description:raa.field_raa_range__number_to
+msgid "Number To"
 msgstr "Hasta"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_period
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa_period
-#: model:ir.ui.view,arch_db:raa.registry_aa_search_view
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__period
+#: model:ir.model.fields,field_description:raa.field_raa_registry_aa__period
+#: model_terms:ir.ui.view,arch_db:raa.registry_aa_view_search
 msgid "Period"
 msgstr "Período"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.registry_aa_search_view
-msgid "Period per Dependence"
-msgstr "Período por Dependencia"
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
+msgid "Print"
+msgstr "Imprimir"
 
 #. module: raa
 #: model:ir.module.category,name:raa.module_category_raa
-#: model:ir.ui.menu,name:raa.main_raa_menu
+#: model:ir.ui.menu,name:raa.raa_menu_root
 msgid "RAA"
-msgstr "RAA"
+msgstr ""
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_range_ids
-msgid "Range ids"
-msgstr "Rangos"
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__range_ids
+msgid "Range"
+msgstr "Intervalo"
 
 #. module: raa
 #: model:res.groups,name:raa.group_read_only
@@ -242,16 +243,21 @@ msgid "Read Only"
 msgstr "Sólo Lectura"
 
 #. module: raa
-#: code:addons/raa/models/registry_aa.py:71
-#: sql_constraint:raa.registry_aa:0
+#: code:addons/raa/models/registry_aa.py:0
 #, python-format
 msgid "Record already exists"
 msgstr "El registro ya existe"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_range_registry_aa_id
-msgid "Registry aa id"
-msgstr "Registro de Acto Administrativo"
+#: code:addons/raa/wizards/entry.py:0
+#, python-format
+msgid "Registries were created successfully"
+msgstr "Los registros se crearon correctamente"
+
+#. module: raa
+#: model:ir.model.fields,field_description:raa.field_raa_range__registry_aa_id
+msgid "Registry Aa"
+msgstr "Registro"
 
 #. module: raa
 #: model:ir.module.category,description:raa.module_category_raa
@@ -259,50 +265,44 @@ msgid "Registry of Administrative Acts"
 msgstr "Registro"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
 msgid "Search"
 msgstr "Buscar"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:75
-#, python-format
-msgid "Search Results"
-msgstr "Resultados de la Búsqueda"
-
-#. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
 msgid "Search for Maximum Numbering"
 msgstr "Buscar por Numeración Máxima"
 
 #. module: raa
-#: model:ir.ui.menu,name:raa.main_raa_search_missing_wizard
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
+#: model:ir.ui.menu,name:raa.raa_menu_search_missing_wizard
+#: model_terms:ir.ui.view,arch_db:raa.search_missing_wizard_view_form
 msgid "Search for Missing"
 msgstr "Búsqueda de Faltantes"
 
 #. module: raa
-#: model:ir.actions.act_window,name:raa.raa_search_missing_wizard
+#: model:ir.actions.act_window,name:raa.search_missing_wizard_action_form
 msgid "Search for Missing Administrative Acts"
 msgstr "Búsqueda de Actos Administrativos Faltantes"
 
 #. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_entry_wizard_form
+#: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
 msgid "Specify Document Ranges"
 msgstr "Especificar Rangos de Documentos"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard_specify_maximum
-msgid "Specify maximum"
+#: model:ir.model.fields,field_description:raa.field_raa_entry_wizard__specify_maximum
+msgid "Specify Maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:153
+#: code:addons/raa/wizards/entry.py:0
 #, python-format
-msgid "The following registries were created"
-msgstr "Los siguientes registros fueron creados"
+msgid "Success"
+msgstr "Resultado"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:224
+#: code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "There are values in conflict"
 msgstr "Existen rangos en conflicto"
@@ -313,28 +313,12 @@ msgid "User"
 msgstr "Usuario"
 
 #. module: raa
-#: code:addons/raa/models/wizards.py:227
+#: model:ir.model,name:raa.model_raa_entry_wizard
+msgid "Wizard to load administrative acts"
+msgstr "Wizard para cargar actos administrativos"
+
+#. module: raa
+#: code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "You must enter values greater than 0 (zero)"
 msgstr "Debe ingresar valores mayores a 0 (cero)"
-
-#. module: raa
-#: model:ir.ui.view,arch_db:raa.view_raa_search_missing_wizard_form
-msgid "_Print"
-msgstr "Reporte"
-
-#. module: raa
-#: model:ir.model,name:raa.model_raa_entry_wizard
-msgid "raa.entry.wizard"
-msgstr "raa.entry.wizard"
-
-#. module: raa
-#: model:ir.model,name:raa.model_raa_range
-msgid "raa.range"
-msgstr "raa.range"
-
-#. module: raa
-#: model:ir.model,name:raa.model_raa_registry_aa
-msgid "raa.registry_aa"
-msgstr "raa.registry_aa"
-
