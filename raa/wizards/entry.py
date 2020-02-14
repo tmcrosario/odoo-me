@@ -82,6 +82,7 @@ class EntryWizard(models.TransientModel):
         last = None
         maximum = None
         missing = None
+        missing_formatted = None
 
         if registries:
             last = maximum = max(document_numbers)
@@ -93,7 +94,10 @@ class EntryWizard(models.TransientModel):
                 if numbers not in document_numbers:
                     missing.append(numbers)
 
-        return {'last': last, 'maximum': maximum, 'missing': missing}
+            missing_formatted = [str(x).zfill(6)
+                                 for x in missing] if missing else None
+
+        return {'last': last, 'maximum': maximum, 'missing': missing_formatted}
 
     def create_registry_aa(self):
         raa_ids = []
@@ -160,15 +164,17 @@ class EntryWizard(models.TransientModel):
 
         return res
 
-    def _prepare_report(self):
-        context = self._context.copy()
-        res = self.search_missing()
-        context['last'] = str(res['last']).zfill(6) if res['last'] else None
-        context['maximum'] = str(
-            res['maximum']).zfill(6) if res['maximum'] else None
-        context['missing'] = [str(x).zfill(6) for x in res['missing']
-                              ] if res['missing'] else None
-        return self.with_context(context)
+    '''TO-DO: Review the way values are passed to the report since changes \
+       in Odoo v11 don't allow to easily use the context anymore'''
+    # def _prepare_report(self):
+    #     context = self._context.copy()
+    #     res = self.search_missing()
+    #     context['last'] = str(res['last']).zfill(6) if res['last'] else None
+    #     context['maximum'] = str(
+    #         res['maximum']).zfill(6) if res['maximum'] else None
+    #     context['missing'] = [str(x).zfill(6) for x in res['missing']
+    #                           ] if res['missing'] else None
+    #     return self.with_context(context)
 
     @api.onchange('dependence_id')
     def _onchange_dependence(self):
