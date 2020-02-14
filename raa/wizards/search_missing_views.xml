@@ -38,7 +38,7 @@
                     <button name="generate_report"
                             type="object"
                             string=" Print"
-                            context="{'report_name': 'missing_raa'}"
+                            context="{'report_name': 'raa.missing_raa'}"
                             icon="fa-file-text-o"
                             class="oe_highlight" />
                     <button special="cancel"
@@ -55,6 +55,5 @@
                 view_id="search_missing_wizard_view_form"
                 view_mode="form"
                 target="new" />
-    <!-- key2="client_action_multi" /> -->
 
 </odoo>
