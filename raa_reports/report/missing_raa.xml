@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="raa.missing_raa"
+    <record id="missing_raa"
             model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry.wizard</field>

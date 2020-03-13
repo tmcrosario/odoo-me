@@ -7,9 +7,7 @@
     'license': 'AGPL-3',
     'depends': [
         'tmc',
-        'popup_message_dialog_box',
-        'report_py3o',
-        'report_py3o_fusion_server'
+        'popup_message_dialog_box'
     ],
     'data': [
         'security/groups.xml',
@@ -21,8 +19,7 @@
         'wizards/entry_menu.xml',
         'wizards/number_range_views.xml',
         'wizards/search_missing_views.xml',
-        'wizards/search_missing_menu.xml',
-        'report/missing_raa.xml'
+        'wizards/search_missing_menu.xml'
     ],
     'demo': [],
     'installable': True,
