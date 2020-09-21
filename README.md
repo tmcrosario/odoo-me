@@ -1,5 +1,5 @@
 # Odoo RAA
-Sistema de Registro de Actos Administrativos. Tribunal Municipal de Cuentas de Rosario.
+Sistema de Registro de Actos Administrativos (RAA). Tribunal Municipal de Cuentas de Rosario.
 
 ## License
 
