@@ -7,6 +7,7 @@
     'license': 'AGPL-3',
     'depends': [
         'raa',
+        'tmc_data_py3o',
         'report_py3o',
         'report_py3o_fusion_server'
     ],
