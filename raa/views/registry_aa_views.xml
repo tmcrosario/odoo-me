@@ -3,7 +3,7 @@
 
     <!-- WINDOW ACTION -->
     <record id="registry_aa_action_form"
-            model="ir.actions.act_window">
+        model="ir.actions.act_window">
         <field name="name">Administrative Act Registries</field>
         <field name="res_model">raa.registry_aa</field>
         <field name="view_mode">tree,form</field>
@@ -11,11 +11,11 @@
 
     <!-- TREE VIEW -->
     <record id="registry_aa_view_tree"
-            model="ir.ui.view">
+        model="ir.ui.view">
         <field name="name">raa.registry_aa.view.tree</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
-               type="xml">
+            type="xml">
             <tree default_order="entry_date desc">
                 <field name="document_id" />
                 <field name="entry_date" />
@@ -26,16 +26,16 @@
 
     <!-- FORM VIEW -->
     <record id="registry_aa_view_form"
-            model="ir.ui.view">
+        model="ir.ui.view">
         <field name="name">raa.registry_aa.view.form</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
-               type="xml">
+            type="xml">
             <form duplicate="0">
                 <sheet>
                     <h2>
                         <field name="document_id"
-                               options="{'no_create': True}"/>
+                            options="{'no_create': True}" />
                     </h2>
                     <group>
                         <group>
@@ -43,11 +43,11 @@
                         </group>
                         <group>
                             <field name="create_date"
-                                   attrs="{'readonly': True}"
-                                   groups="raa.group_manager" />
+                                attrs="{'readonly': True}"
+                                groups="raa.group_manager" />
                             <field name="create_uid"
-                                   attrs="{'readonly': True}"
-                                   groups="raa.group_manager" />
+                                attrs="{'readonly': True}"
+                                groups="raa.group_manager" />
                         </group>
                     </group>
                 </sheet>
@@ -57,32 +57,29 @@
 
     <!-- SEARCH VIEW -->
     <record id="registry_aa_view_search"
-            model="ir.ui.view">
+        model="ir.ui.view">
         <field name="name">raa.registry_aa.view.search</field>
         <field name="model">raa.registry_aa</field>
         <field name="arch"
-               type="xml">
+            type="xml">
             <search>
                 <field name="document_type_id"
-                       filter_domain="['|', ('document_type_id', '=', self)]" />
+                    filter_domain="['|', ('document_type_id', '=', self)]" />
                 <field name="number"
-                       filter_domain="['|', ('number', '=', self" />
+                    filter_domain="['|', ('number', '=', self" />
                 <field name="period"
-                       filter_domain="['|', ('period', '=', self" />
+                    filter_domain="['|', ('period', '=', self" />
                 <field name="dependence_id"
-                       filter_domain="[('dependence_id', 'ilike', self)]" />
+                    filter_domain="[('dependence_id', 'ilike', self)]" />
                 <field name="entry_date"
-                       filter_domain="['|'('entry_date', '>=', self)]" />
+                    filter_domain="['|'('entry_date', '>=', self)]" />
                 <group expand="True">
                     <filter name="group_by_dependence"
-                            string="Dependence"
-                            context="{'group_by':'dependence_id'}" />
+                        string="Dependencia"
+                        context="{'group_by':'dependence_id'}" />
                     <filter name="group_by_period"
-                            string="Period"
-                            context="{'group_by':'period'}" />
-                    <!-- <filter name="group_by_period_per_dependence"
-                            string="Period per Dependence"
-                            context="{'group_by': ['dependence_id', 'period']}" /> -->
+                        string="Período"
+                        context="{'group_by':'period'}" />
                 </group>
             </search>
         </field>

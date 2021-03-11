@@ -4,18 +4,16 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 13.0\n"
+"Project-Id-Version: Odoo Server 13.0-20210217\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-13 16:06+0000\n"
-"PO-Revision-Date: 2019-12-13 13:08-0300\n"
+"POT-Creation-Date: 2021-03-11 12:59+0000\n"
+"PO-Revision-Date: 2021-03-11 12:59+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
-"Language: es_AR\n"
-"X-Generator: Poedit 2.2.4\n"
 
 #. module: raa
 #: code:addons/raa/wizards/entry.py:0
@@ -102,7 +100,7 @@ msgstr "Tipo de Documento"
 #. module: raa
 #: model:ir.model.constraint,message:raa.constraint_raa_registry_aa_document_id_unique
 msgid "El registro ya existe"
-msgstr "El registro ya existe"
+msgstr ""
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.entry_wizard_view_form
@@ -165,15 +163,11 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/number_range.py:0
+#: code:addons/raa/wizards/entry.py:0
+#: code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "Maximum number allowed has been exceeded"
 msgstr "Se ha excedido la numeración máxima permitida"
-
-#. module: raa
-#: model:ir.actions.report,name:raa.raa_missing_raa_report
-msgid "Missing Administrative Acts Report"
-msgstr "Actos Administrativos Faltantes"
 
 #. module: raa
 #: code:addons/raa/wizards/entry.py:0
@@ -296,6 +290,7 @@ msgid "Specify Maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
+#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/entry.py:0
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Success"

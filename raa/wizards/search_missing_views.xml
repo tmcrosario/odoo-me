@@ -3,46 +3,46 @@
 
     <!-- SEARCH VIEW -->
     <record id="search_missing_wizard_view_form"
-            model="ir.ui.view">
+        model="ir.ui.view">
         <field name="name">raa.search_missing.wizard.view.form</field>
         <field name="model">raa.entry.wizard</field>
         <field name="arch"
-               type="xml">
+            type="xml">
             <form string="Search for Missing">
                 <group>
-                    <separator string="Enter Document Information" />
+                    <separator string="Ingresar Datos de Documentos" />
                     <group colspan="2"
-                           col="2">
+                        col="2">
                         <field name="period" />
                         <field name="dependence_id"
-                               context="{'search_default_filter_actual_nomenclator': True}"
-                               options="{'no_create': True}" />
+                            context="{'search_default_filter_actual_nomenclator': True}"
+                            options="{'no_create': True}" />
                         <field name="document_type_id"
-                               attrs="{'invisible':[('dependence_id','=',False)]}"
-                               options="{'no_create': True}" />
+                            attrs="{'invisible':[('dependence_id','=',False)]}"
+                            options="{'no_create': True}" />
                     </group>
-                    <separator string="Search for Maximum Numbering" />
+                    <separator string="Buscar por Numeración Máxima" />
                     <group colspan="2"
-                           col="2">
+                        col="2">
                         <field name="specify_maximum" />
                         <field name="maximum"
-                               attrs="{'invisible':[('specify_maximum','=',False)]}" />
+                            attrs="{'invisible':[('specify_maximum','=',False)]}" />
                     </group>
                 </group>
                 <footer>
                     <button name="show_window_message"
-                            type="object"
-                            string="Search"
-                            icon="fa-search"
-                            class="oe_highlight" />
+                        type="object"
+                        string=" Buscar"
+                        icon="fa-search"
+                        class="oe_highlight" />
                     <button name="generate_report"
-                            type="object"
-                            string=" Print"
-                            context="{'report_name': 'raa_reports.missing_raa'}"
-                            icon="fa-file-text-o"
-                            class="oe_highlight" />
+                        type="object"
+                        string=" Reporte"
+                        context="{'report_name': 'raa_reports.missing_raa'}"
+                        icon="fa-file-text-o"
+                        class="oe_highlight" />
                     <button special="cancel"
-                            string="Cancel" />
+                        string="Cancelar" />
                 </footer>
             </form>
         </field>
@@ -50,10 +50,10 @@
 
     <!-- WINDOW ACTION -->
     <act_window id="search_missing_wizard_action_form"
-                name="Search for Missing Administrative Acts"
-                res_model="raa.entry.wizard"
-                view_id="search_missing_wizard_view_form"
-                view_mode="form"
-                target="new" />
+        name="Search for Missing Administrative Acts"
+        res_model="raa.entry.wizard"
+        view_id="search_missing_wizard_view_form"
+        view_mode="form"
+        target="new" />
 
 </odoo>
