@@ -5,7 +5,7 @@
         model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry.wizard</field>
-        <field name="report_name">raa_reports.missing_raa</field>
+        <field name="report_name">raa.missing_raa_report</field>
         <field name="print_report_name">'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)</field>
         <field name="report_type">py3o</field>
         <field name="py3o_filetype">pdf</field>
