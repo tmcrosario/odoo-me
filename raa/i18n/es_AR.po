@@ -7,13 +7,15 @@ msgstr ""
 "Project-Id-Version: Odoo Server 13.0-20210217\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-03-11 12:59+0000\n"
-"PO-Revision-Date: 2021-03-11 12:59+0000\n"
+"PO-Revision-Date: 2021-03-26 08:22-0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: \n"
+"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: \n"
+"Language: es_AR\n"
+"X-Generator: Poedit 2.0.6\n"
 
 #. module: raa
 #: code:addons/raa/wizards/entry.py:0
@@ -163,8 +165,7 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/wizards/entry.py:0
-#: code:addons/raa/wizards/number_range.py:0
+#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "Maximum number allowed has been exceeded"
 msgstr "Se ha excedido la numeración máxima permitida"
@@ -246,7 +247,7 @@ msgstr "El registro ya existe"
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Registries were created successfully"
-msgstr "Los registros se crearon correctamente"
+msgstr "Los registros se crearon correctamente."
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_range__registry_aa_id
@@ -290,7 +291,6 @@ msgid "Specify Maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
-#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/entry.py:0
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Success"
