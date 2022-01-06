@@ -2,3 +2,9 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_raa_registry_aa_manager,raa.registry_aa.manager,model_raa_registry_aa,group_manager,1,1,1,1
 access_raa_registry_aa_user,raa.registry_aa.user,model_raa_registry_aa,group_user,1,0,0,0
 access_raa_registry_aa_read_only,raa.registry_aa.read_only,model_raa_registry_aa,group_read_only,1,0,0,0
+access_raa_entry_manager,raa.entry.manager,model_raa_entry,group_manager,1,1,1,1
+access_raa_entry_user,raa.entry.user,model_raa_entry,group_user,1,0,0,0
+access_raa_entry_read_only,raa.entry.read_only,model_raa_entry,group_read_only,1,0,0,0
+access_raa_number_range_manager,raa.number_range.manager,model_raa_number_range,group_manager,1,1,1,1
+access_raa_number_range_user,raa.number_range.user,model_raa_number_range,group_user,1,0,0,0
+access_raa_number_range_read_only,raa.number_range.read_only,model_raa_number_range,group_read_only,1,0,0,0

@@ -2,7 +2,7 @@
 <odoo>
 
     <!-- WINDOW ACTION -->
-    <record id="registry_aa_action_form"
+    <record id="registry_aa_action_view_form"
         model="ir.actions.act_window">
         <field name="name">Administrative Act Registries</field>
         <field name="res_model">raa.registry_aa</field>
@@ -20,7 +20,8 @@
                 <field name="document_id" />
                 <field name="entry_date" />
                 <field name="dependence_id" />
-                <field name="create_uid" string="Ingresado por"/>
+                <field name="create_uid"
+                    string="Ingresado por" />
             </tree>
         </field>
     </record>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="missing_raa"
+    <record id="missing_raa_report"
         model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry.wizard</field>
@@ -13,7 +13,7 @@
             ref="tmc_data_py3o.local_server" />
         <field name="py3o_is_local_fusion"
             eval="1" />
-        <field name="module">raa_reports</field>
+        <field name="module">raa</field>
         <field name="py3o_template_fallback">report/missing_raa.odt</field>
     </record>
 

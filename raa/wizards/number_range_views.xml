@@ -2,14 +2,14 @@
 <odoo>
 
     <!-- TREE VIEW -->
-    <record id="range_view_tree"
-            model="ir.ui.view">
-        <field name="name">raa.range.view.tree</field>
-        <field name="model">raa.range</field>
+    <record id="number_range_view_tree"
+        model="ir.ui.view">
+        <field name="name">raa.number_range.view.tree</field>
+        <field name="model">raa.number_range</field>
         <field name="arch"
-               type="xml">
+            type="xml">
             <tree string="Document Range"
-                  editable="bottom">
+                editable="bottom">
                 <field name="number_from" />
                 <field name="number_to" />
             </tree>

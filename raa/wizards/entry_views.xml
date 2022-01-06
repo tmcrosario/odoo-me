@@ -2,10 +2,10 @@
 <odoo>
 
     <!-- FORM VIEW -->
-    <record id="entry_wizard_view_form"
+    <record id="entry_view_form"
         model="ir.ui.view">
-        <field name="name">raa.entry.wizard.view.form</field>
-        <field name="model">raa.entry.wizard</field>
+        <field name="name">raa.entry.view.form</field>
+        <field name="model">raa.entry</field>
         <field name="arch"
             type="xml">
             <form string="Administrative Acts Entry">
@@ -19,9 +19,12 @@
                             context="{'search_default_filter_actual_nomenclator': True}"
                             default_focus="1"
                             options="{'no_create': True}" />
+                        <field name="document_type_ids"
+                            invisible="True" />
                         <field name="document_type_id"
                             attrs="{'invisible':[('dependence_id','=',False)]}"
-                            options="{'no_create': True}" />
+                            options="{'no_create': True}"
+                            domain="[('id', 'in', document_type_ids)]" />
                     </group>
                 </group>
                 <group string="Especificar Rangos de Documentos">
@@ -40,10 +43,14 @@
     </record>
 
     <!-- WINDOW ACTION -->
-    <act_window id="entry_wizard_action_form"
-        name="Administrative Acts Entry"
-        res_model="raa.entry.wizard"
-        view_mode="form"
-        target="new" />
+    <record id="entry_action_view_form"
+        model="ir.actions.act_window">
+        <field name="name">Administrative Acts Entry</field>
+        <field name="res_model">raa.entry</field>
+        <field name="view_mode">form</field>
+        <field name="view_id"
+            ref="entry_view_form" />
+        <field name="target">new</field>
+    </record>
 
 </odoo>

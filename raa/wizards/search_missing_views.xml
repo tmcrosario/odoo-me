@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- SEARCH VIEW -->
-    <record id="search_missing_wizard_view_form"
+    <!-- FORM VIEW -->
+    <record id="search_missing_view_form"
         model="ir.ui.view">
-        <field name="name">raa.search_missing.wizard.view.form</field>
-        <field name="model">raa.entry.wizard</field>
+        <field name="name">raa.search_missing.view.form</field>
+        <field name="model">raa.entry</field>
         <field name="arch"
             type="xml">
             <form string="Search for Missing">
@@ -17,9 +17,12 @@
                         <field name="dependence_id"
                             context="{'search_default_filter_actual_nomenclator': True}"
                             options="{'no_create': True}" />
+                        <field name="document_type_ids"
+                            invisible="True" />
                         <field name="document_type_id"
                             attrs="{'invisible':[('dependence_id','=',False)]}"
-                            options="{'no_create': True}" />
+                            options="{'no_create': True}"
+                            domain="[('id', 'in', document_type_ids)]" />
                     </group>
                     <separator string="Buscar por Numeración Máxima" />
                     <group colspan="2"
@@ -49,11 +52,14 @@
     </record>
 
     <!-- WINDOW ACTION -->
-    <act_window id="search_missing_wizard_action_form"
-        name="Search for Missing Administrative Acts"
-        res_model="raa.entry.wizard"
-        view_id="search_missing_wizard_view_form"
-        view_mode="form"
-        target="new" />
+    <record id="search_missing_action_view_form"
+        model="ir.actions.act_window">
+        <field name="name">Search for Missing Administrative Acts</field>
+        <field name="res_model">raa.entry</field>
+        <field name="view_mode">form</field>
+        <field name="view_id"
+            ref="search_missing_view_form" />
+        <field name="target">new</field>
+    </record>
 
 </odoo>

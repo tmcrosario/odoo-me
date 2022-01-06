@@ -21,8 +21,6 @@ class RegistryAA(models.Model):
             ("document_type_ids", "!=", False),
             ("system_ids", "ilike", u"RAA"),
         ],
-        store=True,
-        translate=True,
     )
 
     number = fields.Integer(related="document_id.number", readonly=True)

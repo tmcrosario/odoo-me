@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <menuitem id="raa_menu_search_missing_wizard"
-              name="Search for Missing"
-              parent="raa_menu_root"
-              sequence="20"
-              action="search_missing_wizard_action_form" />
+    <menuitem id="raa_menu_search_missing"
+        name="Search for Missing"
+        parent="raa_menu"
+        sequence="20"
+        action="search_missing_action_view_form" />
 
 </odoo>
