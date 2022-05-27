@@ -4,6 +4,16 @@ from itertools import count, groupby
 from odoo import SUPERUSER_ID, _, api, exceptions, fields, models
 
 
+def as_range(iterable):
+    range_list = list(iterable)
+    first = range_list[0].lstrip("0")
+    if len(range_list) > 1:
+        last = range_list[-1].lstrip("0")
+        return f"{first} a {last}"
+    else:
+        return f"{first}"
+
+
 class Entry(models.TransientModel):
 
     _name = "raa.entry"
@@ -42,27 +52,18 @@ class Entry(models.TransientModel):
         required=True,
     )
 
-    def as_range(self, iterable):
-        range_list = list(iterable)
-        if len(range_list) > 1:
-            return "{0} a {1}".format(range_list[0], range_list[-1])
-        else:
-            return "{0}".format(range_list[0])
-
     def show_window_message(self):
         res = self.search_missing()
         if res["maximum"]:
             if res["missing"]:
                 missing = ", ".join(
-                    self.as_range(g)
+                    as_range(g)
                     for _, g in groupby(
-                        res["missing"], key=lambda n, c=count(): n - next(c)
+                        res["missing"],
+                        key=lambda n, c=count(): int(n) - next(c),
                     )
                 )
-                message = (
-                    _("<p>Missing administrative acts: <b>%s</b></p>")
-                    % missing
-                )
+                message = _("Missing administrative acts: <b>%s</b>") % missing
             else:
                 message = _("No missing administrative acts")
         else:

@@ -10,7 +10,7 @@
         "tmc_data_py3o",
         "report_py3o",
         "report_py3o_fusion_server",
-        # "popup_message_dialog_box"
+        "popup_message_dialog_box",
     ],
     "data": [
         "security/raa_groups.xml",

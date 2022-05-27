@@ -41,7 +41,7 @@
                     <button name="generate_report"
                         type="object"
                         string=" Reporte"
-                        context="{'report_name': 'raa_reports.missing_raa'}"
+                        context="{'report_name': 'raa.missing_raa_report'}"
                         icon="fa-file-text-o"
                         class="oe_highlight" />
                     <button special="cancel"

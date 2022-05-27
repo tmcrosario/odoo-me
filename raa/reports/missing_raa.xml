@@ -4,7 +4,7 @@
     <record id="missing_raa_report"
         model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
-        <field name="model">raa.entry.wizard</field>
+        <field name="model">raa.entry</field>
         <field name="report_name">raa.missing_raa_report</field>
         <field name="print_report_name">'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)</field>
         <field name="report_type">py3o</field>
@@ -14,7 +14,7 @@
         <field name="py3o_is_local_fusion"
             eval="1" />
         <field name="module">raa</field>
-        <field name="py3o_template_fallback">report/missing_raa.odt</field>
+        <field name="py3o_template_fallback">reports/missing_raa.odt</field>
     </record>
 
 </odoo>
