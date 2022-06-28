@@ -8,6 +8,7 @@
     "depends": [
         "tmc",
         "tmc_data_py3o",
+        "me",
         "report_py3o",
         "report_py3o_fusion_server",
         "popup_message_dialog_box",
