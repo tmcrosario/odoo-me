@@ -1,6 +1,6 @@
-# Odoo RAA
+# Odoo ME
 
-Sistema de Registro de Actos Administrativos (RAA). Tribunal Municipal de Cuentas de Rosario.
+Sistema de Mesa de Entrada. Tribunal Municipal de Cuentas de Rosario.
 
 ## License
 
