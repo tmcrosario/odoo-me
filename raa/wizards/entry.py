@@ -56,14 +56,19 @@ class Entry(models.TransientModel):
         res = self.search_missing()
         if res["maximum"]:
             if res["missing"]:
-                missing = ", ".join(
-                    as_range(g)
-                    for _, g in groupby(
-                        res["missing"],
-                        key=lambda n, c=count(): int(n) - next(c),
+                try:
+                    missing = ", ".join(
+                        as_range(g)
+                        for _, g in groupby(
+                            res["missing"],
+                            key=lambda n, c=count(): int(n) - next(c),
+                        )
                     )
-                )
-                message = _("Missing administrative acts: <b>%s</b>") % missing
+                    message = (
+                        _("Missing administrative acts: <b>%s</b>") % missing
+                    )
+                except StopIteration as e:
+                    raise exceptions.Error(e)
             else:
                 message = _("No missing administrative acts")
         else:
