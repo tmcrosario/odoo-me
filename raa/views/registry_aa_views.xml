@@ -35,15 +35,15 @@
             type="xml">
             <search>
                 <field name="document_type_id"
-                    filter_domain="['|', ('document_type_id', '=', self)]" />
+                    filter_domain="[('document_type_id', '=', self)]" />
                 <field name="number"
-                    filter_domain="['|', ('number', '=', self" />
+                    filter_domain="[('number', '=', self)]" />
                 <field name="period"
-                    filter_domain="['|', ('period', '=', self" />
+                    filter_domain="[('period', '=', self)]" />
                 <field name="dependence_id"
                     filter_domain="[('dependence_id', 'ilike', self)]" />
                 <field name="entry_date"
-                    filter_domain="['|'('entry_date', '>=', self)]" />
+                    filter_domain="[('entry_date', '>=', self)]" />
                 <group expand="True">
                     <filter name="group_by_dependence"
                         string="Dependencia"

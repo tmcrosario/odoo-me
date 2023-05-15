@@ -2,7 +2,6 @@ from odoo import _, fields, models
 
 
 class RegistryAA(models.Model):
-
     _name = "raa.registry_aa"
     _description = "Administrative Act Registry"
 
@@ -11,7 +10,9 @@ class RegistryAA(models.Model):
     entry_date = fields.Date(default=fields.Date.context_today, required=True)
 
     document_type_id = fields.Many2one(
-        related="document_id.document_type_id", readonly=True
+        related="document_id.document_type_id",
+        domain="[('abbreviation', '=', False)]",
+        readonly=True,
     )
 
     dependence_id = fields.Many2one(
@@ -47,7 +48,6 @@ class RegistryAA(models.Model):
                 and not document_obj.related_document_ids
                 and not document_obj.highlight_ids
             ):
-
                 super(RegistryAA, raa_obj).unlink()
                 document_obj.unlink()
             else:
