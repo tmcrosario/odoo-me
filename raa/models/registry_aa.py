@@ -11,7 +11,6 @@ class RegistryAA(models.Model):
 
     document_type_id = fields.Many2one(
         related="document_id.document_type_id",
-        domain="[('abbreviation', '=', False)]",
         readonly=True,
     )
 
