@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="registry_exp_action_view_form" model="ir.actions.act_window">
+        <field name="name">Listado de Expedientes</field>
+        <field name="res_model">me.registry_exp</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="registry_exp_view_tree" model="ir.ui.view">
+        <field name="name">me.registry_exp.view.tree</field>
+        <field name="model">me.registry_exp</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="entry_date" />
+            </tree>
+        </field>
+    </record>
+
+</odoo>
