@@ -19,6 +19,6 @@ class NumberRange(models.TransientModel):
                 raise Warning(_("There are values in conflict"))
             elif number_range.number_from < 1 or number_range.number_to < 1:
                 raise Warning(_("You must enter values greater than 0 (zero)"))
-            elif number_range.number_to > 6000:
+            elif number_range.number_to > 9999:
                 raise Warning(_("Maximum number allowed has been exceeded"))
             return True
