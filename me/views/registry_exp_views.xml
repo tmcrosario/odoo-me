@@ -1,62 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-
-    <!-- WINDOW ACTION -->
     <record id="registry_exp_action_view_form" model="ir.actions.act_window">
         <field name="name">Expedientes</field>
         <field name="res_model">me.registry_exp</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'create_wizard': True}</field> <!-- Contexto para abrir el wizard -->
-        <!-- <field name="view_id" ref="registry_exp_view_tree"/> -->
     </record>
 
-        <!-- Vista Tree para Expedientes -->
     <record id="registry_exp_view_tree" model="ir.ui.view">
         <field name="name">me.registry.exp.view.tree</field>
         <field name="model">me.registry_exp</field>
         <field name="arch" type="xml">
             <tree>
-                <!-- <field name="document_id" string="document id"/> -->
-                <field name="name" string="Nombre del Documento"/>
-                <field name="date" string="Inicio de trámite"/>
-                <field name="entry_date" string="Ingreso al TMC"/>
-                <field name="external_key" string="Clave Externa"/>
+                <field name="name"/>
             </tree>
         </field>
     </record>
 
-    <!-- Vista Form -->
     <record id="registry_exp_view_form" model="ir.ui.view">
         <field name="name">me.registry.exp.view.form</field>
         <field name="model">me.registry_exp</field>
-        <!-- <field name="inherit_id" ref="tmc.document_view_form"/> -->
         <field name="arch" type="xml">
-           <form>
+            <form>
                 <sheet>
-                    <!-- Campo document_id -->
-                    <group string="Documento Asociado">
+                    <group>
+                        <field name="name"/>
                         <field name="document_id"/>
-                    </group>
-
-                    <!-- Mostrar campos relacionados -->
-                    <group string="Datos del Documento">
-                        <field name="name" readonly="1"/>
-                        <field name="date" readonly="1"/>
-                        <!-- <field name="document_object" readonly="1"/> -->
-                    </group>
-
-                    <!-- Campos específicos del expediente -->
-                    <group string="Información del Expediente">
-                        <field name="external_key"/>
-                        <!-- <field name="case_number"/> -->
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- TREE VIEW -->
-    <!-- <record id="registry_exp_view_tree" model="ir.ui.view">
+    <!-- Comentado temporalmente para debug
+    <record id="registry_exp_view_tree" model="ir.ui.view">
         <field name="name">me.registry_exp.view.tree</field>
         <field name="model">tmc.document</field>
         <field name="inherit_id" ref="tmc.document_view_tree"/>

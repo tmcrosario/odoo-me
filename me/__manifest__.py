@@ -10,8 +10,6 @@
         "security/me_groups.xml",
         "views/registry_exp_views.xml",
         "views/me_menus.xml",
-        "views/movement_views.xml",
-        "views/reg_exp_wizard_views.xml",
     ],
     "demo": [],
     "installable": True,
