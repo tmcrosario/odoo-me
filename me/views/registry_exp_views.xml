@@ -1,71 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <record id="registry_exp_action_view_form" model="ir.actions.act_window">
-        <field name="name">Expedientes</field>
-        <field name="res_model">me.registry_exp</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
+    <!-- Tree View -->
     <record id="registry_exp_view_tree" model="ir.ui.view">
         <field name="name">me.registry.exp.view.tree</field>
         <field name="model">me.registry_exp</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
+                <field name="number"/>
+                <field name="period"/>
+                <field name="date" string="Fecha de inicio"/>
+                <field name="entry_date" string="Fecha de ingreso TMC"/>
+                <field name="external_key" string="Clave Externa"/>
+                <field name="dependence_id"/>
             </tree>
         </field>
     </record>
 
+    <!-- Form View -->
     <record id="registry_exp_view_form" model="ir.ui.view">
         <field name="name">me.registry.exp.view.form</field>
         <field name="model">me.registry_exp</field>
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
                     <group>
-                        <field name="name"/>
-                        <field name="document_id"/>
+                        <group>
+                            <field name="number"/>
+                            <field name="period"/>
+                            <field name="date" string="Fecha de inicio"/>
+                            <field name="entry_date" string="Fecha de ingreso TMC"/>
+                            <field name="external_key" string="Clave Externa"/>
+                        </group>
+                        <group>
+                            <field name="dependence_id"/>
+                            <field name="document_type_id" readonly="1"/>
+                        </group>
                     </group>
                 </sheet>
             </form>
         </field>
     </record>
 
-    <!-- Comentado temporalmente para debug
-    <record id="registry_exp_view_tree" model="ir.ui.view">
-        <field name="name">me.registry_exp.view.tree</field>
-        <field name="model">tmc.document</field>
-        <field name="inherit_id" ref="tmc.document_view_tree"/>
+    <!-- Search View -->
+    <record id="registry_exp_view_search" model="ir.ui.view">
+        <field name="name">me.registry.exp.view.search</field>
+        <field name="model">me.registry_exp</field>
         <field name="arch" type="xml">
-            <xpath expr="//tree" position="inside">
-                <field name="entry_date" string="Inicio de Trámite"/>
-                <field name="external_key" string="Clave Externa"/>
-            </xpath>
-            <xpath expr="//field[@name='document_object']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='topics_display_name']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-            <xpath expr="//field[@name='date']" position="attributes">
-                <attribute name="invisible">1</attribute>
-            </xpath>
-         </field>
-    </record> -->
-
-    <!-- FORM VIEW -->
-    <!-- <record id="registry_exp_view_form" model="ir.ui.view">
-        <field name="name">me.registry_exp.view.form</field>
-        <field name="model">tmc.document</field>
-        <field name="inherit_id" ref="tmc.document_view_form"/>
-        <field name="arch" type="xml">
-           <xpath expr="//notebook" position="before">
-                <group string="Información del Expediente">
-                    <field name="external_key"/>
-                    <field name="entry_date"/>
+            <search>
+                <field name="name"/>
+                <field name="number"/>
+                <field name="external_key"/>
+                <field name="dependence_id"/>
+                <filter string="Este Año" name="this_year" domain="[('period', '=', context_today().year)]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Dependencia" name="group_by_dependence" context="{'group_by': 'dependence_id'}"/>
+                    <filter string="Año" name="group_by_period" context="{'group_by': 'period'}"/>
                 </group>
-            </xpath>
+            </search>
         </field>
-    </record> -->
+    </record>
 
+    <!-- Action -->
+    <record id="registry_exp_action_view_form" model="ir.actions.act_window">
+        <field name="name">Expedientes</field>
+        <field name="res_model">me.registry_exp</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="registry_exp_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear nuevo expediente
+            </p>
+        </field>
+    </record>
 </odoo>
