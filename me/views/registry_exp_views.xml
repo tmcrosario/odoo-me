@@ -28,20 +28,41 @@
                         <h1>
                             <field name="name" readonly="1"/>
                         </h1>
+                        <h2>
+                            <field name="tentative_name" placeholder="Nombre tentativo del expediente"/>
+                        </h2>
                     </div>
                     <group>
-                        <group>
-                            <field name="number"/>
-                            <field name="period"/>
-                            <field name="date" string="Fecha de inicio"/>
-                            <field name="entry_date" string="Fecha de ingreso TMC"/>
-                            <field name="external_key" string="Clave Externa"/>
-                        </group>
+                        <field name="document_object" string="Objeto (Referencia)" help="Objeto del expediente"/>
+                        <field name="asunto"/>
+                    </group>
+                    <group>
                         <group>
                             <field name="dependence_id"/>
-                            <field name="document_type_id" readonly="1"/>
+                            <field name="document_type_id"/>
+                        </group>
+                        <group>
+                            <field name="number" required="1" attrs="{'class': 'oe_highlight'}"/>
+                            <field name="period"/>
                         </group>
                     </group>
+                    <group>
+                        <group>
+                            <field name="entry_date" string="Fecha de ingreso del expediente" help="Fecha en que el expediente ingresó al TMC"/>
+                            <field name="date" string="Fecha de inicio del trámite" help="Fecha en que inicia el trámite/documento"/>
+                            <field name="external_key"/>
+                        </group>
+                        <group>
+                            <field name="main_topic_ids" widget="many2many_tags" string="Tema principal (Asunto)"/>
+                            <field name="secondary_topic_ids" widget="many2many_tags" string="Tema secundario" invisible="1"/>
+                            <field name="document_topic_ids" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Documentos Relacionados">
+                            <field name="related_document_ids" widget="many2many_tags"/>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
