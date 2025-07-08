@@ -13,14 +13,13 @@ class DocumentExp(models.Model):
         string="Documento",
     )
     # Campos específicos del expediente
-    entry_date = fields.Date(
-        default=fields.Date.context_today,
-        required=True,
-        string="Fecha de ingreso al TMC"
-    )
     external_key = fields.Char(
         string="Clave Externa",
         help="lo usa la Muni para identificar los expedientes"
+    )
+    fojas = fields.Integer(
+        string="Número de fojas",
+        help="Número de fojas del expediente"
     )
     asunto = fields.Char(
         string="Asunto",
@@ -54,7 +53,6 @@ class DocumentExp(models.Model):
         # Crear registro en RAA
         self.env["raa.registry_aa"].create({
             "document_id": record.document_id.id,
-            "entry_date": record.entry_date,
         })
         return record
 
