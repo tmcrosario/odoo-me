@@ -1,8 +1,8 @@
 from odoo import api, fields, models
 
 
-class RegistryExp(models.Model):
-    _name = "me.registry_exp"
+class DocumentExp(models.Model):
+    _name = "me.document_exp"
     _inherits = {"tmc.document": "document_id"}
     _description = "Expediente Registry"
 

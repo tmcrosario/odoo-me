@@ -8,7 +8,7 @@
     "depends": ["tmc"],
     "data": [
         "security/me_groups.xml",
-        "views/registry_exp_views.xml",
+        "views/document_exp_views.xml",
         "views/me_menus.xml",
     ],
     "demo": [],

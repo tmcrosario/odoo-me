@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- Tree View -->
-    <record id="registry_exp_view_tree" model="ir.ui.view">
+    <record id="document_exp_view_tree" model="ir.ui.view">
         <field name="name">me.registry.exp.view.tree</field>
-        <field name="model">me.registry_exp</field>
+        <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <tree>
                 <field name="name"/>
@@ -18,9 +18,9 @@
     </record>
 
     <!-- Form View -->
-    <record id="registry_exp_view_form" model="ir.ui.view">
+    <record id="document_exp_view_form" model="ir.ui.view">
         <field name="name">me.registry.exp.view.form</field>
-        <field name="model">me.registry_exp</field>
+        <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <form>
                 <sheet>
@@ -69,9 +69,9 @@
     </record>
 
     <!-- Search View -->
-    <record id="registry_exp_view_search" model="ir.ui.view">
+    <record id="document_exp_view_search" model="ir.ui.view">
         <field name="name">me.registry.exp.view.search</field>
-        <field name="model">me.registry_exp</field>
+        <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <search>
                 <field name="name"/>
@@ -88,11 +88,11 @@
     </record>
 
     <!-- Action -->
-    <record id="registry_exp_action_view_form" model="ir.actions.act_window">
+    <record id="document_exp_action_view_form" model="ir.actions.act_window">
         <field name="name">Expedientes</field>
-        <field name="res_model">me.registry_exp</field>
+        <field name="res_model">me.document_exp</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="registry_exp_view_search"/>
+        <field name="search_view_id" ref="document_exp_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Crear nuevo expediente
