@@ -12,6 +12,14 @@ class DocumentExp(models.Model):
         ondelete="cascade",
         string="Documento",
     )
+    
+    # Campo para filtrar dependencias permitidas
+    allowed_dependence_ids = fields.Many2many(
+        'tmc.dependence',
+        compute='_compute_allowed_dependencies',
+        string='Dependencias Permitidas'
+    )
+    
     # Campos específicos del expediente
     external_key = fields.Char(
         string="Clave Externa",
@@ -21,30 +29,95 @@ class DocumentExp(models.Model):
         string="Número de fojas",
         help="Número de fojas del expediente"
     )
-    asunto = fields.Char(
-        string="Asunto",
-        help="Asunto específico del expediente"
-    )
-    tentative_name = fields.Char(
-        string="Nombre Tentativo",
-        compute="_compute_tentative_name",
-        store=True,
-        help="Nombre tentativo del expediente"
-    )
+    # asunto = fields.Char(
+    #     string="Asunto",
+    #     help="Asunto específico del expediente"
+    # )
 
     number = fields.Integer(required=True)  # Heredado, pero lo forzamos obligatorio aquí
+
+    is_valid = fields.Boolean(
+        compute="_compute_is_valid",
+        string="Expediente Válido",
+        help="Indica si el expediente tiene todos los campos básicos completos"
+    )
+
+    computed_name = fields.Char(
+        compute="_compute_name",
+        string="Nombre del Expediente",
+        help="Nombre del expediente generado en tiempo real"
+    )
 
     document_movement_ids = fields.One2many(
         "me.document_movement", "expediente_id", string="Movimientos"
     )
 
-    @api.depends('number', 'period')
-    def _compute_tentative_name(self):
+    @api.depends()
+    def _compute_allowed_dependencies(self):
+        """Computar las dependencias permitidas para expedientes"""
         for record in self:
-            if record.number and record.period:
-                record.tentative_name = f"EXP-{str(record.number).zfill(6)}-DEM/{record.period}"
+            # Buscar las dependencias DEM, TMC, CM
+            allowed_deps = self.env['tmc.dependence'].search([
+                ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
+            ])
+            record.allowed_dependence_ids = allowed_deps
+
+    @api.depends('dependence_id', 'document_type_id', 'number', 'period')
+    def _compute_is_valid(self):
+        """Computar si el expediente tiene todos los campos básicos completos"""
+        for record in self:
+            record.is_valid = bool(
+                record.dependence_id and 
+                record.document_type_id and 
+                record.number and 
+                record.period
+            )
+
+    @api.depends('dependence_id', 'document_type_id', 'number', 'period')
+    def _compute_name(self):
+        """Computar el nombre del expediente en tiempo real"""
+        for record in self:
+            if record.dependence_id and record.document_type_id and record.number and record.period:
+                dep_abbr = record.dependence_id.abbreviation
+                record.computed_name = f"EXP-{str(record.number).zfill(6)}-{dep_abbr}/{record.period}"
             else:
-                record.tentative_name = False
+                record.computed_name = "Documento Sin Nombre"
+
+    @api.onchange('dependence_id')
+    def _onchange_dependence(self):
+        """Configurar el tipo de documento cuando se selecciona dependencia"""
+        self.document_type_id = False
+        if self.dependence_id:
+            # Buscar el tipo de documento "Expediente"
+            exp_type = self.env['tmc.document_type'].search([
+                ('abbreviation', '=', 'EXP')
+            ], limit=1)
+            if exp_type:
+                self.document_type_id = exp_type
+        return {
+            'domain': {
+                'document_type_id': [('abbreviation', '=', 'EXP')]
+            }
+        }
+
+    @api.onchange('dependence_id', 'document_type_id', 'period', 'number')
+    def _onchange_document_data(self):
+        """Validar que el expediente no exista cuando se completan los campos básicos"""
+        if self.dependence_id and self.document_type_id and self.number and self.period:
+            # Verificar si ya existe un documento con estos datos
+            existing_doc = self.env["tmc.document"].search([
+                ("dependence_id", "=", self.dependence_id.id),
+                ("document_type_id", "=", self.document_type_id.id),
+                ("number", "=", self.number),
+                ("period", "=", self.period)
+            ])
+            if existing_doc:
+                return {
+                    'warning': {
+                        'title': 'Expediente existente',
+                        'message': 'Ya existe un expediente con estos datos. Verifique la información.'
+                    }
+                }
 
     @api.model
     def create(self, vals):
