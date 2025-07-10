@@ -64,6 +64,26 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Movimientos">
+                            <field name="document_movement_ids" mode="tree,form" context="{'default_expediente_id': active_id}">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="origin_dependence_id"/>
+                                    <field name="destination_dependence_id"/>
+                                    <!-- <field name="notes"/> -->
+                                    <field name="user_id"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <field name="date"/>
+                                        <field name="origin_dependence_id"/>
+                                        <field name="destination_dependence_id"/>
+                                        <!-- <field name="notes"/> -->
+                                        <field name="user_id"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
                         <page string="Documentos Relacionados">
                             <field name="related_document_ids" widget="many2many_tags"/>
                         </page>
