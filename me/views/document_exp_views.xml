@@ -87,7 +87,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Documentos Relacionados">
+                        <page string="Documentos Relacionados" invisible="1">
                             <field name="related_document_ids" widget="many2many_tags"/>
                         </page>
                     </notebook>

@@ -138,6 +138,16 @@ class DocumentExp(models.Model):
         self.env["raa.registry_aa"].create({
             "document_id": record.document_id.id,
         })
+        # Crear el primer movimiento automáticamente
+        tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
+        if record.jurisdiction_dependence and tmc_dependence:
+            self.env['me.document_movement'].create({
+                'expediente_id': record.id,
+                'date': fields.Datetime.now(),
+                'origin_dependence_id': record.jurisdiction_dependence.id,
+                'destination_dependence_id': tmc_dependence.id,
+                'user_id': self.env.uid,
+            })
         return record
 
     def _update_document_date(self, date_val):
