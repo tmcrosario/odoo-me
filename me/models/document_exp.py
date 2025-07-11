@@ -25,6 +25,12 @@ class DocumentExp(models.Model):
         string="Clave Externa",
         help="lo usa la Muni para identificar los expedientes"
     )
+    jurisdiction_dependence = fields.Many2one(
+        'tmc.dependence',
+        string="Jurisdicción",
+        required=True,
+        help="Dependencia de jurisdicción del expediente"
+    )
     fojas = fields.Integer(
         string="Número de fojas",
         help="Número de fojas del expediente"
@@ -62,7 +68,7 @@ class DocumentExp(models.Model):
             ])
             record.allowed_dependence_ids = allowed_deps
 
-    @api.depends('dependence_id', 'document_type_id', 'number', 'period')
+    @api.depends('dependence_id', 'document_type_id', 'number', 'period', 'jurisdiction_dependence')
     def _compute_is_valid(self):
         """Computar si el expediente tiene todos los campos básicos completos"""
         for record in self:
@@ -70,14 +76,15 @@ class DocumentExp(models.Model):
                 record.dependence_id and 
                 record.document_type_id and 
                 record.number and 
-                record.period
+                record.period and
+                record.jurisdiction_dependence
             )
 
-    @api.depends('dependence_id', 'document_type_id', 'number', 'period')
+    @api.depends('dependence_id', 'document_type_id', 'number', 'period', 'jurisdiction_dependence')
     def _compute_name(self):
         """Computar el nombre del expediente en tiempo real"""
         for record in self:
-            if record.dependence_id and record.document_type_id and record.number and record.period:
+            if record.dependence_id and record.document_type_id and record.number and record.period and record.jurisdiction_dependence:
                 dep_abbr = record.dependence_id.abbreviation
                 record.computed_name = f"EXP-{str(record.number).zfill(6)}-{dep_abbr}/{record.period}"
             else:
@@ -100,10 +107,10 @@ class DocumentExp(models.Model):
             }
         }
 
-    @api.onchange('dependence_id', 'document_type_id', 'period', 'number')
+    @api.onchange('dependence_id', 'document_type_id', 'period', 'number', 'jurisdiction_dependence')
     def _onchange_document_data(self):
         """Validar que el expediente no exista cuando se completan los campos básicos"""
-        if self.dependence_id and self.document_type_id and self.number and self.period:
+        if self.dependence_id and self.document_type_id and self.number and self.period and self.jurisdiction_dependence:
             # Verificar si ya existe un documento con estos datos
             existing_doc = self.env["tmc.document"].search([
                 ("dependence_id", "=", self.dependence_id.id),

@@ -6,14 +6,15 @@
         <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name"/>
+                <field name="name" string="Documento"/>
+                <field name="dependence_id"/>
+                <field name="jurisdiction_dependence" string="Jurisdicción"/>
+                <field name="entry_date" string="Fecha de alta en el sistema"/>
                 <!-- <field name="number"/>
                 <field name="period"/> -->
-                <field name="date" string="Fecha de inicio del trámite"/>
-                <field name="entry_date" string="Fecha de ingreso al TMC"/>
-                <field name="external_key" string="Clave Externa"/>
-                <field name="fojas" string="Cantidad de fojas"/>
-                <field name="dependence_id"/>
+                <!-- <field name="date" string="Fecha de inicio del trámite"/> -->
+                <!-- <field name="external_key" string="Clave Externa"/> -->
+                <!-- <field name="fojas" string="Cantidad de fojas"/> -->
             </tree>
         </field>
     </record>
@@ -37,12 +38,9 @@
                     </div>
                     <field name="is_valid" invisible="1"/>
                     <group>
-                        <field name="document_object" string="Referencia"/>
-                        <!-- <field name="asunto" string="Asunto (Referencia)"/> -->
-                    </group>
-                    <group>
                         <group>
                             <field name="dependence_id" domain="[('abbreviation', 'in', ['DEM', 'TMC', 'CM'])]"/>
+                            <field name="jurisdiction_dependence" attrs="{'invisible': [('dependence_id', '=', False)], 'class': 'oe_highlight'}" string="Jurisdicción"/>
                             <field name="document_type_id" attrs="{'invisible': [('dependence_id', '=', False)]}"/>
                         </group>
                         <group>
@@ -51,6 +49,11 @@
                         </group>
                     </group>
                     <group attrs="{'invisible': [('is_valid', '=', False)]}">
+                        <group>
+                            <field name="main_topic_ids" widget="many2many_tags" string="Asunto"/>
+                            <field name="document_object" string="Referencia"/>
+                            <!-- <field name="asunto" string="Asunto (Referencia)"/> -->
+                        </group>
                         <group>
                             <field name="entry_date" string="Fecha de ingreso del expediente" help="Fecha en que el expediente ingresó al TMC" invisible="1"/>
                             <field name="date" string="Fecha de inicio del trámite" help="Fecha en que inicia el trámite/documento"/>
@@ -61,10 +64,6 @@
                         </group>
                     </group>
                     <group attrs="{'invisible': [('is_valid', '=', False)]}">
-                        <group>
-                            <field name="main_topic_ids" widget="many2many_tags" string="Tema principal (Asunto)"/>
-                            <!-- <field name="secondary_topic_ids" widget="many2many_tags" string="Tema secundario"/> -->
-                        </group>
                         <group>
                             <field name="document_topic_ids" invisible="1"/>
                         </group>
@@ -107,9 +106,11 @@
                 <field name="number"/>
                 <field name="external_key"/>
                 <field name="dependence_id"/>
+                <field name="jurisdiction_dependence"/>
                 <filter string="Este Año" name="this_year" domain="[('period', '=', context_today().year)]"/>
                 <group expand="0" string="Agrupar Por">
                     <filter string="Dependencia" name="group_by_dependence" context="{'group_by': 'dependence_id'}"/>
+                    <filter string="Jurisdicción" name="group_by_jurisdiction_dependence" context="{'group_by': 'jurisdiction_dependence'}"/>
                     <filter string="Año" name="group_by_period" context="{'group_by': 'period'}"/>
                 </group>
             </search>
@@ -121,6 +122,7 @@
         <field name="name">Expedientes</field>
         <field name="res_model">me.document_exp</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="document_exp_view_tree"/>
         <field name="search_view_id" ref="document_exp_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
