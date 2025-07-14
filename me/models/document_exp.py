@@ -140,12 +140,22 @@ class DocumentExp(models.Model):
         })
         # Crear el primer movimiento automáticamente
         tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
+        mesa_entrada_dependence = self.env['tmc.dependence'].search([('name', 'ilike', 'Mesa de Entradas')], limit=1)
         if record.jurisdiction_dependence and tmc_dependence:
             self.env['me.document_movement'].create({
                 'expediente_id': record.id,
                 'date': fields.Datetime.now(),
                 'origin_dependence_id': record.jurisdiction_dependence.id,
                 'destination_dependence_id': tmc_dependence.id,
+                'user_id': self.env.uid,
+            })
+        # Crear el segundo movimiento automáticamente (TMC -> Mesa de Entrada)
+        if tmc_dependence and mesa_entrada_dependence:
+            self.env['me.document_movement'].create({
+                'expediente_id': record.id,
+                'date': fields.Datetime.now(),
+                'origin_dependence_id': tmc_dependence.id,
+                'destination_dependence_id': mesa_entrada_dependence.id,
                 'user_id': self.env.uid,
             })
         return record

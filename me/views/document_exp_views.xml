@@ -68,7 +68,7 @@
                             <field name="document_topic_ids" invisible="1"/>
                         </group>
                     </group>
-                    <notebook attrs="{'invisible': [('is_valid', '=', False)]}">
+                    <notebook attrs="{'invisible': [('id', '=', False)]}">
                         <page string="Movimientos">
                             <field name="document_movement_ids" mode="tree,form" context="{'default_expediente_id': active_id}">
                                 <tree editable="bottom">
