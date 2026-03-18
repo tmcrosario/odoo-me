@@ -1,7 +1,8 @@
 from datetime import date
 from itertools import count, groupby
 
-from odoo import SUPERUSER_ID, _, api, exceptions, fields, models
+from odoo import _, api, exceptions, fields, models
+from odoo.api import SUPERUSER_ID
 
 
 def as_range(iterable):
@@ -18,11 +19,10 @@ class Entry(models.TransientModel):
 
     _name = "raa.entry"
     _description = "Wizard to load administrative acts"
-    _inherit = ["tmc.report"]
 
     entry_date = fields.Date(required=True, default=fields.Date.context_today)
 
-    period = fields.Integer(required=True, default=int(date.today().year))
+    period = fields.Char(required=True, default=str(date.today().year))
 
     dependence_id = fields.Many2one(
         comodel_name="tmc.dependence",
@@ -34,13 +34,9 @@ class Entry(models.TransientModel):
         required=True,
     )
 
-    document_type_id = fields.Many2one(
-        comodel_name="tmc.document_type", required=True
-    )
+    document_type_id = fields.Many2one(comodel_name="tmc.document_type", required=True)
 
-    document_type_ids = fields.Many2many(
-        related="dependence_id.document_type_ids"
-    )
+    document_type_ids = fields.Many2many(related="dependence_id.document_type_ids")
 
     specify_maximum = fields.Boolean()
 
@@ -64,32 +60,33 @@ class Entry(models.TransientModel):
                             key=lambda n, c=count(): int(n) - next(c),
                         )
                     )
-                    message = (
-                        _("Missing administrative acts: <b>%s</b>") % missing
-                    )
+                    title = _("Actos Administrativos faltantes")
+                    message = _("Missing administrative acts: %s") % missing
+                    notif_type = "warning"
+                    sticky = True
                 except StopIteration as e:
                     raise exceptions.Error(e)
             else:
+                title = _("Sin faltantes")
                 message = _("No missing administrative acts")
+                notif_type = "success"
+                sticky = False
         else:
+            title = _("Sin registros")
             message = _("No existing registries matching criteria")
+            notif_type = "info"
+            sticky = False
 
-        context = dict(self._context or {})
-        context["message"] = message
-        context["is_html"] = True
-        res = {
-            "name": _("Success"),
-            "type": "ir.actions.act_window",
-            "view_mode": "form",
-            "res_model": "popup.message",
-            "view_id": self.env["ir.model.data"].xmlid_to_res_id(
-                "popup_message_view_form"
-            ),
-            "target": "new",
-            "context": context,
-        }  # yapf: disable
-
-        return res
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': title,
+                'message': message,
+                'type': notif_type,
+                'sticky': sticky,
+            },
+        }
 
     def search_missing(self):
         domain = [
@@ -117,11 +114,13 @@ class Entry(models.TransientModel):
                 if numbers not in document_numbers:
                     missing.append(numbers)
 
-            missing_formatted = (
-                [str(x).zfill(6) for x in missing] if missing else None
-            )
+            missing_formatted = [str(x).zfill(6) for x in missing] if missing else None
 
         return {"last": last, "maximum": maximum, "missing": missing_formatted}
+
+    def generate_report(self):
+        data = self.search_missing()
+        return self.env.ref('raa.action_missing_raa_report').report_action(self, data=data)
 
     def create_registry_aa(self):
         raa_ids = []
@@ -160,37 +159,27 @@ class Entry(models.TransientModel):
                     raa_ids.append(raa.id)
 
         if raa_ids:
-            message = _("Registries were created successfully")
-            context = dict(self._context or {})
-            context["message"] = message
-            res = {
-                "name": _("Success"),
-                "type": "ir.actions.act_window",
-                "view_mode": "form",
-                "res_model": "popup.message",
-                "view_id": self.env["ir.model.data"].xmlid_to_res_id(
-                    "popup_message_view_form"
-                ),
-                "target": "new",
-                "context": context,
-            }  # yapf: disable
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Success"),
+                    'message': _("Registries were created successfully"),
+                    'type': 'success',
+                    'sticky': False,
+                },
+            }
         else:
-            message = _("No new registries were created. They already exist.")
-            context = dict(self._context or {})
-            context["message"] = message
-            res = {
-                "name": _("Success"),
-                "type": "ir.actions.act_window",
-                "view_mode": "form",
-                "res_model": "popup.message",
-                "view_id": self.env["ir.model.data"].xmlid_to_res_id(
-                    "popup_message_view_form"
-                ),
-                "target": "new",
-                "context": context,
-            }  # yapf: disable
-
-        return res
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _("Info"),
+                    'message': _("No new registries were created. They already exist."),
+                    'type': 'warning',
+                    'sticky': False,
+                },
+            }
 
     @api.onchange("specify_maximum")
     def _onchange_specify_maximum(self):
@@ -199,6 +188,4 @@ class Entry(models.TransientModel):
     @api.constrains("maximum")
     def _check_maximum(self):
         if self.maximum > 6000:
-            raise exceptions.UserError(
-                _("Maximum number allowed has been exceeded")
-            )
+            raise exceptions.UserError(_("Maximum number allowed has been exceeded"))
