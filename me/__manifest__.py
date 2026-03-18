@@ -1,6 +1,6 @@
 {
     "name": "TMC ME",
-    "version": "14.0.1.0.1",
+    "version": "19.0.1.0.0",
     "summary": "Sistema de Mesa de Entrada",
     "author": "Tribunal Municipal de Cuentas - Municipalidad de Rosario",
     "website": "https://www.tmcrosario.gob.ar",
@@ -13,5 +13,4 @@
     "demo": [],
     "installable": True,
     "application": True,
-    "qweb": [],
 }  # yapf: disable
