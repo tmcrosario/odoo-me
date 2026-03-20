@@ -1,2 +1,1 @@
-from . import entry
-from . import number_range
+from . import entry, number_range

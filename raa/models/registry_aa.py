@@ -1,4 +1,4 @@
-from odoo import _, fields, models
+from odoo import api, fields, models
 
 
 class RegistryAA(models.Model):
@@ -25,16 +25,12 @@ class RegistryAA(models.Model):
 
     number = fields.Integer(related="document_id.number", readonly=True)
 
-    period = fields.Integer(
-        related="document_id.period", readonly=True, store=True
-    )
+    period = fields.Selection(related="document_id.period", readonly=True, store=True)
 
-    def name_get(self):
-        result = []
+    @api.depends("document_id")
+    def _compute_display_name(self):
         for raa_obj in self:
-            document_name = raa_obj.document_id.name_get()[0][1]
-            result.append((raa_obj.id, document_name))
-        return result
+            raa_obj.display_name = raa_obj.document_id.display_name
 
     def unlink(self):
         for raa_obj in self:
@@ -53,10 +49,7 @@ class RegistryAA(models.Model):
                 super(RegistryAA, raa_obj).unlink()
         return True
 
-    _sql_constraints = [
-        (
-            "document_id_unique",
-            "UNIQUE(document_id)",
-            _("Record already exists"),
-        )
-    ]
+    _document_id_unique = models.Constraint(
+        "UNIQUE(document_id)",
+        "Record already exists",
+    )

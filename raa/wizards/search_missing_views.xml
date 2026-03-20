@@ -20,7 +20,7 @@
                         <field name="document_type_ids"
                             invisible="True" />
                         <field name="document_type_id"
-                            attrs="{'invisible':[('dependence_id','=',False)]}"
+                            invisible="not dependence_id"
                             options="{'no_create': True}"
                             domain="[('id', 'in', document_type_ids)]" />
                     </group>
@@ -29,7 +29,7 @@
                         col="2">
                         <field name="specify_maximum" />
                         <field name="maximum"
-                            attrs="{'invisible':[('specify_maximum','=',False)]}" />
+                            invisible="not specify_maximum" />
                     </group>
                 </group>
                 <footer>

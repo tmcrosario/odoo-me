@@ -6,6 +6,6 @@
         parent="raa_menu"
         sequence="10"
         action="entry_action_view_form"
-        groups="raa.group_manager" />
+        groups="base.group_erp_manager,raa.group_manager" />
 
 </odoo>
