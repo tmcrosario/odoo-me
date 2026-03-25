@@ -1,59 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
 
-    <!-- TREE VIEW -->
-    <record id="movement_view_tree"
-        model="ir.ui.view">
-        <field name="name">me.movement.view.tree</field>
-        <field name="model">me.movement</field>
-        <!-- <field name="priority">5</field> -->
-        <field name="arch"
-            type="xml">
-            <tree>
-                <field name="origin" />
-                <field name="destination" />
-                <field name="pages" />
-                <field name="create_uid"
-                    readonly="True" />
-                <field name="write_uid"
-                    readonly="True"
-                    optional="hide" />
-                <field name="create_date"
-                    readonly="True"
-                    optional="hide" />
-            </tree>
+    <!-- LIST VIEW -->
+    <record id="movement_view_list" model="ir.ui.view">
+        <field name="name">me.document_movement.view.list</field>
+        <field name="model">me.document_movement</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="expediente_id"/>
+                <field name="date"/>
+                <field name="origin_dependence_id"/>
+                <field name="destination_dependence_id"/>
+                <field name="user_id" readonly="1"/>
+                <field name="create_date" readonly="1" optional="hide"/>
+            </list>
         </field>
     </record>
 
     <!-- FORM VIEW -->
-    <!-- <record id="highlight_view_form"
-        model="ir.ui.view">
-        <field name="name">tmc.highlight.view.form</field>
-        <field name="model">tmc.highlight</field>
-        <field name="arch"
-            type="xml">
+    <record id="movement_view_form" model="ir.ui.view">
+        <field name="name">me.document_movement.view.form</field>
+        <field name="model">me.document_movement</field>
+        <field name="arch" type="xml">
             <form>
                 <sheet>
                     <group>
-                        <group>
-                            <field name="level" />
-                            <field name="applicable" />
-                        </group>
-                        <group>
-                            <field name="create_date"
-                                attrs="{'invisible': [('create_date', '=', False)]}" />
-                            <field name="create_uid"
-                                attrs="{'invisible': [('create_date', '=', False)]}" />
-                            <field name="write_uid"
-                                attrs="{'invisible': [('create_date', '=', False)]}" />
-                        </group>
-                    </group>
-                    <group>
-                        <field name="comment" />
+                        <field name="expediente_id"/>
+                        <field name="date"/>
+                        <field name="origin_dependence_id"/>
+                        <field name="destination_dependence_id"/>
+                        <field name="user_id"/>
                     </group>
                 </sheet>
             </form>
         </field>
-    </record> -->
+    </record>
 
 </odoo>

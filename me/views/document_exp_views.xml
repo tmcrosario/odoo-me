@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Tree View -->
+    <!-- List View -->
     <record id="document_exp_view_tree" model="ir.ui.view">
         <field name="name">me.registry.exp.view.tree</field>
         <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
-            <tree>
+            <list>
                 <field name="name" string="Documento"/>
                 <field name="dependence_id"/>
                 <field name="jurisdiction_dependence" string="Jurisdicción"/>
-                <field name="entry_date" string="Fecha de alta en el sistema"/>
+                <!-- <field name="entry_date" string="Fecha de alta en el sistema"/> -->
                 <!-- <field name="number"/>
                 <field name="period"/> -->
                 <!-- <field name="date" string="Fecha de inicio del trámite"/> -->
                 <!-- <field name="external_key" string="Clave Externa"/> -->
                 <!-- <field name="fojas" string="Cantidad de fojas"/> -->
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -28,11 +28,10 @@
                 <sheet>
                     <div class="oe_title">
                         <label for="computed_name"
-                            class="oe_edit_only"
                             string="Nombre del Expediente" />
                         <h1>
-                            <field name="computed_name" 
-                            readonly="1" 
+                            <field name="computed_name"
+                            readonly="1"
                             placeholder="Complete los campos básicos para generar el nombre"/>
                         </h1>
                     </div>
@@ -40,22 +39,22 @@
                     <group>
                         <group>
                             <field name="dependence_id" domain="[('abbreviation', 'in', ['DEM', 'TMC', 'CM'])]"/>
-                            <field name="jurisdiction_dependence" attrs="{'invisible': [('dependence_id', '=', False)], 'class': 'oe_highlight'}" string="Jurisdicción"/>
-                            <field name="document_type_id" attrs="{'invisible': [('dependence_id', '=', False)]}"/>
+                            <field name="jurisdiction_dependence" invisible="not dependence_id" string="Jurisdicción"/>
+                            <field name="document_type_id" invisible="not dependence_id"/>
                         </group>
                         <group>
-                            <field name="number" required="1" attrs="{'class': 'oe_highlight'}"/>
+                            <field name="number" required="1"/>
                             <field name="period"/>
                         </group>
                     </group>
-                    <group attrs="{'invisible': [('is_valid', '=', False)]}">
+                    <group invisible="not is_valid">
                         <group>
                             <field name="main_topic_ids" widget="many2many_tags" string="Asunto"/>
                             <field name="document_object" string="Referencia"/>
                             <!-- <field name="asunto" string="Asunto (Referencia)"/> -->
                         </group>
                         <group>
-                            <field name="entry_date" string="Fecha de ingreso del expediente" help="Fecha en que el expediente ingresó al TMC" invisible="1"/>
+                            <!-- <field name="entry_date" string="Fecha de ingreso del expediente" help="Fecha en que el expediente ingresó al TMC"/> -->
                             <field name="date" string="Fecha de inicio del trámite" help="Fecha en que inicia el trámite/documento"/>
                         </group>
                         <group>
@@ -63,20 +62,20 @@
                             <field name="fojas"/>
                         </group>
                     </group>
-                    <group attrs="{'invisible': [('is_valid', '=', False)]}">
+                    <group invisible="not is_valid">
                         <group>
                             <field name="document_topic_ids" invisible="1"/>
                         </group>
                     </group>
-                    <notebook attrs="{'invisible': [('id', '=', False)]}">
+                    <notebook invisible="not id">
                         <page string="Movimientos">
-                            <field name="document_movement_ids" mode="tree,form" context="{'default_expediente_id': active_id}">
-                                <tree editable="bottom">
+                            <field name="document_movement_ids" mode="list,form" context="{'default_expediente_id': id}">
+                                <list editable="bottom">
                                     <field name="date"/>
                                     <field name="origin_dependence_id"/>
                                     <field name="destination_dependence_id"/>
                                     <field name="user_id"/>
-                                </tree>
+                                </list>
                                 <form>
                                     <group>
                                         <field name="date"/>
@@ -104,15 +103,6 @@
             <search>
                 <field name="name"/>
                 <field name="number"/>
-                <field name="external_key"/>
-                <field name="dependence_id"/>
-                <field name="jurisdiction_dependence"/>
-                <filter string="Este Año" name="this_year" domain="[('period', '=', context_today().year)]"/>
-                <group expand="0" string="Agrupar Por">
-                    <filter string="Dependencia" name="group_by_dependence" context="{'group_by': 'dependence_id'}"/>
-                    <filter string="Jurisdicción" name="group_by_jurisdiction_dependence" context="{'group_by': 'jurisdiction_dependence'}"/>
-                    <filter string="Año" name="group_by_period" context="{'group_by': 'period'}"/>
-                </group>
             </search>
         </field>
     </record>
@@ -121,7 +111,7 @@
     <record id="document_exp_action_view_form" model="ir.actions.act_window">
         <field name="name">Expedientes</field>
         <field name="res_model">me.document_exp</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="document_exp_view_tree"/>
         <field name="search_view_id" ref="document_exp_view_search"/>
         <field name="help" type="html">
