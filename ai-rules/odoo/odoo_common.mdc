@@ -1,0 +1,294 @@
+# Odoo Development Rules (Common)
+
+This document defines the core development rules for building Odoo modules
+in this repository.
+
+These rules apply to all modules in the project and must be respected when
+generating or modifying code.
+
+They are designed to ensure:
+
+- consistency of the codebase
+- maintainable architecture
+- compatibility with Odoo 19
+- safe AI-assisted development
+
+
+--------------------------------------------------
+General Principles
+--------------------------------------------------
+
+Prefer simple and explicit implementations.
+
+Avoid introducing unnecessary complexity.
+
+Favor readability and maintainability over clever solutions.
+
+When multiple approaches are possible, prefer the one that:
+
+- uses the Odoo ORM
+- keeps business logic inside models
+- minimizes side effects.
+
+
+--------------------------------------------------
+Language and Naming
+--------------------------------------------------
+
+All code must be written in English.
+
+This includes:
+
+- model names
+- field names
+- method names
+- comments
+- docstrings
+- UI labels.
+
+Model technical names should follow the pattern:
+
+```
+module_name.model_name
+```
+
+Examples:
+
+```
+me.document_exp
+me.document_movement
+```
+
+Field names should be descriptive and consistent.
+
+
+--------------------------------------------------
+Model Design
+--------------------------------------------------
+
+Models must represent real domain entities.
+
+Avoid introducing new models unless the concept:
+
+- has its own lifecycle
+- represents a distinct entity
+- cannot be represented by extending an existing model.
+
+Before proposing a new model, consult:
+
+```
+docs/model_registry.md
+```
+
+
+--------------------------------------------------
+Model Responsibilities
+--------------------------------------------------
+
+Each model should have a clear responsibility.
+
+Avoid models that mix unrelated responsibilities.
+
+Prefer extending existing models rather than duplicating data structures.
+
+
+--------------------------------------------------
+Business Logic Placement
+--------------------------------------------------
+
+Business logic must be implemented in Python models.
+
+Views should only define the user interface.
+
+Never implement business rules in XML views.
+
+
+--------------------------------------------------
+ORM Usage
+--------------------------------------------------
+
+Always prefer the Odoo ORM.
+
+Avoid direct SQL queries unless strictly necessary.
+
+If SQL is required:
+
+- document the reason
+- ensure the query is safe.
+
+
+--------------------------------------------------
+Method Overrides
+--------------------------------------------------
+
+When overriding core methods such as:
+
+```
+create
+write
+unlink
+```
+
+always call the parent implementation unless there is a strong reason not to.
+
+
+Example:
+
+```
+record = super().create(vals)
+```
+
+Avoid complex side effects in overrides unless required by business logic.
+
+
+--------------------------------------------------
+Compute Fields
+--------------------------------------------------
+
+Compute methods must be deterministic and side-effect free.
+
+Compute methods must not:
+
+- create records
+- modify unrelated models
+- send notifications
+- perform heavy operations.
+
+Use `store=True` when the value is frequently accessed.
+
+
+--------------------------------------------------
+Onchange Usage
+--------------------------------------------------
+
+`@api.onchange` should only be used for UI behavior.
+
+Business logic must not depend on onchange methods.
+
+
+--------------------------------------------------
+Relationships
+--------------------------------------------------
+
+Use proper relational fields:
+
+```
+Many2one
+One2many
+Many2many
+```
+
+Avoid storing redundant data when it can be obtained through relations.
+
+
+--------------------------------------------------
+Constraints
+--------------------------------------------------
+
+Use constraints to enforce data integrity.
+
+Prefer:
+
+```
+@api.constrains
+```
+
+over manual validation scattered across methods.
+
+
+--------------------------------------------------
+Security
+--------------------------------------------------
+
+Every model must define explicit access rules.
+
+Access control should be defined in:
+
+```
+security/ir.model.access.csv
+```
+
+Use security groups when different roles require different access levels.
+
+
+--------------------------------------------------
+Views
+--------------------------------------------------
+
+Views must remain declarative.
+
+Avoid embedding business logic in view definitions.
+
+Views should focus on:
+
+- layout
+- field visibility
+- navigation.
+
+
+--------------------------------------------------
+Code Structure
+--------------------------------------------------
+
+A typical module should follow this structure:
+
+```
+module/
+    models/
+    views/
+    security/
+    wizards/
+    data/
+```
+
+Each model should live in its own Python file when possible.
+
+
+--------------------------------------------------
+Documentation
+--------------------------------------------------
+
+If a change affects the system structure, update:
+
+```
+docs/models.md
+docs/rules_business.md
+docs/model_registry.md
+```
+
+Documentation must remain consistent with the code.
+
+
+--------------------------------------------------
+AI-Assisted Development
+--------------------------------------------------
+
+When generating code with AI:
+
+1. Analyze existing models before introducing new ones.
+2. Respect the current architecture.
+3. Avoid unnecessary refactors.
+4. Prefer extending existing models.
+
+If behavior is unclear in the existing codebase,
+mark it as:
+
+```
+pending definition
+```
+
+instead of inventing functionality.
+
+
+--------------------------------------------------
+System Integrity
+--------------------------------------------------
+
+The following principles must always hold:
+
+- models represent domain entities
+- business logic lives in models
+- views define UI only
+- documentation reflects the current architecture.
+
+Any change that violates these principles must be reconsidered.

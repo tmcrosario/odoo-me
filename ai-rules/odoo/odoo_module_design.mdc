@@ -1,0 +1,201 @@
+# Odoo Module Design Rules
+
+This document defines architectural rules for designing and extending
+Odoo modules in this repository.
+
+Its goal is to prevent architectural drift and ensure that AI-generated
+code respects the structure of the existing system.
+
+
+--------------------------------------------------
+Principle: Understand Before Modifying
+--------------------------------------------------
+
+Before proposing any change to a module, the AI must:
+
+1. Inspect existing models.
+2. Identify relationships between models.
+3. Detect existing business logic.
+4. Understand the intended domain behavior.
+
+New code must extend the existing architecture rather than replace it.
+
+
+--------------------------------------------------
+Principle: Prefer Extension Over Creation
+--------------------------------------------------
+
+When adding functionality, prefer:
+
+- extending existing models
+- adding fields
+- adding relations
+- adding methods
+
+Avoid creating new models unless the concept:
+
+- has its own lifecycle
+- represents a distinct domain entity
+- cannot be modeled as a relation or field.
+
+Before introducing a new model, check:
+
+docs/model_registry.md
+
+
+--------------------------------------------------
+Principle: Respect Existing Model Boundaries
+--------------------------------------------------
+
+Each model in the system should have a clear responsibility.
+
+AI must avoid:
+
+- duplicating responsibilities across models
+- creating parallel models with similar purposes
+- introducing models that mirror existing ones.
+
+If two models appear to represent the same concept,
+the architecture must be reviewed before adding more.
+
+
+--------------------------------------------------
+Principle: Preserve Domain Entities
+--------------------------------------------------
+
+Models should represent real entities in the domain.
+
+Examples of domain entities:
+
+- document
+- document movement
+- administrative act
+- dossier
+- user assignment
+
+Avoid creating purely technical models unless required
+for configuration or system infrastructure.
+
+
+--------------------------------------------------
+Principle: Use Relational Modeling
+--------------------------------------------------
+
+Relationships between entities should be represented using
+Odoo relational fields.
+
+Preferred patterns:
+
+Many2one → parent or owner relationship  
+One2many → child collections  
+Many2many → tagging or flexible relations
+
+Avoid storing redundant or duplicated data.
+
+
+--------------------------------------------------
+Principle: Avoid Artificial Workflows
+--------------------------------------------------
+
+AI must not invent workflows that do not exist in the domain.
+
+Workflow states should only be introduced if:
+
+- the domain explicitly requires them
+- transitions are clearly defined.
+
+Avoid creating unnecessary state machines.
+
+
+--------------------------------------------------
+Principle: Preserve Traceability
+--------------------------------------------------
+
+When the system models traceable entities
+(such as documents or records that move through the organization),
+their history must remain intact.
+
+Operations must avoid removing historical records
+unless explicitly required by the domain.
+
+
+--------------------------------------------------
+Principle: Separation of Responsibilities
+--------------------------------------------------
+
+Modules should maintain clear separation of responsibilities.
+
+Typical responsibilities include:
+
+- domain models
+- user interface (views)
+- access control
+- wizards
+- reports.
+
+Business logic must remain inside models.
+
+
+--------------------------------------------------
+Principle: Avoid Overengineering
+--------------------------------------------------
+
+Do not introduce unnecessary abstractions.
+
+Avoid:
+
+- excessive inheritance layers
+- unnecessary configuration models
+- generic frameworks inside the module.
+
+Prefer simple domain-driven models.
+
+
+--------------------------------------------------
+Principle: Respect External Modules
+--------------------------------------------------
+
+Some modules may exist in the repository but be outside
+the scope of the current development.
+
+AI must not propose structural changes to those modules
+unless explicitly requested.
+
+Example:
+
+The module `raa` may exist in the repository but is outside
+the scope of development for the ME module.
+
+
+--------------------------------------------------
+Principle: AI-Assisted Development Safety
+--------------------------------------------------
+
+When generating new features, the AI must:
+
+1. inspect existing architecture
+2. check documentation
+3. verify the model registry
+4. propose minimal changes.
+
+If domain behavior is unclear, mark it as:
+
+"pending definition"
+
+instead of inventing new behavior.
+
+
+--------------------------------------------------
+Architecture Integrity Checklist
+--------------------------------------------------
+
+Before proposing changes, verify:
+
+- Does the feature extend an existing model?
+- Is a new model truly required?
+- Are relationships modeled correctly?
+- Does the change preserve traceability?
+- Does it respect module boundaries?
+
+If any answer is unclear, further analysis is required
+before implementing changes.
