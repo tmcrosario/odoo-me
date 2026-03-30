@@ -77,6 +77,22 @@ me.document_exp
 me.document_movement  
 raa.registry_aa
 
+Indicar explícitamente si la relación entre modelos es:
+
+- _inherits (delegation)
+- _inherit (extension)
+- relación normal (Many2one / One2many)
+
+En particular, aclarar que me.document_exp usa _inherits sobre tmc.document.
+
+Todas las relaciones deben estar clasificadas como:
+
+- Observed in code
+- Inferred
+- Uncertain
+
+No presentar relaciones inferidas como si fueran confirmadas.
+
 
 --------------------------------------------------
 Formato del archivo
