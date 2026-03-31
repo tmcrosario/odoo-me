@@ -115,8 +115,11 @@ Automatic Behavior in create()
 
 IMPORTANT: when a `me.document_exp` is created, the system automatically:
 
-1. Creates a `tmc.document` record with the base fields
+1. Creates a `tmc.document` record via the `_inherits` delegation mechanism.
+   Odoo handles this automatically in `super().create()` — the base fields
    (dependence_id, document_type_id, number, period, date, document_object)
+   are passed through transparently.
+   Do NOT create tmc.document manually before calling super() — it breaks _inherits.
 
 2. Creates a `raa.registry_aa` record linked to that tmc.document
 
@@ -127,12 +130,12 @@ IMPORTANT: when a `me.document_exp` is created, the system automatically:
    (only if a tmc.dependence with name ilike 'Mesa de Entradas' exists)
 
 The user does NOT create the tmc.document separately first.
-The document is created inside me.document_exp.create().
+The document is created inside me.document_exp.create() via _inherits.
 
 If the searched dependences do not exist in the database,
 the movements are silently skipped — no error, no warning.
 
-Implementation: `me/models/document_exp.py`, lines 129–161.
+Implementation: `me/models/document_exp.py`, lines 133–162.
 
 
 --------------------------------------------------

@@ -40,7 +40,11 @@ class DocumentExp(models.Model):
     #     help="Asunto específico del expediente"
     # )
 
-    number = fields.Integer(required=True)  # Heredado, pero lo forzamos obligatorio aquí
+    # NO re-declarar number aquí. Re-declararlo rompe el mecanismo _inherits:
+    # el campo deja de ser proxy y Odoo no lo pasa a tmc.document en create(),
+    # dejando tmc.document.number = 0 y generando name = "Unnamed Document".
+    # El required se define en la vista (required="1" en el campo).
+    # number = fields.Integer(required=True)
 
     is_valid = fields.Boolean(
         compute="_compute_is_valid",
@@ -126,39 +130,37 @@ class DocumentExp(models.Model):
                     }
                 }
 
-    @api.model
-    def create(self, vals):
-        doc_fields = [
-            "dependence_id", "document_type_id", "number", "period", "date", "document_object"
-        ]
-        document_vals = {field: vals[field] for field in doc_fields if field in vals}
-        vals["document_id"] = self.env["tmc.document"].create(document_vals).id
-        record = super().create(vals)
-        # Crear registro en RAA
-        self.env["raa.registry_aa"].create({
-            "document_id": record.document_id.id,
-        })
-        # Crear el primer movimiento automáticamente
+    @api.model_create_multi
+    def create(self, vals_list):
+        # _inherits maneja la creación de tmc.document automáticamente.
+        # No crear tmc.document manualmente — rompe el mecanismo de delegación.
+        records = super().create(vals_list)
         tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
         mesa_entrada_dependence = self.env['tmc.dependence'].search([('name', 'ilike', 'Mesa de Entradas')], limit=1)
-        if record.jurisdiction_dependence and tmc_dependence:
-            self.env['me.document_movement'].create({
-                'expediente_id': record.id,
-                'date': fields.Datetime.now(),
-                'origin_dependence_id': record.jurisdiction_dependence.id,
-                'destination_dependence_id': tmc_dependence.id,
-                'user_id': self.env.uid,
+        for record in records:
+            # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py)
+            self.env["raa.registry_aa"].create({
+                "document_id": record.document_id.id,
             })
-        # Crear el segundo movimiento automáticamente (TMC -> Mesa de Entrada)
-        if tmc_dependence and mesa_entrada_dependence:
-            self.env['me.document_movement'].create({
-                'expediente_id': record.id,
-                'date': fields.Datetime.now(),
-                'origin_dependence_id': tmc_dependence.id,
-                'destination_dependence_id': mesa_entrada_dependence.id,
-                'user_id': self.env.uid,
-            })
-        return record
+            # Crear el primer movimiento automáticamente: jurisdicción → TMC
+            if record.jurisdiction_dependence and tmc_dependence:
+                self.env['me.document_movement'].create({
+                    'expediente_id': record.id,
+                    'date': fields.Datetime.now(),
+                    'origin_dependence_id': record.jurisdiction_dependence.id,
+                    'destination_dependence_id': tmc_dependence.id,
+                    'user_id': self.env.uid,
+                })
+            # Crear el segundo movimiento automáticamente: TMC → Mesa de Entradas
+            if tmc_dependence and mesa_entrada_dependence:
+                self.env['me.document_movement'].create({
+                    'expediente_id': record.id,
+                    'date': fields.Datetime.now(),
+                    'origin_dependence_id': tmc_dependence.id,
+                    'destination_dependence_id': mesa_entrada_dependence.id,
+                    'user_id': self.env.uid,
+                })
+        return records
 
     def _update_document_date(self, date_val):
         """Actualizar la fecha del documento padre evitando la validación problemática"""

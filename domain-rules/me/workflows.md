@@ -51,24 +51,23 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 ## 2. Creación automática del documento base (sub-paso de Workflow 1)
 
-Ocurre dentro de `me.document_exp.create()` antes de crear el registro ME.
+Ocurre dentro de `me.document_exp.create()` al llamar a `super().create()`.
 No es un workflow independiente — forma parte del Workflow 1.
 
 ### Pasos
 
-1. `create()` extrae de `vals` los campos del documento base:
-   `dependence_id`, `document_type_id`, `number`, `period`, `date`, `document_object`.
-2. Crea un registro en `tmc.document` con esos campos.
-3. Asigna el `id` resultante a `vals["document_id"]`.
-4. Llama a `super().create(vals)` — crea el registro `me.document_exp` vinculado.
+1. `super().create(vals_list)` es invocado con los campos del expediente en `vals`.
+2. El mecanismo `_inherits` de Odoo detecta los campos del padre
+   (`dependence_id`, `document_type_id`, `number`, `period`, `date`, `document_object`)
+   y crea automáticamente el registro `tmc.document`.
+3. Odoo asigna el `document_id` resultante al registro `me.document_exp`.
+4. El registro `me.document_exp` queda creado y vinculado al `tmc.document`.
 
 ### Evidence
 
 **Observed in code:**
-- Extracción de campos: `me/models/document_exp.py:131–134`
-- Creación de `tmc.document`: `me/models/document_exp.py:135`
-- Asignación de `document_id`: `me/models/document_exp.py:135`
-- Llamada a `super().create()`: `me/models/document_exp.py:136`
+- Llamada a `super().create()`: `me/models/document_exp.py:135`
+- Mecanismo `_inherits`: `me/models/document_exp.py:6`
 
 **Inferred:**
 - Si la creación de `tmc.document` falla (ej. constraint de unicidad de nombre),
@@ -78,7 +77,7 @@ No es un workflow independiente — forma parte del Workflow 1.
 **Uncertain / pending definition:**
 - No está definido qué campos adicionales del documento base
   (ej. `highlight_ids`, `main_topic_ids`) se inicializan en la creación.
-  Solo se pasan los 6 campos listados en `doc_fields`.
+  Solo se pasan los campos presentes en `vals` al momento de llamar a `super()`.
 
 
 --------------------------------------------------
