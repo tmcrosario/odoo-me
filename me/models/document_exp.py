@@ -203,5 +203,18 @@ class DocumentExp(models.Model):
 
     def unlink(self):
         for record in self:
-            record.document_id.unlink()
+            # Capturar document antes de cualquier eliminación.
+            # raa.unlink() puede cascade-eliminar tmc.document y luego me.document_exp,
+            # por lo que acceder a record.document_id después lanzaría MissingError.
+            document = record.document_id
+            # Eliminar raa.registry_aa antes de tmc.document para evitar
+            # violación de la FK constraint (raa.document_id RESTRICT).
+            raa = self.env['raa.registry_aa'].search(
+                [('document_id', '=', document.id)]
+            )
+            raa.unlink()
+            # raa.unlink() puede haber eliminado tmc.document (si estaba vacío);
+            # solo eliminar manualmente si aún existe.
+            if document.exists():
+                document.unlink()
         return super().unlink()
