@@ -1,128 +1,299 @@
-These prompts are examples.
-They should be adapted depending on the current development phase
-of the ME module.
+# ME – Prompts templates
 
-## ME – Prompt examples for AI-assisted development
+Este archivo define una forma **estructurada y consistente** de trabajar con IA
+en el módulo ME (Mesa de Entradas).
 
-This file contains reusable prompt templates to work with the
-**ME (Mesa de Entradas)** module.
+Se basa en:
 
-The prompts assume that the assistant has access to the project rules
-and documentation:
+- el backlog (`todo.md`)
+- la documentación del sistema
+- un flujo de trabajo con modos (definición / implementación / revisión / fix)
 
-- docs/system_overview.md
-- docs/models.md
-- docs/model_registry.md
-- docs/rules_business.md
-- docs/tmc_base_system.md
-- domain-rules/me/me_architecture.md
-- me/ai-context.md
-- ai-rules/*
-- skills/*
+---
 
+## Principio clave
 
---------------------------------------------------
-Base prompt template
---------------------------------------------------
+👉 El desarrollo SIEMPRE parte del backlog (`todo.md`)
 
-Use this template as a starting point for any request.
+- No se trabaja con ideas sueltas
+- Toda tarea debe tener un ID (#XXX)
+
+---
+
+## Regla 1 – Decisiones abiertas
+
+Si una tarea tiene decisiones abiertas:
+
+❌ NO se puede implementar  
+✔ primero se debe trabajar en modo "definición"
+
+---
+
+## Regla 2 – Tests obligatorios
+
+Toda implementación debe incluir tests.
+
+Reglas:
+- Crear o actualizar tests en tests/
+- Validar comportamiento implementado
+- No cerrar tarea sin tests
+
+Excepciones:
+- solo si se justifica explícitamente
+
+---
+
+## Regla 3 – Commits (formato obligatorio)
+
+La IA NO debe ejecutar commits.
+
+Debe sugerir:
+
+- commit name
+- descripción breve
+
+Formato requerido:
+
+commit name:
+[IMP] mejoras o ajustes funcionales
+[FIX] corrección de errores
+[ADD] nuevas funcionalidades o módulos
+[REM] eliminación de funcionalidades o código
+[REF] refactor (sin cambios funcionales)
+[MIG] migraciones entre versiones de Odoo
+[UPD] actualizaciones de documentación o configuración
+[WIP] trabajo en progreso (evitar en rama principal)
+
+description:
+Explicación breve del cambio realizado (1–3 líneas)
+
+---
+
+## Regla 4 – Criterio de cierre
+
+Una tarea NO se considera completa si:
+
+- no tiene tests
+- no fue validada funcionalmente
+- no es consistente con workflows / narrative
+
+---
+
+## Comando mínimo diario (uso recomendado)
+
+Formato:
+
+Avanzá con #ID | modo: X | opciones
+
+Modos disponibles:
+
+- definición → analizar y cerrar decisiones (sin código)
+- implementación → escribir código
+- revisión → auditar o validar implementación
+- fix → corregir errores
+
+Opciones comunes:
+
+- con tests
+- sin código
+- validar lógica
+- validar consistencia
+
+---
+
+## Ejemplos
+
+- Avanzá con #001 | modo: definición | sin código
+- Avanzá con #002 | modo: implementación | con tests
+- Avanzá con #002 | modo: revisión
+- Avanzá con #002 | modo: fix
+
+---
+
+## Template base
 
 Contexto:
-- Tipo de cambio: [análisis / bugfix / nueva funcionalidad / migración / auditoría]
-- Zona del sistema: [modelos, vistas o módulos involucrados]
+- Tarea backlog: #ID
+- Tipo de cambio: [análisis / bugfix / nueva funcionalidad / refactor]
+- Zona del sistema: [modelos, vistas, wizards]
+
+Modo:
+[definición / implementación / revisión / fix]
 
 Objetivo funcional:
-[qué querés lograr y por qué]
+[qué querés lograr]
 
 Criterios de aceptación:
-[comportamientos que deben cumplirse]
+[comportamientos esperados]
 
+---
 
---------------------------------------------------
-Prompt A – Analizar una parte del módulo
---------------------------------------------------
+## Template 0 – Generar tarea de backlog
 
 Contexto:
-- Tipo de tarea: análisis de arquitectura
-- Zona del sistema: modelo específico del módulo ME
+- Tipo de tarea: generación de backlog
 
 Objetivo:
-Quiero entender cómo funciona el modelo
-y qué responsabilidades tiene dentro del sistema.
+Convertir una idea en una entrada estructurada para todo.md
 
-Criterios de aceptación:
-- Explicar el propósito del modelo
-- Explicar sus relaciones
-- Explicar su rol en el flujo documental
+Instrucciones:
+- Analizar la idea en lenguaje natural
+- Determinar si corresponde:
+  - [IDEA] → si hay decisiones abiertas
+  - [TODO] → si ya es implementable
+- No asumir decisiones no definidas
 
+Salida requerida:
 
---------------------------------------------------
-Prompt B – Revisar lógica de movimientos
---------------------------------------------------
+- ID (#XXX)
+- Estado: [IDEA] o [TODO]
 
 Contexto:
-- Tipo de tarea: análisis funcional
-- Zona del sistema: document_movement
+[descripción clara del problema o necesidad]
+
+Decisiones abiertas (solo si aplica):
+- ...
+
+Criterios de aceptación (solo si aplica):
+- ...
+
+Impacto técnico:
+- models
+- views
+- workflows
+- tests
+- documentación
+
+Restricciones:
+- No escribir código
+- No implementar
+
+---
+
+## Template 1 – Definición (sin código)
+
+Usar cuando hay ambigüedad o decisiones abiertas.
+
+Salida requerida:
+
+1. Alcance funcional
+2. Escenarios posibles
+3. Decisiones necesarias
+4. Riesgos
+5. Impacto en:
+   - modelos
+   - vistas
+   - reglas de negocio
+   - tests
+   - documentación
+
+⚠️ No escribir código
+
+---
+
+## Template 2 – Implementación
+
+Regla operativa:
+- No implementar si hay decisiones abiertas
+
+Expectativas de análisis:
+
+- Revisar:
+  - docs/system_narrative.md
+  - docs/system_overview.md
+  - domain-rules/me/workflows.md
+  - me/ai-context.md
+
+Salida requerida:
+
+1. Plan breve (archivos afectados)
+
+2. Implementación
+
+3. Tests:
+   - crear o actualizar tests en tests/
+   - explicar qué validan
+   - indicar si se ejecutaron
+
+4. Validación:
+   - coherencia con workflows
+   - coherencia con narrative
+
+5. Impacto en documentación
+
+6. Sugerencia de commit:
+
+commit name:
+[ADD]/[FIX]/[UPDATE]/[REFACTOR]/[TEST] descripción corta
+
+description:
+Explicación breve del cambio (1–3 líneas)
+
+---
+
+## Template 3 – Revisión
 
 Objetivo:
-Quiero revisar si la implementación actual de movimientos
-garantiza trazabilidad correcta de documentos.
+Validar calidad e integridad de una implementación.
 
-Criterios de aceptación:
-- Identificar reglas de creación de movimientos
-- Identificar restricciones existentes
-- Detectar posibles inconsistencias
+Salida requerida:
 
+- Problemas detectados
+- Riesgos
+- Inconsistencias con:
+  - narrative
+  - workflows
+- Gaps de tests
+- Gaps de documentación
 
---------------------------------------------------
-Prompt C – Agregar campo a un modelo
---------------------------------------------------
+---
 
-Contexto:
-- Tipo de cambio: nueva funcionalidad
-- Zona del sistema: modelo existente
-
-Objetivo:
-Agregar un campo que permita almacenar información adicional
-sobre el documento.
-
-Criterios de aceptación:
-- Campo visible en vistas relevantes
-- No romper relaciones existentes
-- Mantener coherencia con `tmc.document`
-
-
---------------------------------------------------
-Prompt D – Migración a Odoo 19
---------------------------------------------------
-
-Contexto:
-- Tipo de tarea: migración técnica
-- Zona del sistema: módulo ME
+## Template 4 – Fix
 
 Objetivo:
-Detectar partes del módulo que deben adaptarse
-para Odoo 19.
+Corregir un error específico.
 
-Criterios de aceptación:
-- Detectar vistas incompatibles (`tree`, `attrs`, etc.)
-- Detectar APIs antiguas
-- Identificar posibles refactors necesarios
+Salida requerida:
 
+1. Causa raíz
+2. Corrección
+3. Tests asociados
+4. Impacto en documentación
+5. Sugerencia de commit
 
---------------------------------------------------
-Prompt E – Auditoría del módulo
---------------------------------------------------
+---
 
-Contexto:
-- Tipo de tarea: auditoría técnica
-- Alcance: módulo ME completo
+## Template 5 – Auditoría
 
 Objetivo:
-Detectar problemas potenciales en arquitectura
-o inconsistencias entre código y documentación.
+Detectar inconsistencias en el sistema completo.
 
-Criterios de aceptación:
-- Identificar inconsistencias
-- Identificar posibles mejoras
-- Identificar documentación desactualizada
+Salida requerida:
+
+- Hallazgos (alto / medio / bajo)
+- Problemas en:
+  - lógica
+  - seguridad
+  - tests
+  - documentación
+- Recomendaciones
+
+---
+
+## Reglas de uso
+
+- No inventar comportamiento
+- Priorizar código como fuente de verdad
+- Marcar como "Uncertain" lo no definido
+- No ejecutar commits
+- Mantener consistencia con ai-context.md
+
+---
+
+## Flujo de trabajo recomendado
+
+1. Crear o elegir tarea en todo.md
+2. Ejecutar modo definición (si aplica)
+3. Ejecutar modo implementación (con tests)
+4. Ejecutar revisión
+5. Commit manual
