@@ -136,7 +136,7 @@ class DocumentExp(models.Model):
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
         records = super().create(vals_list)
         tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
-        mesa_entrada_dependence = self.env['tmc.dependence'].search([('name', 'ilike', 'Mesa de Entradas')], limit=1)
+        mesa_entrada_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         for record in records:
             # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py)
             self.env["raa.registry_aa"].create({

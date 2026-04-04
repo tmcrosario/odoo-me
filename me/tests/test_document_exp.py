@@ -52,7 +52,7 @@ class TestDocumentExp(TransactionCase):
 
         # tmc.dependence Mesa de Entradas: necesaria para movimiento automático 2 (TMC → ME)
         self.dep_mesa = self.env['tmc.dependence'].search(
-            [('name', 'ilike', 'Mesa de Entradas')], limit=1
+            [('abbreviation', '=', 'ME')], limit=1
         )
         if not self.dep_mesa:
             self.dep_mesa = self.env['tmc.dependence'].create({

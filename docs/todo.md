@@ -103,3 +103,80 @@ Criterios:
 - constraint
 - mensaje claro
 - test
+
+--------------------------------------------------
+### #006 – Nomenclador de dependencias del Tribunal
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Los movimientos automáticos de expedientes dependen de que existan
+dependencias específicas en la base de datos. Si no existen, los
+movimientos se omiten silenciosamente sin aviso al operador.
+
+Las dependencias requeridas por create() en me.document_exp son:
+- TMC   (buscada por abbreviation='TMC')
+- Mesa de Entradas (buscada por name ilike 'Mesa de Entradas')
+
+---- Hallazgos ----
+
+TMC:
+- EXISTE en odoo-tmc-data como tmc_dependence_tmc
+- name='TRIBUNAL MUNICIPAL DE CUENTAS', abbreviation='TMC'
+- Incluida en el clasificador institucional (código 1.13.00,
+  todos los clasificadores vigentes)
+- El movimiento 1 (jurisdicción → TMC) SE CREA correctamente
+
+Mesa de Entradas:
+- NO EXISTE en el nomenclador (odoo-tmc-data/dependence.xml)
+- El movimiento 2 (TMC → Mesa de Entradas) NUNCA SE CREA
+  en ninguna instalación actual
+- Falla silenciosa: sin error, sin aviso al operador
+
+Riesgo de búsqueda por ilike:
+- La búsqueda name ilike 'Mesa de Entradas' es frágil:
+  si el nombre difiere o hay variantes, retorna un resultado
+  inesperado o ninguno
+- TMC se busca por abbreviation='TMC' — criterio más robusto
+  Mesa de Entradas debería seguir el mismo patrón
+
+---- Decisiones ----
+
+1. Dependencias mínimas requeridas: TMC y Mesa de Entradas.
+   TMC ya existe y está bien definida.
+   Mesa de Entradas debe crearse.
+
+2. Dónde agregar Mesa de Entradas:
+   En odoo-tmc-data (dependence.xml), como subdependencia de TMC.
+   Mismo patrón que tmc_dependence_tmc_sub.
+   No se modifica odoo-tmc (modelo), solo los datos de referencia.
+
+3. Abbreviation para Mesa de Entradas: 'ME'
+   Permite buscar por abbreviation='ME' en lugar de name ilike.
+   Consistente con el patrón de búsqueda de TMC.
+
+4. Actualizar criterio de búsqueda en create():
+   Reemplazar name ilike 'Mesa de Entradas' por abbreviation='ME'.
+   Referencia: me/models/document_exp.py:139
+
+5. Verificación en instalación:
+   No se implementa hook en esta iteración.
+   Corrección de datos es suficiente para desbloquear el flujo.
+
+---- Criterios de aceptación ----
+
+- [ ] Dependencia "Mesa de Entradas" agregada en odoo-tmc-data
+      (dependence.xml) con abbreviation='ME', como subdependencia de TMC
+- [ ] create() en me.document_exp actualizado: buscar por
+      abbreviation='ME' en lugar de name ilike 'Mesa de Entradas'
+- [ ] Test: al crear un expediente, se generan los 2 movimientos
+      automáticos correctamente
+- [ ] Verificar in_actual_nomenclator en instalación: TMC debe
+      aparecer marcada como activa para ser seleccionable en el campo
+      jurisdiction_dependence (si aplica el filtro)
+
+Impacto:
+- odoo-tmc-data: dependence.xml (nuevo registro)
+- me/models/document_exp.py: línea 139 (criterio de búsqueda)
+- tests
