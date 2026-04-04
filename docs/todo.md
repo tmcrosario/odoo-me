@@ -180,3 +180,45 @@ Impacto:
 - odoo-tmc-data: dependence.xml (nuevo registro)
 - me/models/document_exp.py: línea 139 (criterio de búsqueda)
 - tests
+
+--------------------------------------------------
+### #007 – Relación entre ME y el módulo JUNCO (Proceso Licitatorio)
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+El módulo JUNCO gestionará procesos licitatorios. Su punto de partida
+es un expediente existente en ME: un proceso licitatorio siempre se
+origina en un expediente de Mesa de Entradas.
+
+La carga de datos del proceso licitatorio es independiente de ME.
+
+Cardinalidad definida:
+- 1 expediente (me.document_exp) puede tener múltiples procesos licitatorios
+- cada proceso licitatorio pertenece a un único expediente
+- se requiere historial: un proceso puede quedar desierto, nulo o ser
+  modificado, y luego iniciarse un nuevo proceso sobre el mismo expediente
+
+Decisiones abiertas:
+- ¿Dónde vive la relación? Opciones:
+  a) JUNCO tiene un campo Many2one → me.document_exp (JUNCO depende de ME)
+  b) ME tiene un campo One2many → junco.proceso (ME depende de JUNCO)
+  c) La relación se resuelve sin dependencia directa entre módulos
+     (ej. referencia por external_key u otro campo desacoplado)
+- ¿ME necesita conocer los procesos licitatorios asociados a un expediente,
+  o la visibilidad es solo desde JUNCO?
+- ¿La vista de ME muestra un tab/resumen de procesos licitatorios?
+- ¿Qué campos mínimos define un proceso licitatorio a efectos del vínculo
+  con ME? (fecha, tipo, estado)
+- ¿Los estados del proceso licitatorio están definidos?
+  (desierto, nulo, adjudicado, en curso, etc.)
+- ¿Existe un estado en me.document_exp que deba cambiar cuando
+  se vincula un proceso licitatorio?
+
+Impacto técnico:
+- models: relación entre me.document_exp y junco.proceso (a definir)
+- views: posible tab en formulario de expediente (a definir)
+- workflows: ciclo de vida del proceso licitatorio y su relación con el expediente
+- tests: creación de proceso sobre expediente existente, historial múltiple
+- documentación: actualizar ai-context.md y architecture_diagram.md
