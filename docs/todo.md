@@ -188,37 +188,68 @@ Impacto:
 [IDEA]
 
 Contexto:
-El módulo JUNCO gestionará procesos licitatorios. Su punto de partida
-es un expediente existente en ME: un proceso licitatorio siempre se
-origina en un expediente de Mesa de Entradas.
+JUNCO gestionará procesos licitatorios. Cada proceso licitatorio puede
+estar asociado a uno o más expedientes que ingresan por Mesa de Entradas.
 
-La carga de datos del proceso licitatorio es independiente de ME.
+Un proceso no nace vinculado a un único expediente fijo. A lo largo de
+su historia puede incorporar nuevos expedientes. Ejemplo:
 
-Cardinalidad definida:
-- 1 expediente (me.document_exp) puede tener múltiples procesos licitatorios
-- cada proceso licitatorio pertenece a un único expediente
-- se requiere historial: un proceso puede quedar desierto, nulo o ser
-  modificado, y luego iniciarse un nuevo proceso sobre el mismo expediente
+1. Ingresa por ME el expediente X (licitación privada).
+2. Se crea o identifica en JUNCO un proceso licitatorio asociado a X.
+3. La licitación queda anulada.
+4. Ingresa por ME el expediente Y, que representa una nueva actuación
+   o relanzamiento de esa misma licitación.
+5. El expediente Y se incorpora al mismo proceso licitatorio.
+6. El expediente X queda en el historial del proceso.
+7. El expediente Y pasa a ser el expediente actual/vigente del proceso.
+
+Principios arquitectónicos:
+- ME es la puerta de entrada de los expedientes.
+- JUNCO tiene su propia carga de datos y lógica, independiente de ME.
+- JUNCO usa expedientes ya creados en ME como insumo del proceso.
+- La relación es dinámica: un proceso puede acumular expedientes en el tiempo.
+- Dentro del proceso siempre debe poder identificarse cuál es el expediente
+  actual o vigente, y cuáles son históricos.
 
 Decisiones abiertas:
-- ¿Dónde vive la relación? Opciones:
-  a) JUNCO tiene un campo Many2one → me.document_exp (JUNCO depende de ME)
-  b) ME tiene un campo One2many → junco.proceso (ME depende de JUNCO)
-  c) La relación se resuelve sin dependencia directa entre módulos
-     (ej. referencia por external_key u otro campo desacoplado)
-- ¿ME necesita conocer los procesos licitatorios asociados a un expediente,
-  o la visibilidad es solo desde JUNCO?
-- ¿La vista de ME muestra un tab/resumen de procesos licitatorios?
-- ¿Qué campos mínimos define un proceso licitatorio a efectos del vínculo
-  con ME? (fecha, tipo, estado)
-- ¿Los estados del proceso licitatorio están definidos?
-  (desierto, nulo, adjudicado, en curso, etc.)
-- ¿Existe un estado en me.document_exp que deba cambiar cuando
-  se vincula un proceso licitatorio?
+
+1. Modelado de la relación proceso–expedientes
+   - ¿La relación es una lista simple (Many2many) o una tabla intermedia
+     con metadatos (ej. fecha de incorporación, motivo, estado)?
+   - ¿Se registra el evento que motivó la incorporación de cada expediente?
+     (inicio, anulación, relanzamiento, ampliación, etc.)
+
+2. Identificación del expediente actual/vigente
+   - ¿Se marca explícitamente con un campo booleano (is_current) en la
+     relación, o se infiere por orden cronológico?
+   - ¿Puede haber más de un expediente vigente simultáneamente, o siempre
+     hay exactamente uno?
+   - ¿Qué sucede si el expediente vigente se anula: el proceso queda sin
+     expediente vigente hasta que ingrese uno nuevo?
+
+3. Exclusividad del expediente entre procesos
+   - ¿Un expediente puede pertenecer a más de un proceso licitatorio?
+   - Si no, ¿quién valida esa restricción: ME, JUNCO, o ambos?
+
+4. Visibilidad desde ME
+   - ¿ME necesita mostrar referencia a JUNCO en el formulario del expediente?
+   - ¿O la visibilidad es unidireccional: solo desde JUNCO hacia ME?
+   - Si ME muestra referencia, ¿es solo informativa o permite navegar al proceso?
+
+5. Eventos que disparan la incorporación de un nuevo expediente
+   - ¿Qué estados o eventos del proceso habilitan agregar un nuevo expediente?
+   - ¿El operador de JUNCO elige manualmente qué expediente incorporar,
+     o ME "notifica" a JUNCO de expedientes candidatos?
+
+6. Representación del historial
+   - ¿El historial de expedientes se muestra dentro del proceso licitatorio
+     como una línea de tiempo, una tabla, o solo un listado?
+   - ¿Se requiere registrar quién incorporó cada expediente y cuándo?
 
 Impacto técnico:
-- models: relación entre me.document_exp y junco.proceso (a definir)
-- views: posible tab en formulario de expediente (a definir)
-- workflows: ciclo de vida del proceso licitatorio y su relación con el expediente
-- tests: creación de proceso sobre expediente existente, historial múltiple
+- models: estructura de la relación entre junco.proceso y me.document_exp
+  (tabla intermedia vs. campo relacional directo, a definir)
+- views: posible referencia en formulario de expediente de ME (a definir)
+- workflows: eventos del proceso que implican incorporar un nuevo expediente
+- tests: proceso con múltiples expedientes, cambio de vigente, historial
 - documentación: actualizar ai-context.md y architecture_diagram.md
