@@ -297,3 +297,23 @@ Salida requerida:
 3. Ejecutar modo implementación (con tests)
 4. Ejecutar revisión
 5. Commit manual
+
+
+## Regla adicional – Idioma del código
+
+Todo el código generado debe estar en inglés.
+
+Aplica a:
+- modelos
+- campos
+- métodos
+- variables
+- tests
+- XML ids
+- comentarios técnicos
+
+El español se usa solo para:
+- documentación
+- backlog
+- descripciones funcionales
+- textos visibles al usuario cuando corresponda

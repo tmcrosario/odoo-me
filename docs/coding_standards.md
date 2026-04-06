@@ -1,289 +1,70 @@
-# Project Coding Standards
+# Coding Standards
 
-These rules define how code must be written in generic tmc projects.
+This document defines the coding standards for the ME project.
 
-They apply to:
+Its goal is to keep the codebase:
 
-- Python code
-- Odoo models
-- business logic
-- error handling
-- commits
-- development workflow
+- consistent
+- maintainable
+- easy to review
+- easy to evolve with AI-assisted development
 
-The goal is to keep the system maintainable, consistent, and predictable as it grows.
+---
 
+## General Principles
 
---------------------------------------------------
-Project Context
---------------------------------------------------
+- Prefer clarity over cleverness
+- Keep modules small and focused
+- Avoid duplicated logic
+- Reuse Odoo conventions whenever possible
+- Do not introduce architectural complexity without clear need
 
-Project: Odoo-based administrative systems
-Platform: Odoo 19
-Python Version: 3.12
+---
 
+## Odoo Conventions
 
-The system must remain consistent and maintainable as the codebase grows and AI-assisted development is used.
+- Follow standard Odoo module structure:
+  - `models/`
+  - `views/`
+  - `security/`
+  - `wizards/`
+  - `data/`
+  - `tests/`
+- Use Odoo ORM conventions consistently
+- Prefer explicit model relationships over implicit logic
+- Keep business logic in models, not in views
+- Use views only for presentation and interaction flow
+- Avoid putting business rules only in domains or onchange methods
+- If a rule is important, validate it in backend too
 
+---
 
---------------------------------------------------
-General Development Principles
---------------------------------------------------
+## Python Style
 
-1. Prefer simple solutions over complex architectures.
+- Use clear and descriptive names
+- Keep methods short and focused
+- Avoid deeply nested logic when possible
+- Prefer helper methods when logic becomes repetitive
+- Use comments only when the intention is not obvious from the code
+- Do not leave dead code commented out unless there is a temporary and justified reason
+- Remove debug prints before closing a task
 
-2. Avoid introducing new models unless clearly justified.
+---
 
-3. Avoid duplicating business logic across models.
+## XML / Views Style
 
-4. Prefer explicit logic over hidden side effects.
+- Keep views readable and well organized
+- Use meaningful XML ids
+- Avoid unnecessary duplication in views
+- Prefer simple and explicit domains
+- Keep form views aligned with the real workflow of the model
+- Do not encode important business rules only in the UI
 
-5. The code must always reflect the documented business rules.
+---
 
-6. Business rules must not be hidden in UI logic.
+## Naming Conventions
 
-
---------------------------------------------------
-Commit Style
---------------------------------------------------
-
-Commits must follow the Odoo Git guidelines.
-
-Reference:
-https://www.odoo.com/documentation/19.0/contributing/development/git_guidelines.html
-
-
-Format:
-
-[TYPE] Short description
-
-- Detailed change 1
-- Detailed change 2
-- Detailed change 3
-
-
-Allowed types:
-
-ADD – new feature  
-IMP – improvement  
-FIX – bug fix  
-REF – refactor without functional change  
-REM – remove code or feature  
-MIG – migration between Odoo versions  
-UPD – documentation or configuration changes  
-
-
-Rules:
-
-- Use imperative form.
-- Keep the first line under ~72 characters.
-- One logical change per commit.
-- Do not include AI attribution in commits.
-
-
-Example:
-
-[ADD] Document review model
-
-- Added SLA computation logic
-- Implemented deadline comparison
-- Added computed SLA status field
-
-
---------------------------------------------------
-Python Style
---------------------------------------------------
-
-Follow PEP 8.
-
-Key rules:
-
-- 4 spaces indentation
-- No tabs
-- Maximum line length: 100 characters
-- Use descriptive variable names
-- Avoid unnecessary abbreviations
-
-
-Imports order:
-
-1. standard library
-2. third-party libraries
-3. odoo modules
-4. local modules
-
-
-Example:
-
-from datetime import date
-from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
-
-
---------------------------------------------------
-Error Handling
---------------------------------------------------
-
-Use explicit exceptions for business logic errors.
-
-ValidationError
-
-Used for validation rules.
-
-Example:
-
-raise ValidationError(_("Deadline must be in the future."))
-
-
-UserError
-
-Used when the user must correct an action.
-
-
-Logging
-
-Use Python logging when needed.
-
-Example:
-
-import logging
-_logger = logging.getLogger(__name__)
-
-
---------------------------------------------------
-Performance Principles
---------------------------------------------------
-
-Avoid N+1 queries.
-
-Prefer:
-
-- read_group for aggregations
-- batch operations
-- prefetching relations
-
-Avoid loops performing database queries.
-
-Compute fields should use store=True only when necessary.
-
-
---------------------------------------------------
-Testing
---------------------------------------------------
-
-Tests are strongly recommended for:
-
-- complex business rules
-- workflow transitions
-- computed fields
-- data integrity constraints
-- integrations with other modules
-- run the relevant Odoo test suite
-
-
---------------------------------------------------
-Development Workflow
---------------------------------------------------
-
-When implementing changes:
-
-1. Analyze the request
-2. Identify impacted models
-3. Check business rule consistency
-4. Check documentation impact
-5. Implement the change
-6. Validate behavior
-
-
-Large features should follow the feature_development skill workflow.
-
-
---------------------------------------------------
-Documentation Synchronization
---------------------------------------------------
-
-Code changes must remain consistent with the documentation in:
-
-doc/models.md  
-doc/rules_business.md
-
-When a change affects:
-
-- models
-- fields
-- relationships
-- workflows
-- business rules
-
-The documentation must be updated accordingly.
-
-
---------------------------------------------------
-Complexity Control
---------------------------------------------------
-
-To prevent system degradation:
-
-- avoid unnecessary abstractions
-- avoid premature optimization
-- avoid hidden dependencies
-
-If a feature introduces significant complexity, consider:
-
-- refactoring
-- simplifying workflows
-- documenting architectural decisions
-
---------------------------------------------------
-Documentation Synchronization Rules
---------------------------------------------------
-
-Documentation must always remain synchronized with the codebase.
-
-When a developer or AI agent introduces changes affecting:
-
-- new models
-- new fields
-- new relationships
-- model removals
-- changes to state machines
-- new business entities
-
-the following documents MUST be updated in the same change:
-
-doc/models.md  
-doc/rules_business.md
-
-
-Required updates when modifying models:
-
-If a new model is introduced:
-- add the model to doc/models.md
-- document its relationships
-- update the Mermaid diagram if necessary
-- update the conceptual model overview
-
-If a model gains important fields:
-- update the "Key Fields" section
-
-If relationships change:
-- update the relationship section and diagram
-
-
-Changes must be committed in the same commit as the code modification.
-
-Example commit:
-
-[ADD] WorkOrderReview model
-
-- Added model sigop.work_order.review
-- Added relation to work orders
-- Updated models.md documentation
-- Updated model diagram
-
-Language rules
-
-All source code must be written in English.
+Use English for all technical artifacts.
 
 This includes:
 
@@ -292,52 +73,150 @@ This includes:
 - method names
 - variable names
 - XML ids
-- user-visible strings in models and views
-- validation messages
-- help texts
-- labels
+- Python comments
+- test class names
+- test method names
+- internal technical constants
 
-Use the Odoo translation system for other languages.
+Examples:
 
-User-facing strings must always be wrapped in _() for translation.
+- `document_movement`
+- `current_dependence_id`
+- `action_create_process`
+- `test_create_expediente_generates_movements` ❌
+- `test_create_expediente_generates_movements` should be avoided because it mixes languages
+- `test_create_record_generates_movements` ✅
+
+---
+
+## Language Rules
+
+All technical code artifacts must be written in English.
+
+This includes:
+
+- Python code
+- model names
+- field names
+- method names
+- variable names
+- XML ids
+- technical comments
+- test names
+
+User-facing strings in models and views should also be written in English
+and wrapped in `_()` so they can be translated through Odoo i18n.
 
 Do not mix Spanish and English in the same string.
 
-Example (correct):
+Use Spanish only in:
 
-raise ValidationError(_('The dossier number must be greater than zero.'))
+- functional documentation
+- backlog descriptions
+- business notes
+- translation files (`i18n/*.po`)
+- user-facing translated text when required by the system
 
-Example (incorrect):
+---
 
-raise ValidationError(_('El número de expediente must be greater than zero.'))
+## Business Logic Rules
 
+- Important rules must live in backend code
+- Do not rely only on `onchange` for critical validations
+- Do not rely only on view domains for data integrity
+- If a value must be restricted, validate it in the model
+- Prefer explicit constraints for integrity rules
+- If behavior depends on another module, document that dependency clearly
 
+---
 
---------------------------------------------------
-System evolution checklist (AI & developers)
---------------------------------------------------
+## Tests
 
-Whenever you introduce one of the following:
+- Every important functional change should include tests
+- Tests must live in `tests/`
+- Prefer focused tests with minimal setup
+- Test names must describe behavior clearly
+- Cover:
+  - expected behavior
+  - validation errors
+  - important side effects
+- Do not close an implementation task without validating whether tests are needed
 
-- a new **model**
-- a new **field** that affects business behavior
-- a new **state** or a change in state transitions
-- a new **cron** or automation
+---
 
-you must explicitly check:
+## Documentation Alignment
 
-- **Business rules**:
-  - Does this change affect workflow rules or business constraints?
-  - If yes, update `doc/rules_business.md`.
-- **Documentation of models**:
-  - If models or important fields/relations change, update:
-    - `doc/models.md`
-    - `doc/model_registry.md`
-- **Security**:
-  - For new models, ensure entries exist in `security/ir.model.access.csv`
-    and record rules if needed.
-- **Odoo 19 compatibility**:
-  - Verify views and ORM usage against `odoo_common.mdc` and `odoo19.mdc`.
+Whenever a change affects behavior, evaluate whether these files must be updated:
 
-Changes are considered incomplete if code, business rules and documentation
-are not kept in sync.
+- `docs/system_overview.md`
+- `docs/system_narrative.md`
+- `docs/models.md`
+- `docs/model_registry.md`
+- `docs/rules_business.md`
+- `domain-rules/me/workflows.md`
+- `me/ai-context.md`
+
+Code is the final source of truth, but documentation must be kept aligned.
+
+---
+
+## Security and Access
+
+- Do not assume UI restrictions are enough
+- Validate permissions in backend when needed
+- If access rules are important for a feature, review:
+  - `security/ir.model.access.csv`
+  - related security XML files
+- If a feature changes who can read/write/create/delete, document it
+
+---
+
+## Commits
+
+The AI must not execute commits.
+
+It should only suggest:
+
+- commit name
+- short description
+
+Allowed labels:
+
+- `[IMP]` – Improvements and enhancements
+- `[FIX]` – Bug fixes
+- `[ADD]` – Add new features or modules
+- `[REM]` – Remove features or code
+- `[REF]` – Refactoring (no functional changes)
+- `[MIG]` – Migration between Odoo versions
+- `[UPD]` – Updates to documentation or configurations
+- `[WIP]` – Work in progress (avoid in main branch)
+
+Always choose the label that best represents the main purpose of the change.
+
+---
+
+## AI-Assisted Development
+
+Before proposing code changes, review available project context:
+
+- `me/ai-context.md`
+- `docs/system_overview.md`
+- `docs/system_narrative.md`
+- `docs/architecture_diagram.md`
+- `docs/me_architecture_analysis_report.md`
+- `domain-rules/me/workflows.md`
+- `todo.md`
+
+Rules for AI-assisted work:
+
+- Do not invent behavior not supported by code or documentation
+- If something is unclear, mark it as `Uncertain / pending definition`
+- If backlog decisions are still open, do not jump directly to implementation
+- Prefer backlog → definition → implementation → tests → review
+
+---
+
+## Final Rule
+
+Readable code, explicit logic, aligned documentation, and validated behavior
+are always more important than writing code quickly.
