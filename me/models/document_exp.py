@@ -73,6 +73,17 @@ class DocumentExp(models.Model):
         "me.document_movement", "expediente_id", string="Movimientos"
     )
 
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super().default_get(fields_list)
+        if 'document_type_id' not in defaults or not defaults.get('document_type_id'):
+            exp_type = self.env['tmc.document_type'].search(
+                [('abbreviation', '=', 'EXP')], limit=1
+            )
+            if exp_type:
+                defaults['document_type_id'] = exp_type.id
+        return defaults
+
     @api.depends()
     def _compute_allowed_dependencies(self):
         """Computar las dependencias permitidas para expedientes"""

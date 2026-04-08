@@ -8,7 +8,7 @@
             <list>
                 <field name="name" string="Documento"/>
                 <field name="intake_date" string="Fecha de Ingreso"/>
-                <field name="main_topic_ids" string="Asunto"/>
+                <field name="topics_display_name" string="Asunto"/>
                 <field name="document_object" string="Referencia"/>
             </list>
         </field>
