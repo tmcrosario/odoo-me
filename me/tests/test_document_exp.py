@@ -1,5 +1,7 @@
+from datetime import date, timedelta
+
 from odoo import fields
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -70,6 +72,7 @@ class TestDocumentExp(TransactionCase):
             'number': 99991,
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': fields.Date.today(),
         }
 
     def test_create_expediente_basic(self):
@@ -158,3 +161,58 @@ class TestDocumentExp(TransactionCase):
             # jurisdiction_dependence ausente → is_valid debe ser False
         })
         self.assertFalse(record.is_valid)
+
+    def test_is_origin_complete_true(self):
+        """is_origin_complete = True con dependence_id, number y period presentes."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_dem.id,
+            'number': 1,
+            'period': self.current_year,
+        })
+        self.assertTrue(record.is_origin_complete)
+
+    def test_is_origin_complete_false_missing_number(self):
+        """is_origin_complete = False si falta number."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_dem.id,
+            'period': self.current_year,
+        })
+        self.assertFalse(record.is_origin_complete)
+
+    def test_is_origin_complete_false_missing_period(self):
+        """is_origin_complete = False si falta period."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_dem.id,
+            'number': 1,
+        })
+        self.assertFalse(record.is_origin_complete)
+
+    def test_is_origin_complete_false_missing_dependence(self):
+        """is_origin_complete = False si falta dependence_id."""
+        record = self.env['me.document_exp'].new({
+            'number': 1,
+            'period': self.current_year,
+        })
+        self.assertFalse(record.is_origin_complete)
+
+    def test_intake_date_future_raises(self):
+        """intake_date no puede ser fecha futura — debe lanzar ValidationError."""
+        future_date = fields.Date.today() + timedelta(days=1)
+        vals = dict(self.valid_vals, number=99992, intake_date=future_date)
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_intake_date_accepts_different_year_than_period(self):
+        """intake_date no se valida contra period — año distinto debe aceptarse."""
+        past_year_date = date(2024, 1, 15)
+        vals = dict(self.valid_vals, number=99993, period='2023', intake_date=past_year_date)
+        expediente = self.env['me.document_exp'].create(vals)
+        self.assertEqual(expediente.intake_date, past_year_date)
+
+    def test_intake_date_stored_correctly(self):
+        """intake_date se persiste correctamente en el registro."""
+        today = fields.Date.today()
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99994, intake_date=today)
+        )
+        self.assertEqual(expediente.intake_date, today)

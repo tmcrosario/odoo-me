@@ -7,14 +7,9 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name" string="Documento"/>
-                <field name="dependence_id"/>
-                <field name="jurisdiction_dependence" string="Jurisdicción"/>
-                <!-- <field name="entry_date" string="Fecha de alta en el sistema"/> -->
-                <!-- <field name="number"/>
-                <field name="period"/> -->
-                <!-- <field name="date" string="Fecha de inicio del trámite"/> -->
-                <!-- <field name="external_key" string="Clave Externa"/> -->
-                <!-- <field name="fojas" string="Cantidad de fojas"/> -->
+                <field name="intake_date" string="Fecha de Ingreso"/>
+                <field name="main_topic_ids" string="Asunto"/>
+                <field name="document_object" string="Referencia"/>
             </list>
         </field>
     </record>
@@ -36,25 +31,33 @@
                         </h1>
                     </div>
                     <field name="is_valid" invisible="1"/>
-                    <group>
+                    <field name="is_origin_complete" invisible="1"/>
+
+                    <!-- Fase 1: Origen — siempre visible -->
+                    <group string="Origen">
                         <group>
                             <field name="dependence_id" domain="[('abbreviation', 'in', ['DEM', 'TMC', 'CM'])]"/>
-                            <field name="jurisdiction_dependence" invisible="not dependence_id" string="Jurisdicción"/>
-                            <field name="document_type_id" invisible="not dependence_id"/>
-                        </group>
-                        <group>
                             <field name="number" required="1"/>
                             <field name="period"/>
                         </group>
                     </group>
-                    <group invisible="not is_valid">
+
+                    <!-- Fase 2: Procedencia — visible cuando is_origin_complete -->
+                    <group string="Procedencia" invisible="not is_origin_complete">
+                        <group>
+                            <field name="jurisdiction_dependence" string="Jurisdicción"/>
+                            <field name="document_type_id" readonly="1"/>
+                            <field name="intake_date" string="Fecha de Ingreso"/>
+                        </group>
+                    </group>
+
+                    <!-- Campos adicionales — visibles cuando is_origin_complete -->
+                    <group invisible="not is_origin_complete">
                         <group>
                             <field name="main_topic_ids" widget="many2many_tags" string="Asunto"/>
                             <field name="document_object" string="Referencia"/>
-                            <!-- <field name="asunto" string="Asunto (Referencia)"/> -->
                         </group>
                         <group>
-                            <!-- <field name="entry_date" string="Fecha de ingreso del expediente" help="Fecha en que el expediente ingresó al TMC"/> -->
                             <field name="date" string="Fecha de inicio del trámite" help="Fecha en que inicia el trámite/documento"/>
                         </group>
                         <group>
@@ -62,7 +65,7 @@
                             <field name="fojas"/>
                         </group>
                     </group>
-                    <group invisible="not is_valid">
+                    <group invisible="not is_origin_complete">
                         <group>
                             <field name="document_topic_ids" invisible="1"/>
                         </group>

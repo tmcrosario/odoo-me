@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import _, api, exceptions, fields, models
 
 
 class DocumentExp(models.Model):
@@ -46,10 +46,21 @@ class DocumentExp(models.Model):
     # El required se define en la vista (required="1" en el campo).
     # number = fields.Integer(required=True)
 
+    intake_date = fields.Date(
+        string="Fecha de Ingreso",
+        required=True,
+        help="Fecha en que el expediente fue recibido físicamente en Mesa de Entradas",
+    )
+
     is_valid = fields.Boolean(
         compute="_compute_is_valid",
         string="Expediente Válido",
         help="Indica si el expediente tiene todos los campos básicos completos"
+    )
+
+    is_origin_complete = fields.Boolean(
+        compute="_compute_is_origin_complete",
+        string="Origen Completo",
     )
 
     computed_name = fields.Char(
@@ -71,6 +82,21 @@ class DocumentExp(models.Model):
                 ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
             ])
             record.allowed_dependence_ids = allowed_deps
+
+    @api.constrains('intake_date')
+    def _check_intake_date_not_future(self):
+        for record in self:
+            if record.intake_date and record.intake_date > fields.Date.today():
+                raise exceptions.ValidationError(
+                    _("La fecha de ingreso no puede ser una fecha futura.")
+                )
+
+    @api.depends('dependence_id', 'number', 'period')
+    def _compute_is_origin_complete(self):
+        for record in self:
+            record.is_origin_complete = bool(
+                record.dependence_id and record.number and record.period
+            )
 
     @api.depends('dependence_id', 'document_type_id', 'number', 'period', 'jurisdiction_dependence')
     def _compute_is_valid(self):

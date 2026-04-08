@@ -258,7 +258,7 @@ Impacto técnico:
 ### #008 – Rediseño de vista form de expediente (fases de carga y fechas)
 --------------------------------------------------
 
-[IDEA]
+[TODO]
 
 Contexto:
 La vista form actual de me.document_exp muestra los campos en un orden
@@ -266,108 +266,112 @@ plano sin distinción conceptual entre origen administrativo, procedencia
 física y fechas del trámite.
 
 Se requiere reorganizar la carga del expediente en dos fases progresivas
-y clarificar la semántica de los campos de fecha.
+y agregar el campo `intake_date` para registrar la recepción física del
+expediente en Mesa de Entradas.
 
----- Cambios definidos ----
+---- Fases del formulario ----
 
 Fase 1 — Origen (siempre visible):
 - Título "Origen" encima de `dependence_id`
 - Campos visibles: `dependence_id`, `number`, `period`
-- `dependence_id` representa el origen administrativo del expediente
-  (DEM, TMC, CM)
+- `dependence_id` representa el origen administrativo (DEM, TMC, CM)
 
-Fase 2 — Procedencia (visible al completar los 3 campos de Fase 1):
+Fase 2 — Procedencia (visible cuando is_origin_complete = True):
 - Título "Procedencia" encima de `jurisdiction_dependence`
-- Campos que se habilitan: `jurisdiction_dependence`, `document_type_id`
+- Campos que se habilitan: `jurisdiction_dependence`, `document_type_id`,
+  `intake_date`, y el resto de los campos existentes (temas, objeto, fojas…)
 - `jurisdiction_dependence` representa la oficina de origen físico
 - `document_type_id` se completa automáticamente con EXP, no editable
-- Al completar los 3 campos de Fase 1 también se habilita
-  el resto de los campos existentes (temas, objeto, fojas, etc.)
+- `intake_date` es obligatorio y lo completa el operador manualmente
 
----- Decisión cerrada: is_valid ----
+---- Campo is_origin_complete ----
 
-`is_valid` no cambia su semántica ni sus 5 dependencias:
+Campo computed en me.document_exp.
+Depende de: `dependence_id`, `number`, `period`.
+Controla la progresión visual de Fase 1 a Fase 2.
+
+No reemplaza ni modifica `is_valid`.
+`is_valid` mantiene sus 5 dependencias originales:
 (dependence_id, document_type_id, number, period, jurisdiction_dependence)
 
-La progresión visual de Fase 1 se controla con un campo computed separado
-(nombre en inglés, a definir — tentativo: `is_origin_complete`), que depende
-solo de: `dependence_id`, `number`, `period`.
+Motivo: completitud funcional del expediente y progresión visual de carga
+son dos conceptos distintos. No mezclarlos.
 
-Motivo: no mezclar completitud funcional del expediente con progresión
-visual de carga inicial. Son dos conceptos distintos.
+---- Arquitectura de fechas ----
 
----- Análisis del campo `date` (fuente de verdad: código) ----
+No todos los documentos en tmc.document tienen ingreso físico por ME.
+La fecha de ingreso físico es un atributo del circuito, no del documento.
+tmc.document no debe tener campo de ingreso físico.
 
-`date` se define en tmc.document como `fields.Date()` sin default.
-En la vista de ME ya tiene semántica explícita:
-  string="Fecha de inicio del trámite"
-  help="Fecha en que inicia el trámite/documento"
+Circuitos y campos:
+- ME (expedientes):      `intake_date` en me.document_exp (nuevo)
+- RAA (actos formales):  `entry_date` en raa.registry_aa (ya existe)
+- Gestión documental:    no aplica el concepto
 
-Comportamiento observado en código:
-- No participa en create(): no se pasa en vals al guardar el expediente.
-  Queda vacío hasta que el operador lo complete manualmente.
-- En write(): se extrae de vals y se actualiza vía SQL directo en
-  _update_document_date() — bypassa la constraint _check_date_not_future.
-- No tiene relación con la fecha de los movimientos automáticos.
-  Los movimientos usan fields.Datetime.now() en create(), de forma
-  completamente independiente.
+Los tres campos de fecha tienen semánticas distintas:
+  `date`        = fecha propia del documento (la que figura en el papel)
+  `create_date` = alta técnica del registro (Odoo, automático, no editable)
+  `intake_date` = recepción física en Mesa de Entradas (editable, obligatorio)
 
-Constraints heredadas de tmc.document que afectan a `date`:
-- _check_date_not_future: no puede ser fecha futura (ME la bypassa).
-- El año de `date` debe coincidir con `period` (excepto tipo CONV).
+El campo `entry_date` en tmc.document está comentado y no debe
+descomentarse: mezclaría circuitos distintos en el modelo base.
+El método _compute_entry_date que persiste en el código es deuda técnica.
 
-Campo `entry_date` en tmc.document (comentado en el código base):
-- Existe como campo computado pero está desactivado:
-  `# entry_date = fields.Date(compute="_compute_entry_date", readonly=True)`
-- Lógica computada: deriva la fecha de raa.registry_aa.entry_date;
-  si no existe, usa create_date como fallback.
-- En la vista de ME también está comentado.
-- No permite ingreso manual — es computed y readonly.
+---- Definición de intake_date ----
 
-Conclusión:
-- `date` = fecha de inicio del trámite (la del documento físico). Claro.
-- Fecha de ingreso al TMC: no existe como campo editable en ME.
-  `entry_date` existe en el modelo base pero está comentado, es computed
-  y no cubre el caso de ingreso manual con fecha distinta a create_date.
+Nombre técnico:   intake_date
+Modelo:           me.document_exp
+Tipo:             fields.Date()
+Obligatorio:      sí (required=True)
+Default:          ninguno — el operador lo carga conscientemente
+Editable:         sí, por el operador de ME
+Fecha futura:     no permitida (constraint en me.document_exp)
+Relación period:  no validada — un EXP/2023 puede ingresar en 2025
+Ubicación en UI:  Fase 2, visible cuando is_origin_complete = True
 
----- Decisión abierta: fecha de ingreso al TMC ----
+Definición funcional:
+  Fecha en que el expediente fue recibido físicamente en Mesa de
+  Entradas del Tribunal Municipal de Cuentas.
 
-¿La fecha de ingreso al TMC debe ser:
-  a) La fecha de carga en el sistema (create_date, automática, no editable)
-  b) Un campo editable en me.document_exp que el operador complete
-     con la fecha real de llegada física al Tribunal
+Ejemplo:
+  - Expediente llega físicamente: martes 2 de abril
+  - Se carga en el sistema:       miércoles 3 de abril
+  - intake_date = 2 de abril  (lo ingresa el operador)
+  - create_date = 3 de abril  (automático, no editable)
 
-Ejemplo concreto:
-- Expediente llega físicamente: martes 2 de abril
-- Se carga en el sistema: miércoles 3 de abril
-- ¿Se debe poder registrar el martes 2 como fecha de ingreso?
+---- Decisiones abiertas ----
 
-Si la respuesta es (b):
-- Nuevo campo en me.document_exp (nombre en inglés)
-- Nombre tentativo: `intake_date`
-- Campo editable, separado de `date` (fecha del documento)
-- `entry_date` del modelo base no es reutilizable directamente:
-  es computed, depende de RAA y no permite ingreso manual
+Ninguna. La task está lista para implementación.
 
-Convención de nombres:
-Todos los nombres técnicos de campos nuevos deben estar en inglés.
+---- Criterios de aceptación ----
 
----- Criterios de aceptación (parciales — pendiente decisión de intake_date) ----
+Modelo:
+- [ ] Campo computed `is_origin_complete` en me.document_exp
+      dependiente de: dependence_id, number, period
+- [ ] Campo `intake_date` en me.document_exp:
+      required=True, sin default, sin validación contra period
+- [ ] Constraint en me.document_exp: intake_date no puede ser fecha futura
 
-- [ ] Campo computed `is_origin_complete` en me.document_exp,
-      dependiente de dependence_id + number + period
-- [ ] Vista reorganizada: grupo "Origen" (Fase 1) y grupo "Procedencia" (Fase 2)
-- [ ] Fase 2 controlada por `is_origin_complete`, no por `is_valid`
-- [ ] `document_type_id` readonly en la vista (no editable manualmente)
-- [ ] Test: is_origin_complete = True con los 3 campos; Fase 2 visible
-- [ ] Definir e implementar campo de fecha de ingreso al TMC (pendiente)
+Vista:
+- [ ] Grupo "Origen" visible siempre: dependence_id, number, period
+- [ ] Grupo "Procedencia" visible solo cuando is_origin_complete = True:
+      jurisdiction_dependence, document_type_id, intake_date,
+      y el resto de los campos existentes
+- [ ] document_type_id readonly en la vista (no editable manualmente)
+- [ ] intake_date visible en Fase 2, obligatorio en la vista
+
+Tests:
+- [ ] is_origin_complete = True solo con los 3 campos de Fase 1 completos
+- [ ] is_origin_complete = False si falta alguno de los 3
+- [ ] intake_date rechaza fecha futura
+- [ ] intake_date acepta fecha de año distinto al period
+- [ ] Crear expediente sin intake_date falla por required
 
 Impacto técnico:
-- models: nuevo campo `is_origin_complete` en me.document_exp;
-  posible nuevo campo `intake_date` (a confirmar)
-- views: reorganización de grupos, títulos, visibilidad por fase,
-  document_type_id readonly
-- workflows: sin impacto en create() salvo que se agregue intake_date
-  con valor default o requerimiento de ingreso manual
-- tests: test de is_origin_complete, actualizar test de is_valid si aplica
-- documentación: actualizar ai-context.md (sección UI progresiva y campos)
+- models: is_origin_complete, intake_date, constraint de fecha futura
+- views: reorganización de grupos, títulos, visibilidad condicional,
+         document_type_id readonly, intake_date en Fase 2
+- workflows: create() no se modifica (intake_date sin default, el ORM
+             rechazará el registro si no se provee — comportamiento estándar)
+- tests: casos listados arriba
+- documentación: actualizar ai-context.md (UI progresiva, campos de fecha)
