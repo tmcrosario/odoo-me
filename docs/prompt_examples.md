@@ -221,13 +221,18 @@ Salida requerida:
 
 5. Impacto en documentación
 
-6. Sugerencia de commit:
+6. Sugerencia de commit (obligatoria al cierre):
 
 commit name:
-[ADD]/[FIX]/[UPDATE]/[REFACTOR]/[TEST] descripción corta
+[IMP]/[FIX]/[ADD]/[REM]/[REF]/[MIG]/[UPD]/[WIP] descripción corta
 
 description:
-Explicación breve del cambio (1–3 líneas)
+Explicación breve del cambio
+
+Regla adicional:
+- Elegir la etiqueta que mejor represente el objetivo principal del cambio
+- No ejecutar commits
+- Siempre devolver commit name y description al finalizar
 
 ---
 
@@ -259,7 +264,13 @@ Salida requerida:
 2. Corrección
 3. Tests asociados
 4. Impacto en documentación
-5. Sugerencia de commit
+5. Sugerencia de commit (obligatoria al cierre)
+
+commit name:
+[IMP]/[FIX]/[ADD]/[REM]/[REF]/[MIG]/[UPD]/[WIP] descripción corta
+
+description:
+Explicación breve del cambio
 
 ---
 
