@@ -216,3 +216,23 @@ class TestDocumentExp(TransactionCase):
             dict(self.valid_vals, number=99994, intake_date=today)
         )
         self.assertEqual(expediente.intake_date, today)
+
+    def test_computed_name_after_phase1_complete(self):
+        """computed_name se genera al completar dependence_id, number y period,
+        sin necesidad de jurisdiction_dependence ni document_type_id."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_dem.id,
+            'number': 42,
+            'period': self.current_year,
+        })
+        expected = f"EXP-{str(42).zfill(6)}-DEM/{self.current_year}"
+        self.assertEqual(record.computed_name, expected)
+
+    def test_computed_name_empty_when_phase1_incomplete(self):
+        """computed_name es cadena vacía si falta algún campo de Fase 1."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_dem.id,
+            'number': 42,
+            # period ausente
+        })
+        self.assertEqual(record.computed_name, "Documento sin nombre")

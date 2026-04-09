@@ -121,15 +121,15 @@ class DocumentExp(models.Model):
                 record.jurisdiction_dependence
             )
 
-    @api.depends('dependence_id', 'document_type_id', 'number', 'period', 'jurisdiction_dependence')
+    @api.depends('dependence_id', 'number', 'period')
     def _compute_name(self):
         """Computar el nombre del expediente en tiempo real"""
         for record in self:
-            if record.dependence_id and record.document_type_id and record.number and record.period and record.jurisdiction_dependence:
+            if record.dependence_id and record.number and record.period:
                 dep_abbr = record.dependence_id.abbreviation
                 record.computed_name = f"EXP-{str(record.number).zfill(6)}-{dep_abbr}/{record.period}"
             else:
-                record.computed_name = "Documento Sin Nombre"
+                record.computed_name = "Documento sin nombre"
 
     @api.onchange('dependence_id')
     def _onchange_dependence(self):

@@ -33,20 +33,24 @@
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
 
-                    <!-- Fase 1: Origen — siempre visible -->
-                    <group string="Origen">
+                    <!-- Fase 1 — siempre visible -->
+                    <group>
                         <group>
                             <field name="dependence_id" domain="[('abbreviation', 'in', ['DEM', 'TMC', 'CM'])]"/>
+                            <field name="document_type_id" readonly="1" invisible="not dependence_id"/>
+                        </group>
+                        <group>
                             <field name="number" required="1"/>
                             <field name="period"/>
                         </group>
                     </group>
 
-                    <!-- Fase 2: Procedencia — visible cuando is_origin_complete -->
-                    <group string="Procedencia" invisible="not is_origin_complete">
+                    <!-- Fase 2 — visible cuando is_origin_complete -->
+                    <group invisible="not is_origin_complete">
                         <group>
                             <field name="jurisdiction_dependence" string="Jurisdicción"/>
-                            <field name="document_type_id" readonly="1"/>
+                        </group>
+                        <group>
                             <field name="intake_date" string="Fecha de Ingreso"/>
                         </group>
                     </group>
