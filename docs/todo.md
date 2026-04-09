@@ -375,3 +375,86 @@ Impacto técnico:
              rechazará el registro si no se provee — comportamiento estándar)
 - tests: casos listados arriba
 - documentación: actualizar ai-context.md (UI progresiva, campos de fecha)
+
+--------------------------------------------------
+### #009 – Selección jerárquica dependiente de jurisdicción
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+En la vista form de me.document_exp, `jurisdiction_dependence` permite
+elegir la dependencia de jurisdicción del expediente (Many2one → tmc.dependence).
+Se agrega un segundo campo dependiente que muestra solo las dependencias
+hijas de la jurisdicción seleccionada (repartición de origen del expediente).
+
+---- Análisis del nomenclador ----
+
+tmc.dependence: modelo plano, 191 registros. Sin parent_id, sin jerarquía propia.
+
+tmc.dependence_order: 197 registros. Campos relevantes:
+  - dependence_id → tmc.dependence (qué dependencia es)
+  - parent_id     → tmc.dependence (cuál es su padre)
+  - code          → código jerárquico X.XX.XX
+
+La jerarquía se obtiene consultando tmc.dependence_order donde
+parent_id = jurisdiction_dependence.id, y mapeando .dependence_id.
+
+Las jurisdicciones permitidas (DEM, TMC, CM) tienen hijos en el nomenclador:
+  - DEM (1.02.00): 8 hijos
+  - TMC (1.13.00): 1 hijo
+  - CM: tiene hijos
+
+---- Decisiones ----
+
+1. El campo apunta a tmc.dependence (no a tmc.dependence_order).
+   Motivo: consistencia con jurisdiction_dependence, semántica correcta,
+   el usuario ve el nombre de la dependencia, no el código.
+
+2. Domain del campo hijo: campo computed auxiliary allowed_sub_dependence_ids
+   (Many2many, compute), que consulta tmc.dependence_order por parent_id
+   y mapea .dependence_id. Domain en vista referencia ese campo.
+   Patrón consistente con allowed_dependence_ids ya existente en el modelo.
+
+3. Nombre técnico: reparticion_id
+   (Many2one → tmc.dependence, required=False)
+
+4. Label visible: "Repartición"
+
+5. Obligatorio: No.
+   Motivo: la jurisdicción puede ser suficiente en algunos casos.
+
+6. Auto-limpieza: Sí, vía onchange sobre jurisdiction_dependence.
+   Si cambia la jurisdicción, reparticion_id se limpia para evitar
+   datos inconsistentes.
+
+7. Impacto en movimientos automáticos: ninguno en esta tarea.
+   Los movimientos en create() siguen usando jurisdiction_dependence
+   como origen del movimiento 1. reparticion_id no se incorpora.
+
+---- Criterios de aceptación ----
+
+Modelo:
+- [ ] Campo reparticion_id: Many2one(tmc.dependence, required=False)
+      en me.document_exp
+- [ ] Campo computed allowed_sub_dependence_ids: Many2many(tmc.dependence),
+      depende de jurisdiction_dependence; consulta tmc.dependence_order
+      donde parent_id = jurisdiction_dependence.id
+- [ ] Onchange sobre jurisdiction_dependence que limpia reparticion_id
+
+Vista:
+- [ ] reparticion_id en Fase 2, debajo de jurisdiction_dependence
+- [ ] Domain del campo referencia allowed_sub_dependence_ids
+- [ ] Visible cuando is_origin_complete = True
+
+Tests:
+- [ ] reparticion_id se filtra a hijos de la jurisdicción seleccionada
+- [ ] reparticion_id se limpia al cambiar jurisdiction_dependence
+- [ ] Expediente sin reparticion_id se crea sin error (campo opcional)
+
+Impacto técnico:
+- models: reparticion_id, allowed_sub_dependence_ids, onchange
+- views: campo nuevo en Fase 2, domain dependiente de jurisdicción
+- workflows: sin cambios en create() ni movimientos automáticos
+- tests: casos listados arriba
+- documentación: actualizar ai-context.md y workflows.md (Fase 2)
