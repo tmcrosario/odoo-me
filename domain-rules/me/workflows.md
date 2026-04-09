@@ -20,15 +20,24 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 ### Pasos
 
+**Fase 1 (siempre visible):**
+
 1. El usuario abre el formulario de nuevo expediente.
 2. Completa `dependence_id` (origen del expediente).
-3. Al seleccionar `dependence_id`, el sistema auto-asigna `document_type_id` con `abbreviation = 'EXP'`.
-4. El usuario completa `jurisdiction_dependence`, `number` y `period`.
-5. A medida que completa los campos, el sistema muestra en tiempo real el valor de `computed_name` (ej. `EXP-000001-DEM/2025`).
-6. Si los 5 campos básicos están completos y existe un expediente con los mismos datos, el sistema emite un **warning** (no bloquea).
-7. El usuario guarda el formulario → se ejecuta `create()`.
-8. El sistema ejecuta los sub-pasos 2, 3 y 4 automáticamente.
-9. El formulario muestra el expediente creado con su nombre generado.
+3. Al seleccionar `dependence_id`, el sistema auto-asigna `document_type_id = 'EXP'`
+   (vía `default_get` y `_onchange_dependence`). El campo es readonly.
+4. El usuario completa `number` y `period`.
+5. Al completar los 3 campos de Fase 1, `is_origin_complete` se vuelve `True`
+   y el sistema muestra en tiempo real `computed_name` (ej. `EXP-000001-DEM/2025`).
+
+**Fase 2 (visible cuando `is_origin_complete = True`):**
+
+6. El usuario completa `jurisdiction_dependence` e `intake_date` (ambos obligatorios).
+7. Si los 5 campos básicos están completos y existe un expediente con los mismos datos,
+   el sistema emite un **warning** (no bloquea).
+8. El usuario guarda el formulario → se ejecuta `create()`.
+9. El sistema ejecuta los sub-pasos 2, 3 y 4 automáticamente.
+10. El formulario muestra el expediente creado con su nombre generado.
 
 ### Evidence
 
@@ -132,7 +141,7 @@ Crea dos movimientos automáticos que registran la trayectoria inicial del exped
 
 **Movimiento 2 — TMC → Mesa de Entradas:**
 
-3. El sistema busca `tmc.dependence` con `name ilike 'Mesa de Entradas'`.
+3. El sistema busca `tmc.dependence` con `abbreviation = 'ME'`.
 4. Si existen ambas dependencias (TMC y Mesa de Entradas), crea un segundo movimiento:
    - origen: `tmc.dependence (TMC)`
    - destino: `tmc.dependence (Mesa de Entradas)`
@@ -199,48 +208,52 @@ desde la pestaña "Movimientos" en el formulario.
 
 --------------------------------------------------
 
-## 6. Progresión de UI basada en is_valid
+## 6. Progresión de UI basada en is_origin_complete
 
 El formulario de `me.document_exp` muestra campos progresivamente
-según el estado de completitud del expediente.
+según el estado de completitud de la Fase 1 del expediente.
 
 ### Pasos
 
-**Fase 1 — Campos básicos (siempre visibles):**
+**Fase 1 — siempre visible:**
 
-1. El usuario ve `computed_name`, `dependence_id`, `document_type_id`, `jurisdiction_dependence`, `number`, `period`.
-2. `computed_name` muestra "Documento Sin Nombre" hasta que los 5 campos estén completos.
+1. El usuario ve `dependence_id`, `document_type_id` (readonly, visible al seleccionar dependence_id),
+   `number`, `period`.
+2. `computed_name` muestra "Documento sin nombre" hasta que los 3 campos de Fase 1 estén completos.
 
-**Fase 2 — Campos extendidos (visibles cuando `is_valid = True`):**
+**Fase 2 — visible cuando `is_origin_complete = True`:**
 
-3. Cuando los 5 campos básicos están completos, `is_valid` se vuelve `True`.
-4. Se habilita el segundo grupo de campos: `main_topic_ids`, `document_object`, `date`, `external_key`, `fojas`.
+3. Cuando `dependence_id`, `number` y `period` están completos, `is_origin_complete` se vuelve `True`.
+4. `computed_name` muestra el nombre generado (ej. `EXP-000001-DEM/2025`).
+5. Se habilitan: `jurisdiction_dependence`, `intake_date`, `main_topic_ids`, `document_object`,
+   `date`, `external_key`, `fojas`.
 
-**Fase 3 — Pestaña de movimientos (visible cuando el registro está guardado):**
+**Fase 3 — pestaña de movimientos (visible cuando el registro está guardado):**
 
-5. Cuando el registro tiene `id` (fue guardado), aparece el notebook con la pestaña "Movimientos".
-6. La pestaña "Documentos Relacionados" permanece siempre invisible.
+6. Cuando el registro tiene `id` (fue guardado), aparece el notebook con la pestaña "Movimientos".
+7. La pestaña "Documentos Relacionados" permanece siempre invisible.
 
 ### Evidence
 
 **Observed in code:**
-- `is_valid` se computa sobre 5 campos: `me/models/document_exp.py:71–81`
-- Campos que determinan `is_valid`: `dependence_id`, `document_type_id`, `number`, `period`, `jurisdiction_dependence`
-- Visibilidad del grupo extendido: `me/views/document_exp_views.xml:50`
-  (`invisible="not is_valid"`)
-- Visibilidad del notebook: `me/views/document_exp_views.xml:70`
-  (`invisible="not id"`)
-- Tab "Documentos Relacionados" siempre invisible: `me/views/document_exp_views.xml:89`
-- `document_topic_ids` siempre invisible: `me/views/document_exp_views.xml:67`
+- `is_origin_complete` se computa sobre 3 campos: `me/models/document_exp.py`
+  (`dependence_id`, `number`, `period`)
+- `is_valid` sigue existiendo pero NO controla la visibilidad — mide completitud funcional
+  (5 campos: `dependence_id`, `document_type_id`, `number`, `period`, `jurisdiction_dependence`)
+- `computed_name` depende de los mismos 3 campos que `is_origin_complete`
+- Visibilidad del grupo Fase 2: `me/views/document_exp_views.xml` (`invisible="not is_origin_complete"`)
+- Visibilidad del notebook: `me/views/document_exp_views.xml` (`invisible="not id"`)
+- Tab "Documentos Relacionados" siempre invisible
+- `document_topic_ids` siempre invisible
 
 **Inferred:**
-- El usuario puede completar los campos básicos sin guardar el registro.
-  `is_valid` se evalúa en tiempo real (campo computed).
-- Los campos extendidos se habilitan antes de guardar, si los 5 campos básicos están completos.
+- El usuario puede completar los campos de Fase 1 sin guardar el registro.
+  `is_origin_complete` se evalúa en tiempo real.
+- Los campos de Fase 2 se habilitan antes de guardar, si Fase 1 está completa.
 
 **Uncertain / pending definition:**
-- No está definido qué ocurre si el usuario limpia un campo básico después de haber completado
-  los extendidos. Los campos extendidos desaparecerían de la vista pero los datos podrían persistir.
+- No está definido qué ocurre si el usuario limpia un campo de Fase 1 después de haber completado
+  campos de Fase 2. Los campos de Fase 2 desaparecerían de la vista pero los datos podrían persistir.
 
 
 --------------------------------------------------

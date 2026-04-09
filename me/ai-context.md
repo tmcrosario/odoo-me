@@ -79,11 +79,13 @@ Own fields (defined in `me.document_exp`):
 |---|---|---|---|
 | `document_id` | Many2one(tmc.document) | Yes | delegation link, ondelete=cascade |
 | `jurisdiction_dependence` | Many2one(tmc.dependence) | Yes | origin of first automatic movement |
+| `intake_date` | Date | Yes | date of physical receipt at Mesa de Entradas; no default; future dates rejected |
 | `external_key` | Char | No | identifier used by the Municipality |
 | `fojas` | Integer | No | number of pages |
 | `number` | Integer | Yes | inherited from tmc.document, required enforced here |
-| `is_valid` | Boolean | No | computed: True when all 5 key fields are complete |
-| `computed_name` | Char | No | computed: format EXP-XXXXXX-ABR/YEAR |
+| `is_valid` | Boolean | No | computed: True when 5 fields complete (dependence_id, document_type_id, number, period, jurisdiction_dependence) |
+| `is_origin_complete` | Boolean | No | computed: True when 3 fields complete (dependence_id, number, period); controls UI progression |
+| `computed_name` | Char | No | computed: format EXP-XXXXXX-ABR/YEAR; shown as soon as dependence_id + number + period are set |
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
 
@@ -127,7 +129,7 @@ IMPORTANT: when a `me.document_exp` is created, the system automatically:
    (only if a tmc.dependence with abbreviation='TMC' exists)
 
 4. Creates movement 2: TMC → Mesa de Entradas
-   (only if a tmc.dependence with name ilike 'Mesa de Entradas' exists)
+   (only if a tmc.dependence with abbreviation='ME' exists)
 
 The user does NOT create the tmc.document separately first.
 The document is created inside me.document_exp.create() via _inherits.
@@ -201,10 +203,18 @@ Implementation: `document_exp.py`, `_update_document_date()`, lines 163–180.
 
 **Progressive visibility in UI**
 
-The form view shows fields progressively based on `is_valid`:
+The form view shows fields progressively based on `is_origin_complete` (not `is_valid`):
 
-- is_valid = False: only basic fields visible (dependence, jurisdiction, type, number, period)
-- is_valid = True: also shows topics, reference, date, external_key, fojas
+Phase 1 — always visible: `dependence_id`, `document_type_id` (auto, readonly, visible once
+dependence_id is set), `number`, `period`
+
+Phase 2 — visible when `is_origin_complete = True` (dependence_id + number + period complete):
+`jurisdiction_dependence`, `intake_date`, topics, reference, date, external_key, fojas
+
+- `is_valid` is still computed and exists in the model (controls functional completeness),
+  but it is NOT the UI visibility control — do not use it for that purpose
+- `computed_name` appears in the header as soon as Phase 1 is complete (3 fields),
+  not after all 5 fields
 - record not yet saved (no id): movements tab hidden
 
 The "Documentos Relacionados" tab is always invisible (hardcoded).
