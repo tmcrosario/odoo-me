@@ -386,7 +386,8 @@ Contexto:
 En la vista form de me.document_exp, `jurisdiction_dependence` permite
 elegir la dependencia de jurisdicción del expediente (Many2one → tmc.dependence).
 Se agrega un segundo campo dependiente que muestra solo las dependencias
-hijas de la jurisdicción seleccionada (repartición de origen del expediente).
+hijas de la jurisdicción seleccionada (la dependencia específica que originó
+el expediente dentro de esa jurisdicción).
 
 ---- Análisis del nomenclador ----
 
@@ -395,15 +396,25 @@ tmc.dependence: modelo plano, 191 registros. Sin parent_id, sin jerarquía propi
 tmc.dependence_order: 197 registros. Campos relevantes:
   - dependence_id → tmc.dependence (qué dependencia es)
   - parent_id     → tmc.dependence (cuál es su padre)
-  - code          → código jerárquico X.XX.XX
+  - code          → código jerárquico X.XX.XX (3 segmentos, zero-padded)
 
 La jerarquía se obtiene consultando tmc.dependence_order donde
 parent_id = jurisdiction_dependence.id, y mapeando .dependence_id.
 
-Las jurisdicciones permitidas (DEM, TMC, CM) tienen hijos en el nomenclador:
-  - DEM (1.02.00): 8 hijos
-  - TMC (1.13.00): 1 hijo
+Las jurisdicciones permitidas (DEM, TMC, CM) tienen o tendrán hijos
+en el nomenclador:
+  - DEM (1.02.00): 8 hijos actuales
   - CM: tiene hijos
+  - TMC (1.13.00): 1 hijo actual (de prueba). Las dependencias propias
+    de TMC (incluyendo ME) se agregarán manualmente al nomenclador.
+
+Nota sobre codificación de dependencias propias de TMC:
+  El campo code en tmc.dependence_order usa exclusivamente 3 segmentos (X.XX.XX).
+  No usar 4 segmentos (1.13.01.01) para dependencias propias de TMC.
+  Usar el rango reservado 1.13.90–1.13.99 para dependencias internas de TMC.
+  Motivo: mantener consistencia con el formato establecido, y reservar un rango
+  poco probable de colisión con el nomenclador oficial externo.
+  El campo code no afecta la búsqueda de hijos (que usa parent_id).
 
 ---- Decisiones ----
 
@@ -416,8 +427,10 @@ Las jurisdicciones permitidas (DEM, TMC, CM) tienen hijos en el nomenclador:
    y mapea .dependence_id. Domain en vista referencia ese campo.
    Patrón consistente con allowed_dependence_ids ya existente en el modelo.
 
-3. Nombre técnico: reparticion_id
+3. Nombre técnico: source_dependence_id
    (Many2one → tmc.dependence, required=False)
+   Nombre en inglés, sufijo _id estándar Odoo, sin colisión con campos
+   de movimientos (origin_dependence_id, destination_dependence_id).
 
 4. Label visible: "Repartición"
 
@@ -425,36 +438,42 @@ Las jurisdicciones permitidas (DEM, TMC, CM) tienen hijos en el nomenclador:
    Motivo: la jurisdicción puede ser suficiente en algunos casos.
 
 6. Auto-limpieza: Sí, vía onchange sobre jurisdiction_dependence.
-   Si cambia la jurisdicción, reparticion_id se limpia para evitar
+   Si cambia la jurisdicción, source_dependence_id se limpia para evitar
    datos inconsistentes.
 
 7. Impacto en movimientos automáticos: ninguno en esta tarea.
    Los movimientos en create() siguen usando jurisdiction_dependence
-   como origen del movimiento 1. reparticion_id no se incorpora.
+   como origen del movimiento 1. source_dependence_id no se incorpora.
 
 ---- Criterios de aceptación ----
 
 Modelo:
-- [ ] Campo reparticion_id: Many2one(tmc.dependence, required=False)
+- [ ] Campo source_dependence_id: Many2one(tmc.dependence, required=False)
       en me.document_exp
 - [ ] Campo computed allowed_sub_dependence_ids: Many2many(tmc.dependence),
       depende de jurisdiction_dependence; consulta tmc.dependence_order
       donde parent_id = jurisdiction_dependence.id
-- [ ] Onchange sobre jurisdiction_dependence que limpia reparticion_id
+- [ ] Onchange sobre jurisdiction_dependence que limpia source_dependence_id
 
 Vista:
-- [ ] reparticion_id en Fase 2, debajo de jurisdiction_dependence
+- [ ] source_dependence_id en Fase 2, debajo de jurisdiction_dependence,
+      con string="Repartición"
 - [ ] Domain del campo referencia allowed_sub_dependence_ids
 - [ ] Visible cuando is_origin_complete = True
 
 Tests:
-- [ ] reparticion_id se filtra a hijos de la jurisdicción seleccionada
-- [ ] reparticion_id se limpia al cambiar jurisdiction_dependence
-- [ ] Expediente sin reparticion_id se crea sin error (campo opcional)
+- [ ] source_dependence_id se filtra a hijos de la jurisdicción seleccionada
+- [ ] source_dependence_id se limpia al cambiar jurisdiction_dependence
+- [ ] Expediente sin source_dependence_id se crea sin error (campo opcional)
 
 Impacto técnico:
-- models: reparticion_id, allowed_sub_dependence_ids, onchange
+- models: source_dependence_id, allowed_sub_dependence_ids, onchange
 - views: campo nuevo en Fase 2, domain dependiente de jurisdicción
 - workflows: sin cambios en create() ni movimientos automáticos
 - tests: casos listados arriba
 - documentación: actualizar ai-context.md y workflows.md (Fase 2)
+
+Dato pendiente (fuera del scope de esta task):
+- Agregar dependencias propias de TMC en odoo-tmc-data/dependence_order.xml
+  con rango 1.13.90–1.13.99 para que el campo tenga opciones cuando
+  jurisdiction_dependence = TMC
