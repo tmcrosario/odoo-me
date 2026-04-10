@@ -475,5 +475,89 @@ Impacto técnico:
 
 Dato pendiente (fuera del scope de esta task):
 - Agregar dependencias propias de TMC en odoo-tmc-data/dependence_order.xml
-  con rango 1.13.90–1.13.99 para que el campo tenga opciones cuando
+  con rango 1.13.80–1.13.99 para que el campo tenga opciones cuando
   jurisdiction_dependence = TMC
+
+--------------------------------------------------
+### #010 – Cargar dependencias internas de TMC en el nomenclador
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+La task #009 agrega el campo source_dependence_id en me.document_exp,
+que filtra dependencias hijas de jurisdiction_dependence a través de
+tmc.dependence_order. Para que ese campo funcione cuando la jurisdicción
+sea TMC, deben existir dependencias internas de TMC cargadas en el
+nomenclador con parent_id = tmc_dependence_tmc.
+
+---- Estructura del nomenclador en 1.13.xx ----
+
+Registros existentes bajo 1.13.xx (nomenclador oficial externo):
+
+  1.13.00  →  dependence_id: tmc_dependence_tmc (TRIBUNAL MUNICIPAL DE CUENTAS, abbr='TMC')
+               parent_id: tmc_dependence_adm (ADMINISTRACIÓN CENTRAL)
+               — nodo raíz de TMC en el organigrama oficial
+
+  1.13.01  →  dependence_id: tmc_dependence_tmc_sub (Tribunal Municipal de Cuentas, sin abbr)
+               parent_id: tmc_dependence_tmc
+               — entrada oficial existente del nomenclador externo, hijo directo de TMC
+
+Las nuevas dependencias internas se agregan como entradas adicionales dentro del
+rango reservado 1.13.80–1.13.99, sin interferir con los códigos oficiales existentes.
+Deben tener:
+  - parent_id = tmc_dependence_tmc  (mismo que 1.13.01)
+  - code dentro del rango 1.13.80–1.13.99
+
+---- Distinción importante ----
+
+tmc_dependence_tmc (tmc.dependence):
+  Registro de la entidad "TRIBUNAL MUNICIPAL DE CUENTAS", abbreviation='TMC'.
+  Es el padre al que se vinculan los nuevos registros via parent_id.
+
+tmc_dependence_order_1_13_00 (tmc.dependence_order):
+  Es la representación de TMC en el organigrama jerárquico (código 1.13.00).
+  No es el padre funcional de las nuevas entradas — lo es la dependencia en sí.
+
+---- Listado confirmado de dependencias internas ----
+
+Todas son hijas directas de TMC (parent_id = tmc_dependence_tmc).
+No hay subniveles internos en esta iteración.
+
+  Código    Nombre                              Abbr   XML ID (propuesto)
+  -------   ---------------------------------   ----   --------------------------
+  1.13.80   Mesa de Entradas                    ME     tmc_dependence_me         ← ya existe en dependence.xml
+  1.13.81   Vocalía                             VOC    tmc_dependence_voc
+  1.13.82   Secretaría de Vocalía               SEC    tmc_dependence_sec
+  1.13.83   Fiscalía de Cuentas                 FC     tmc_dependence_fc
+  1.13.84   Contadores Fiscales                 CF     tmc_dependence_cf
+  1.13.85   Dirección de Innovación y Calidad   DIC    tmc_dependence_dic
+  1.13.86   Dirección de Asuntos Legales        DAL    tmc_dependence_dal
+  1.13.87   Dirección de Asuntos Técnicos       DAT    tmc_dependence_dat
+  1.13.88   Dirección de Coordinación y Despacho DCD   tmc_dependence_dcd
+  1.13.89   Dirección Administrativa Financiera DAF    tmc_dependence_daf
+  1.13.90   Asistentes de Fiscalía de Cuentas   AFC    tmc_dependence_afc
+
+  Slots libres: 1.13.91–1.13.99 (9 disponibles para futuras incorporaciones)
+
+---- Criterios de aceptación ----
+
+Data (odoo-tmc-data):
+- [ ] Las 10 dependencias nuevas (VOC, SEC, FC, CF, DIC, DAL, DAT, DCD, DAF, AFC)
+      existen en dependence.xml con name y abbreviation correctos
+- [ ] Las 11 dependencias (ME + 10 nuevas) tienen registro en dependence_order.xml con:
+      - parent_id = tmc_dependence_tmc
+      - code en el rango 1.13.80–1.13.99 según la tabla
+- [ ] ME (tmc_dependence_me) solo requiere su entrada en dependence_order.xml
+      — ya existe en dependence.xml
+
+Tests:
+- [ ] Al buscar hijos de TMC en tmc.dependence_order, se retornan las 11 dependencias
+- [ ] Las dependencias son recuperables con:
+      tmc.dependence_order.search([('parent_id', '=', tmc_id)])
+
+Impacto técnico:
+- data: odoo-tmc-data/dependence.xml (10 registros nuevos) y
+        odoo-tmc-data/dependence_order.xml (11 registros nuevos)
+- tests: verificar que las dependencias aparecen en el filtro de #009
+- documentación: sin impacto directo

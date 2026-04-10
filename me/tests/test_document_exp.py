@@ -236,3 +236,43 @@ class TestDocumentExp(TransactionCase):
             # period ausente
         })
         self.assertEqual(record.computed_name, "Documento sin nombre")
+
+    def test_tmc_has_eleven_internal_dependences_in_nomenclator(self):
+        """
+        Verifica que TMC tiene exactamente 11 dependencias internas en
+        tmc.dependence_order con parent_id = TMC (rango 1.13.80–1.13.90).
+        Requiere que los datos de odoo-tmc-data estén cargados.
+        """
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        self.assertTrue(dep_tmc, "La dependencia TMC debe existir")
+
+        internal_orders = self.env['tmc.dependence_order'].search([
+            ('parent_id', '=', dep_tmc.id),
+            ('code', '>=', '1.13.80'),
+            ('code', '<=', '1.13.99'),
+        ])
+        self.assertEqual(
+            len(internal_orders), 11,
+            f"Se esperan 11 dependencias internas de TMC, encontradas: {len(internal_orders)}"
+        )
+
+    def test_tmc_internal_dependences_include_expected_abbreviations(self):
+        """
+        Verifica que las dependencias internas de TMC incluyen las abreviaciones
+        esperadas: ME, VOC, SEC, FC, CF, DIC, DAL, DAT, DCD, DAF, AFC.
+        """
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        self.assertTrue(dep_tmc, "La dependencia TMC debe existir")
+
+        internal_orders = self.env['tmc.dependence_order'].search([
+            ('parent_id', '=', dep_tmc.id),
+            ('code', '>=', '1.13.80'),
+            ('code', '<=', '1.13.99'),
+        ])
+        found_abbreviations = set(internal_orders.mapped('dependence_id.abbreviation'))
+        expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC'}
+        self.assertEqual(found_abbreviations, expected_abbreviations)
