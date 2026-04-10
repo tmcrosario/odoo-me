@@ -561,3 +561,114 @@ Impacto técnico:
         odoo-tmc-data/dependence_order.xml (11 registros nuevos)
 - tests: verificar que las dependencias aparecen en el filtro de #009
 - documentación: sin impacto directo
+
+--------------------------------------------------
+### #011 – Responsable operativo en movimientos de expediente
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+me.document_movement registra la trazabilidad del expediente entre
+dependencias. El modelo actual tiene:
+  - expediente_id       → me.document_exp
+  - date                → Datetime (default: now)
+  - origin_dependence_id  → tmc.dependence
+  - destination_dependence_id → tmc.dependence
+  - user_id             → res.users (default: usuario de sesión)
+
+user_id registra quién cargó el movimiento en Odoo, no necesariamente
+quién entregó o recibió físicamente el expediente.
+
+El usuario quiere poder reflejar algo como:
+  - Origen: Mesa de Entradas
+  - Destino: Vocalía
+  - Usuario responsable / receptor: Juan Pérez
+
+---- Hallazgos del análisis técnico ----
+
+Tres estructuras coexisten sin vínculo entre sí:
+
+1. res.users (Odoo)
+   — cuenta de sesión, ya presente en el movimiento como user_id
+   — no tiene relación declarada con tmc.hr.employee
+
+2. tmc.hr.employee (custom HR)
+   — modelo propio del TMC: nombre, legajo, email, puesto, oficina
+   — office_id → tmc.hr.office (pertenece a una oficina)
+   — NO tiene user_id ni vínculo con res.users
+
+3. tmc.hr.office (custom HR)
+   — unidad organizacional con jerarquía (parent_id)
+   — employee_ids (One2many → tmc.hr.employee)
+   — manager_id (→ tmc.hr.employee)
+   — NO tiene vínculo con tmc.dependence
+
+Consecuencia:
+  tmc.hr.office y tmc.dependence representan dimensiones distintas
+  del mismo organismo. Una es la estructura organizacional de RRHH
+  (quién trabaja dónde, bajo qué jefatura). La otra es el nomenclador
+  institucional administrativo (qué áreas existen para fines documentales).
+  No hay FK entre ambas en el código actual.
+
+  Un movimiento hoy: "el expediente pasó de dependencia A a dependencia B,
+  y fue cargado por el usuario de sesión X."
+  Un movimiento futuro podría incluir: "lo recibió el empleado Y de la
+  oficina Z."
+
+---- Decisiones abiertas ----
+
+1. Semántica del movimiento
+   - ¿Qué representa exactamente un movimiento?
+   - ¿Es un evento de transferencia formal (dependencia → dependencia),
+     un evento operativo (persona → persona), o ambos?
+   - ¿Debe quedar registrado quién entregó (origen) y quién recibió
+     (destino), o solo uno de ellos?
+
+2. Suficiencia de user_id actual
+   - ¿user_id (res.users, el que cargó el movimiento) es suficiente
+     como trazabilidad operativa?
+   - ¿O se requiere distinguir entre "quién cargó en el sistema" y
+     "quién recibió físicamente el expediente"?
+
+3. Qué entidad representa al responsable
+   - ¿res.users (cuenta Odoo)?
+   - ¿tmc.hr.employee (empleado del TMC, sin cuenta Odoo)?
+   - ¿tmc.hr.office (oficina que recibe, sin persona específica)?
+   - ¿Una combinación (oficina + empleado receptor, derivado de la oficina)?
+
+4. Relación entre tmc.hr.office y tmc.dependence
+   - ¿Existe correspondencia funcional entre una oficina (HR) y una
+     dependencia (nomenclador)? ¿Es 1:1, 1:N, o independiente?
+   - ¿Debería modelarse ese vínculo para permitir derivar la oficina
+     desde la dependencia destino, o son mundos separados que no deben
+     cruzarse en esta capa?
+
+5. Asignación del responsable
+   - ¿El operador selecciona manualmente al receptor en el movimiento?
+   - ¿O se deriva automáticamente del usuario de sesión o de la oficina
+     asociada a la dependencia destino?
+   - ¿Qué pasa con los movimientos automáticos (los 2 que genera create())?
+
+6. Obligatoriedad
+   - ¿El campo de receptor/responsable es obligatorio o opcional?
+   - ¿Los movimientos automáticos del create() tendrían receptor?
+
+7. Impacto en trazabilidad y auditoría
+   - ¿La trazabilidad operativa debe aparecer en la vista del expediente?
+   - ¿Como lista de movimientos con receptor visible?
+   - ¿Genera algún tipo de notificación o acuse?
+
+Decisiones técnicas que dependen de las anteriores:
+   - si agregar receiver_employee_id (tmc.hr.employee) o receiver_office_id
+     (tmc.hr.office) o ambos al modelo me.document_movement
+   - si vincular tmc.hr.office con tmc.dependence (nuevo campo en alguno)
+   - si user_id pasa a ser "quien cargó" vs "quien es responsable"
+   - si el domain del receptor depende de la dependencia destino
+
+Impacto técnico:
+- models: me.document_movement y posiblemente tmc.hr.office o tmc.dependence
+- views: formulario de movimiento y/o vista del expediente
+- workflows: create() automático, movimientos manuales
+- tests: trazabilidad operativa, asignación de receptor
+- documentación: actualizar ai-context.md y workflows.md
