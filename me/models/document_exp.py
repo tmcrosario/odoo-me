@@ -19,7 +19,7 @@ class DocumentExp(models.Model):
         compute='_compute_allowed_dependencies',
         string='Dependencias Permitidas'
     )
-    
+
     # Campos específicos del expediente
     external_key = fields.Char(
         string="Clave Externa",
@@ -30,6 +30,16 @@ class DocumentExp(models.Model):
         string="Jurisdicción",
         required=True,
         help="Dependencia de jurisdicción del expediente"
+    )
+    source_dependence_id = fields.Many2one(
+        'tmc.dependence',
+        string="Repartición",
+        help="Repartición específica dentro de la jurisdicción que origina el expediente",
+    )
+    allowed_sub_dependence_ids = fields.Many2many(
+        'tmc.dependence',
+        compute='_compute_allowed_sub_dependences',
+        string='Reparticiones Permitidas',
     )
     fojas = fields.Integer(
         string="Número de fojas",
@@ -88,11 +98,22 @@ class DocumentExp(models.Model):
     def _compute_allowed_dependencies(self):
         """Computar las dependencias permitidas para expedientes"""
         for record in self:
-            # Buscar las dependencias DEM, TMC, CM
             allowed_deps = self.env['tmc.dependence'].search([
                 ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
             ])
             record.allowed_dependence_ids = allowed_deps
+
+    @api.depends('jurisdiction_dependence')
+    def _compute_allowed_sub_dependences(self):
+        """Computar las reparticiones hijas de la jurisdicción seleccionada"""
+        for record in self:
+            if record.jurisdiction_dependence:
+                sub_orders = self.env['tmc.dependence_order'].search([
+                    ('parent_id', '=', record.jurisdiction_dependence.id)
+                ])
+                record.allowed_sub_dependence_ids = sub_orders.mapped('dependence_id')
+            else:
+                record.allowed_sub_dependence_ids = self.env['tmc.dependence'].browse()
 
     @api.constrains('intake_date')
     def _check_intake_date_not_future(self):
@@ -130,6 +151,11 @@ class DocumentExp(models.Model):
                 record.computed_name = f"EXP-{str(record.number).zfill(6)}-{dep_abbr}/{record.period}"
             else:
                 record.computed_name = "Documento sin nombre"
+
+    @api.onchange('jurisdiction_dependence')
+    def _onchange_jurisdiction_dependence(self):
+        """Limpiar repartición al cambiar jurisdicción para evitar datos inconsistentes"""
+        self.source_dependence_id = False
 
     @api.onchange('dependence_id')
     def _onchange_dependence(self):

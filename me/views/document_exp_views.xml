@@ -32,6 +32,7 @@
                     </div>
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
+                    <field name="allowed_sub_dependence_ids" invisible="1"/>
 
                     <!-- Fase 1 — siempre visible -->
                     <group>
@@ -49,6 +50,9 @@
                     <group invisible="not is_origin_complete">
                         <group>
                             <field name="jurisdiction_dependence" string="Jurisdicción"/>
+                            <field name="source_dependence_id"
+                                   string="Repartición"
+                                   domain="[('id', 'in', allowed_sub_dependence_ids)]"/>
                         </group>
                         <group>
                             <field name="intake_date" string="Fecha de Ingreso"/>

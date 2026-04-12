@@ -258,6 +258,11 @@ class TestDocumentExp(TransactionCase):
             f"Se esperan 11 dependencias internas de TMC, encontradas: {len(internal_orders)}"
         )
 
+    def test_source_dependence_optional_on_create(self):
+        """source_dependence_id es opcional — crear expediente sin él no falla."""
+        expediente = self.env['me.document_exp'].create(self.valid_vals)
+        self.assertFalse(expediente.source_dependence_id)
+
     def test_tmc_internal_dependences_include_expected_abbreviations(self):
         """
         Verifica que las dependencias internas de TMC incluyen las abreviaciones
@@ -276,3 +281,116 @@ class TestDocumentExp(TransactionCase):
         found_abbreviations = set(internal_orders.mapped('dependence_id.abbreviation'))
         expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC'}
         self.assertEqual(found_abbreviations, expected_abbreviations)
+
+
+@tagged('post_install', '-at_install')
+class TestSourceDependence(TransactionCase):
+    """Tests para source_dependence_id y allowed_sub_dependence_ids en me.document_exp."""
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        # Jurisdicción de prueba aislada (no interfiere con datos reales)
+        self.dep_jur_test = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Source Test',
+            'abbreviation': 'JSRC',
+        })
+        # Otra jurisdicción para testear cambio de jurisdicción
+        self.dep_jur_alt = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Alt Test',
+            'abbreviation': 'JALT',
+        })
+
+        # Reparticiones hijas de dep_jur_test
+        self.dep_child_a = self.env['tmc.dependence'].create({
+            'name': 'Reparticion Child A',
+            'abbreviation': 'RCA',
+        })
+        self.dep_child_b = self.env['tmc.dependence'].create({
+            'name': 'Reparticion Child B',
+            'abbreviation': 'RCB',
+        })
+        # Repartición que NO es hija de dep_jur_test
+        self.dep_unrelated = self.env['tmc.dependence'].create({
+            'name': 'Reparticion Unrelated',
+            'abbreviation': 'RCU',
+        })
+
+        # Registros en tmc.dependence_order: child_a y child_b bajo dep_jur_test
+        self.env['tmc.dependence_order'].create({
+            'code': '9.99.01',
+            'parent_id': self.dep_jur_test.id,
+            'dependence_id': self.dep_child_a.id,
+        })
+        self.env['tmc.dependence_order'].create({
+            'code': '9.99.02',
+            'parent_id': self.dep_jur_test.id,
+            'dependence_id': self.dep_child_b.id,
+        })
+
+        self.current_year = str(fields.Date.today().year)
+
+        self.base_vals = {
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 99995,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur_test.id,
+            'intake_date': fields.Date.today(),
+        }
+
+    def test_allowed_sub_dependence_ids_returns_children(self):
+        """
+        allowed_sub_dependence_ids retorna las dependencias hijas de la
+        jurisdicción seleccionada, consultando tmc.dependence_order por parent_id.
+        Usa un record guardado para evitar el problema de NewId en new() records.
+        """
+        expediente = self.env['me.document_exp'].create(self.base_vals)
+        self.assertIn(self.dep_child_a, expediente.allowed_sub_dependence_ids)
+        self.assertIn(self.dep_child_b, expediente.allowed_sub_dependence_ids)
+        self.assertNotIn(self.dep_unrelated, expediente.allowed_sub_dependence_ids)
+
+    def test_allowed_sub_dependence_ids_empty_without_jurisdiction(self):
+        """allowed_sub_dependence_ids es vacío cuando no hay jurisdicción seleccionada."""
+        record = self.env['me.document_exp'].new({})
+        self.assertFalse(record.allowed_sub_dependence_ids)
+
+    def test_source_dependence_cleared_on_jurisdiction_change(self):
+        """
+        Al cambiar jurisdiction_dependence, source_dependence_id se limpia
+        para evitar datos inconsistentes entre jurisdicción y repartición.
+        """
+        record = self.env['me.document_exp'].new({
+            'jurisdiction_dependence': self.dep_jur_test.id,
+            'source_dependence_id': self.dep_child_a.id,
+        })
+        self.assertEqual(record.source_dependence_id, self.dep_child_a)
+
+        record.jurisdiction_dependence = self.dep_jur_alt
+        record._onchange_jurisdiction_dependence()
+
+        self.assertFalse(record.source_dependence_id)
+
+    def test_create_with_source_dependence_persists(self):
+        """source_dependence_id se persiste correctamente al crear el expediente."""
+        vals = dict(self.base_vals, source_dependence_id=self.dep_child_a.id)
+        expediente = self.env['me.document_exp'].create(vals)
+        self.assertEqual(expediente.source_dependence_id, self.dep_child_a)

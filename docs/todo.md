@@ -405,15 +405,17 @@ Las jurisdicciones permitidas (DEM, TMC, CM) tienen o tendrán hijos
 en el nomenclador:
   - DEM (1.02.00): 8 hijos actuales
   - CM: tiene hijos
-  - TMC (1.13.00): 1 hijo actual (de prueba). Las dependencias propias
-    de TMC (incluyendo ME) se agregarán manualmente al nomenclador.
+  - TMC (1.13.00): 11 dependencias internas cargadas por #010
+    (rango 1.13.80–1.13.89). El campo tendrá opciones disponibles
+    cuando jurisdiction_dependence = TMC.
 
 Nota sobre codificación de dependencias propias de TMC:
   El campo code en tmc.dependence_order usa exclusivamente 3 segmentos (X.XX.XX).
   No usar 4 segmentos (1.13.01.01) para dependencias propias de TMC.
-  Usar el rango reservado 1.13.90–1.13.99 para dependencias internas de TMC.
-  Motivo: mantener consistencia con el formato establecido, y reservar un rango
-  poco probable de colisión con el nomenclador oficial externo.
+  Usar el rango reservado 1.13.80–1.13.99 para dependencias internas de TMC.
+  #010 usó 1.13.80–1.13.89. Quedan slots 1.13.90–1.13.99 para incorporaciones
+  futuras. Motivo: mantener consistencia con el formato establecido, y reservar
+  un rango poco probable de colisión con el nomenclador oficial externo.
   El campo code no afecta la búsqueda de hijos (que usa parent_id).
 
 ---- Decisiones ----
@@ -473,10 +475,10 @@ Impacto técnico:
 - tests: casos listados arriba
 - documentación: actualizar ai-context.md y workflows.md (Fase 2)
 
-Dato pendiente (fuera del scope de esta task):
-- Agregar dependencias propias de TMC en odoo-tmc-data/dependence_order.xml
-  con rango 1.13.80–1.13.99 para que el campo tenga opciones cuando
-  jurisdiction_dependence = TMC
+Nota:
+Las dependencias internas de TMC (Mesa de Entradas y 10 áreas adicionales)
+fueron cargadas en #010. El campo source_dependence_id tendrá opciones
+disponibles para TMC desde el momento en que #010 esté implementada.
 
 --------------------------------------------------
 ### #010 – Cargar dependencias internas de TMC en el nomenclador
