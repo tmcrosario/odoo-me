@@ -674,3 +674,300 @@ Impacto técnico:
 - workflows: create() automático, movimientos manuales
 - tests: trazabilidad operativa, asignación de receptor
 - documentación: actualizar ai-context.md y workflows.md
+
+--------------------------------------------------
+### #012 – Comportamiento condicional de jurisdicción y repartición
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+El campo jurisdiction_dependence actualmente no tiene domain filter en la
+vista — muestra las 191 dependencias del nomenclador. Tampoco existe
+comportamiento diferenciado según la dependencia de origen elegida en Fase 1.
+
+Se definen tres reglas funcionales que condicionan la visibilidad y el valor
+de jurisdiction_dependence y source_dependence_id según el valor de
+dependence_id:
+
+---- Reglas ----
+
+1. Expedientes del TMC — auto-asignación de jurisdicción
+   Cuando dependence_id.abbreviation == 'TMC', jurisdiction_dependence
+   debe asignarse automáticamente a "TRIBUNAL MUNICIPAL DE CUENTAS"
+   (tmc_dependence_tmc) y ser readonly para el operador.
+   Si el operador cambia dependence_id (Fase 1), jurisdiction_dependence
+   se limpia y vuelve a ser editable.
+
+2. Expedientes del Concejo Municipal — ocultamiento de campos
+   Cuando dependence_id.abbreviation == 'CM', los campos
+   jurisdiction_dependence y source_dependence_id no deben mostrarse.
+   Motivo: en ese contexto esos campos no aplican.
+
+3. Campo jurisdicción restringido a nodos madre del nomenclador
+   jurisdiction_dependence debe mostrar solo las dependencias que son
+   nodos padre en el nomenclador institucional (jurisdicciones madre),
+   no subdependencias. Las subdependencias (reparticiones, oficinas,
+   direcciones internas) deben aparecer exclusivamente en
+   source_dependence_id, filtradas por la jurisdicción elegida.
+
+---- Decisiones abiertas ----
+
+A. Definición técnica de "jurisdicción madre"
+   El modelo tmc.dependence es plano. La jerarquía está en
+   tmc.dependence_order. Las "madres" son dependencias que tienen
+   hijos en ese modelo (aparecen como parent_id de otros registros)
+   y cuyo código termina en .00 (e.g., 1.02.00, 1.13.00).
+
+   Opciones técnicas:
+   - Lista fija hardcoded (igual que el filtro de dependence_id):
+     simple, requiere mantenimiento manual si el nomenclador crece.
+   - Campo computed que consulta tmc.dependence_order:
+     más dinámico, requiere definir el criterio exacto de "madre".
+   - Flag is_jurisdiction en tmc.dependence (en odoo-tmc):
+     más limpio, pero toca el módulo base.
+
+   Esta decisión determina cómo se filtra el domain de
+   jurisdiction_dependence y bloquea la implementación hasta cerrarse.
+
+B. Constraint required=True de jurisdiction_dependence cuando CM
+   jurisdiction_dependence tiene required=True en el modelo.
+   Ocultarlo sin resolver ese constraint provoca que create() falle.
+
+   Opciones:
+   - Auto-asignar a la dependencia CM misma al ocultar el campo:
+     satisface el required sin cambiar el modelo; simple pero semánticamente
+     impreciso (jurisdiction = dependence en ese caso).
+   - Cambiar required=False y agregar constraint condicional:
+     campo obligatorio solo cuando dependence_id.abbreviation != 'CM'.
+     Requiere cambio en el modelo.
+
+   Esta decisión bloquea las reglas 1 y 2 hasta cerrarse.
+
+---- Impacto técnico ----
+
+- models: onchange sobre dependence_id para auto-asignar o limpiar
+          jurisdiction_dependence; posible cambio de required;
+          posible computed field para domain de jurisdicciones madre
+- views: readonly/invisible condicionales según dependence_id;
+         domain filtrado en jurisdiction_dependence
+- workflows: actualizar Workflow 1 Fase 2 y Workflow 6 Fase 2
+- tests: auto-asignación TMC, bloqueo de edición manual, ocultamiento CM,
+         filtro de jurisdicciones madre en el domain
+- documentación: ai-context.md, workflows.md, system_narrative.md
+
+--------------------------------------------------
+### #013 – Selección de subtema en el campo asunto
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+El campo "Asunto" en el formulario de expediente muestra solo
+main_topic_ids (temas generales, nivel 1). El campo secondary_topic_ids
+(subtemas, nivel 2) existe en tmc.document con domain y onchange ya
+definidos, pero no está expuesto en la vista de me.document_exp.
+
+El operador necesita poder elegir tema Y subtema al completar el asunto.
+Ejemplo: tema "Licitación" → subtema "Privada" o "Pública".
+
+---- Análisis técnico del modelo heredado ----
+
+tmc.document ya tiene los siguientes campos (accesibles en me.document_exp
+vía _inherits):
+
+  document_topic_ids:
+    related field — temas disponibles para dependence_id del documento
+    (todos los temas asociados a esa dependencia vía dependence_id.document_topic_ids)
+
+  main_topic_ids:
+    Many2many(tmc.document_topic)
+    domain: [('parent_id', '=', False), ('id', 'in', document_topic_ids)]
+    → solo temas raíz (nivel 1, sin parent)
+
+  secondary_topic_ids:
+    Many2many(tmc.document_topic)
+    domain: [('parent_id', 'in', main_topic_ids)]
+    → subtemas de los temas seleccionados
+
+  _onchange_main_topic_ids (en tmc.document):
+    → limpia secondary_topic_ids al cambiar main_topic_ids
+    → retorna domain dinámico para secondary_topic_ids
+    → este comportamiento se hereda en me.document_exp vía _inherits
+
+La ME view actualmente solo muestra main_topic_ids con string="Asunto".
+secondary_topic_ids no está en la vista.
+El mecanismo de filtrado y limpieza ya existe en el módulo base.
+
+---- Decisiones ----
+
+1. secondary_topic_ids es opcional.
+   No todo tema tiene subtemas definidos. El operador puede completar el
+   asunto con solo el tema general.
+
+2. Label visible: "Subtema".
+
+3. Widget: many2many_tags (igual que main_topic_ids).
+
+4. Visibilidad: visible solo cuando main_topic_ids no está vacío.
+   Si no hay tema seleccionado, el subtema no aplica.
+
+5. Sin cambios en el modelo.
+   secondary_topic_ids ya existe en tmc.document con domain correcto.
+   No se re-declara en me.document_exp.
+
+---- Criterios de aceptación ----
+
+Vista:
+- [ ] Campo secondary_topic_ids en Fase 2, debajo de main_topic_ids,
+      con string="Subtema", widget="many2many_tags"
+- [ ] Invisible cuando main_topic_ids está vacío
+
+Comportamiento:
+- [ ] Al cambiar main_topic_ids, secondary_topic_ids se limpia
+      (onchange ya existe en tmc.document, hereda automáticamente)
+- [ ] Si el tema no tiene subtemas definidos, el campo aparece vacío
+      y el operador no puede seleccionar valores
+
+Tests:
+- [ ] secondary_topic_ids filtra correctamente a hijos del tema elegido
+- [ ] secondary_topic_ids se limpia al cambiar main_topic_ids
+- [ ] Expediente creado sin secondary_topic_ids no falla (campo opcional)
+- [ ] Expediente creado con secondary_topic_ids lo persiste correctamente
+
+Impacto técnico:
+- models: sin cambios (campo ya existe en tmc.document)
+- views: agregar secondary_topic_ids en Fase 2 en
+         me/views/document_exp_views.xml, debajo de main_topic_ids
+- workflows: actualizar Workflow 1 paso 6 (mención de subtema)
+- tests: casos listados arriba
+- documentación: ai-context.md (Fase 2 campos), system_narrative.md (sección 3.3)
+
+--------------------------------------------------
+### #014 – Nomenclador de temas y subtemas para expedientes del TMC
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+El modelo tmc.document_topic define los temas (nivel 1) y subtemas (nivel 2)
+disponibles para clasificar documentos. Cada dependencia en tmc.dependence
+tiene un campo document_topic_ids (Many2many) que determina qué temas son
+seleccionables cuando esa dependencia es el origen del documento.
+
+En tmc.document, el campo document_topic_ids es un related sobre
+dependence_id.document_topic_ids. El domain de main_topic_ids filtra a los
+temas raíz de ese conjunto. Si una dependencia no tiene temas asignados,
+el campo asunto queda vacío y el operador no puede seleccionar ningún tema.
+
+---- Análisis técnico ----
+
+Módulo y datos:
+  - Modelo: tmc.document_topic, definido en odoo-tmc
+  - Datos maestros: odoo-tmc-data/tmc_data/data/tmc/document_topic.xml
+    (más de 150 registros, noupdate="1", forcecreate="false")
+  - Vínculo temas ↔ dependencias: configurado en
+    odoo-tmc-data/tmc_data/data/tmc/dependence.xml
+    mediante document_topic_ids en cada registro de tmc.dependence
+
+Estado actual de TMC:
+  tmc_dependence_tmc (TRIBUNAL MUNICIPAL DE CUENTAS) NO tiene
+  document_topic_ids asignado en dependence.xml.
+  Consecuencia: para expedientes con dependence_id = TMC, el campo
+  "Asunto" (main_topic_ids) devuelve conjunto vacío — el operador
+  no puede seleccionar ningún tema.
+
+  El tema raíz tmc_document_topic_tmc ("Tribunal de Cuentas") existe en
+  document_topic.xml pero no está vinculado a tmc_dependence_tmc y no
+  tiene subtemas. No se usa ni se reutiliza en esta task.
+
+Relación con #013:
+  #013 resuelve la UX: exponer secondary_topic_ids en la vista.
+  Esta task (#014) resuelve los datos: qué temas existen y están
+  disponibles para TMC. Son independientes entre sí, pero #014 es
+  prerequisito funcional de #013 cuando la dependencia sea TMC —
+  sin los datos, #013 no tiene contenido que mostrar.
+
+---- Temas y subtemas a cargar ----
+
+Origen funcional: opciones del sistema viejo de Mesa de Entradas,
+reinterpretadas en estructura tema + subtema:
+
+  Sistema viejo → Estructura nueva
+  ---------------------------------
+  Licitación Pública           → Licitación / Pública        (ambos ya existen, solo vincular)
+  Licitación Privada           → Licitación / Privada        (ambos ya existen, solo vincular)
+  Lic. Adjunta Documentacion   → Licitación / Documentación  (subtema nuevo)
+  Lic. Fórmula Descargo        → Licitación / Descargo       (subtema nuevo)
+  Lic. Fórmula Impugnación     → Licitación / Impugnación    (subtema nuevo)
+  Notas externas               → Nota / Externa              (tema y subtemas nuevos)
+  [nueva categoría]            → Nota / Interna              (subtema nuevo)
+  Notas originadas en el TMC   → Nota / Originada en el TMC  (subtema nuevo)
+  Informes / Actuaciones       → Nota / Informe               (subtema nuevo)
+
+---- Definición funcional del tema "Nota" ----
+
+Tema raíz: "Nota"
+
+Subtemas confirmados y sus significados:
+
+  Externa:
+    Nota que ingresa desde afuera del Tribunal.
+    Origen: externo al TMC.
+
+  Interna:
+    Nota que circula entre áreas o reparticiones dentro del Tribunal.
+    Origen y destino: ambos internos al TMC.
+    No sale físicamente del organismo.
+
+  Originada en el TMC:
+    Nota generada por el Tribunal que sale físicamente hacia afuera
+    y luego reingresa en un expediente a través de Mesa de Entradas.
+    Aunque comparte origen interno con "Interna", su recorrido es
+    distinto: tiene trayectoria externa y reingreso posterior.
+    Caso operativo específico que debe quedar diferenciado de
+    una nota interna común.
+
+Los cuatro subtemas son conceptualmente distintos y se crean por separado.
+
+---- Resumen de registros nuevos a crear ----
+
+  document_topic.xml:
+    tmc_document_topic_nota                   — "Nota" (tema raíz, nivel 1)
+    tmc_document_topic_nota_externa           — "Externa" (subtema)
+    tmc_document_topic_nota_interna           — "Interna" (subtema)
+    tmc_document_topic_nota_originada_tmc     — "Originada en el TMC" (subtema)
+    tmc_document_topic_nota_informe           — "Informe" (subtema)
+    tmc_document_topic_licitacion_documentacion — "Documentación" (subtema de Licitación)
+    tmc_document_topic_licitacion_descargo    — "Descargo" (subtema de Licitación)
+    tmc_document_topic_licitacion_impugnacion — "Impugnación" (subtema de Licitación)
+  dependence.xml — tmc_dependence_tmc.document_topic_ids:
+    Vincular: tmc_document_topic_licitacion (tema raíz existente)
+              tmc_document_topic_nota (tema raíz nuevo)
+    Los subtemas son visibles automáticamente a través del domain de secondary_topic_ids.
+
+---- Criterios de aceptación ----
+
+Data:
+- [ ] Tema raíz "Nota" creado en document_topic.xml
+- [ ] Subtemas de "Nota" creados: Externa, Interna, Originada en el TMC, Informe
+- [ ] Subtemas nuevos de "Licitación" creados: Documentación, Descargo, Impugnación
+- [ ] tmc_dependence_tmc.document_topic_ids configurado con: Licitación y Nota
+- [ ] Los subtemas existentes de Licitación (Pública, Privada) quedan disponibles
+      automáticamente al vincular el tema raíz
+
+Tests:
+- [ ] Para dependence_id = TMC, document_topic_ids devuelve al menos
+      tmc_document_topic_licitacion y tmc_document_topic_nota
+- [ ] Los subtemas de Licitación incluyen: Pública, Privada, Documentación, Descargo, Impugnación
+- [ ] Los subtemas de Nota incluyen: Externa, Interna, Originada en el TMC, Informe
+
+---- Impacto técnico ----
+
+- models: sin cambios
+- data: odoo-tmc-data/tmc_data/data/tmc/document_topic.xml (8 registros nuevos)
+        odoo-tmc-data/tmc_data/data/tmc/dependence.xml (agregar document_topic_ids
+        a tmc_dependence_tmc)
+- views: sin cambios de código
+- tests: casos listados arriba (en odoo-me o en odoo-tmc-data, según convenga)
+- documentación: system_narrative.md sección 3.3 (agregar temas disponibles para TMC)
