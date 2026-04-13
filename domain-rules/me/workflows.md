@@ -33,6 +33,10 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 **Fase 2 (visible cuando `is_origin_complete = True`):**
 
 6. El usuario completa `jurisdiction_dependence` e `intake_date` (ambos obligatorios).
+   Opcionalmente, completa `source_dependence_id` ("Repartición"), cuyas opciones
+   están filtradas a las dependencias hijas de `jurisdiction_dependence` según el
+   nomenclador (`tmc.dependence_order`). Al cambiar `jurisdiction_dependence`,
+   `source_dependence_id` se limpia automáticamente.
 7. Si los 5 campos básicos están completos y existe un expediente con los mismos datos,
    el sistema emite un **warning** (no bloquea).
 8. El usuario guarda el formulario → se ejecuta `create()`.
@@ -47,6 +51,8 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 - Warning de duplicado en tiempo real: `me/models/document_exp.py:110–127` (`_onchange_document_data`)
 - Warning no bloquea — retorna `warning` dict, no `raise`: `me/models/document_exp.py:122–127`
 - `computed_name` visible desde el primer campo: `me/views/document_exp_views.xml:30–36`
+- `source_dependence_id` opcional, domain dinámico vía `allowed_sub_dependence_ids`: `me/views/document_exp_views.xml:53–55`
+- Limpieza de `source_dependence_id` al cambiar jurisdicción: `me/models/document_exp.py:155–158` (`_onchange_jurisdiction_dependence`)
 
 **Inferred:**
 - El formulario se muestra progresivamente: ver Workflow 6.
@@ -225,7 +231,8 @@ según el estado de completitud de la Fase 1 del expediente.
 
 3. Cuando `dependence_id`, `number` y `period` están completos, `is_origin_complete` se vuelve `True`.
 4. `computed_name` muestra el nombre generado (ej. `EXP-000001-DEM/2025`).
-5. Se habilitan: `jurisdiction_dependence`, `intake_date`, `main_topic_ids`, `document_object`,
+5. Se habilitan: `jurisdiction_dependence`, `source_dependence_id` (opcional, filtrado
+   a hijos de la jurisdicción), `intake_date`, `main_topic_ids`, `document_object`,
    `date`, `external_key`, `fojas`.
 
 **Fase 3 — pestaña de movimientos (visible cuando el registro está guardado):**

@@ -86,6 +86,8 @@ Own fields (defined in `me.document_exp`):
 | `is_valid` | Boolean | No | computed: True when 5 fields complete (dependence_id, document_type_id, number, period, jurisdiction_dependence) |
 | `is_origin_complete` | Boolean | No | computed: True when 3 fields complete (dependence_id, number, period); controls UI progression |
 | `computed_name` | Char | No | computed: format EXP-XXXXXX-ABR/YEAR; shown as soon as dependence_id + number + period are set |
+| `source_dependence_id` | Many2one(tmc.dependence) | No | optional; filtered to children of `jurisdiction_dependence` via `allowed_sub_dependence_ids`; cleared when `jurisdiction_dependence` changes |
+| `allowed_sub_dependence_ids` | Many2many(tmc.dependence) | No | computed; depends on `jurisdiction_dependence`; queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.id`; provides domain for `source_dependence_id` |
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
 
@@ -174,6 +176,23 @@ Do not propose changes to this list without explicit requirement.
 Implementation: `document_exp.py:66`, `document_exp_views.xml:41`
 
 
+**Sub-dependence domain (source_dependence_id)**
+
+`source_dependence_id` is filtered to the children of `jurisdiction_dependence`
+in the nomenclator. The allowed values are computed by `allowed_sub_dependence_ids`,
+which queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.id`
+and maps `.dependence_id`. The view applies this as a domain filter.
+
+When `jurisdiction_dependence` changes, `_onchange_jurisdiction_dependence()` clears
+`source_dependence_id` to prevent stale values. The field is optional — expedientes
+can be created without it.
+
+Do not hardcode a domain on `source_dependence_id` in the view — use the computed
+field `allowed_sub_dependence_ids` as the source of truth.
+
+Implementation: `document_exp.py:34–43`, `document_exp.py:106–116`, `document_exp.py:155–158`
+
+
 **Duplicate validation (warning only)**
 
 When `dependence_id + document_type_id + number + period` matches
@@ -209,7 +228,7 @@ Phase 1 — always visible: `dependence_id`, `document_type_id` (auto, readonly,
 dependence_id is set), `number`, `period`
 
 Phase 2 — visible when `is_origin_complete = True` (dependence_id + number + period complete):
-`jurisdiction_dependence`, `intake_date`, topics, reference, date, external_key, fojas
+`jurisdiction_dependence`, `source_dependence_id` (optional, filtered), `intake_date`, topics, reference, date, external_key, fojas
 
 - `is_valid` is still computed and exists in the model (controls functional completeness),
   but it is NOT the UI visibility control — do not use it for that purpose
@@ -251,6 +270,7 @@ Design Constraints
 - the dependence filter ['DEM', 'TMC', 'CM'] is hardcoded and intentional
 - do not update `date` via ORM — use the existing _update_document_date() method
 - do not re-add commented fields (notes, asunto) without explicit requirement
+- `_onchange_jurisdiction_dependence()` clears `source_dependence_id` — do not bypass this behavior
 
 
 --------------------------------------------------
