@@ -799,11 +799,13 @@ Ejemplo: tema "Licitación" → subtema "Privada" o "Pública".
    un input vacío extra que el operador interpreta como tercer nivel.
    Los proxies Many2one garantizan selección única y dropdown estándar.
 
-3. Domain de main_topic_id: [('parent_id', '=', False)]
-   No filtrar por dependence_id.document_topic_ids.
-   Motivo: los temas EXP son independientes del organismo de origen —
-   el mismo conjunto de temas aplica para expedientes de DEM, TMC y CM.
-   Filtrar por dependence_id era un error conceptual (ver corrección #014).
+3. Domain de main_topic_id:
+   [('parent_id', '=', False), ('id', 'in', allowed_exp_topic_ids)]
+   allowed_exp_topic_ids es un campo computed en me.document_exp que
+   devuelve solo Licitación y Nota, resueltos por XML ID de tmc_data.
+   Motivo: los temas EXP son independientes del organismo de origen
+   (DEM/TMC/CM), pero no deben mostrar los ~195 temas raíz del sistema.
+   El filtro se hace por tipo de documento (EXP) en lugar de por dependencia.
 
 4. Domain de secondary_topic_id: [('parent_id', '=', main_topic_id)]
    Solo hijos directos del tema seleccionado. Un nivel.
@@ -812,14 +814,19 @@ Ejemplo: tema "Licitación" → subtema "Privada" o "Pública".
 
 6. Vista: main_topic_id string="Asunto", secondary_topic_id sin label
    para que aparezca como refinamiento visual del asunto.
+   allowed_exp_topic_ids declarado invisible para que el domain lo use.
 
----- Corrección post-implementación ----
+---- Correcciones post-implementación ----
 
-Error detectado: la implementación inicial usaba
-  domain="[('parent_id', '=', False), ('id', 'in', document_topic_ids)]"
-en main_topic_id. Esto hacía que los temas dependieran del organismo
-de origen, dejando DEM y CM sin temas para EXP.
-Fix aplicado: domain simplificado a [('parent_id', '=', False)].
+Fix 1: domain cambiado de
+  [('parent_id', '=', False), ('id', 'in', document_topic_ids)]
+  a [('parent_id', '=', False)]
+  Error: filtraba por organismo de origen, DEM y CM quedaban sin temas.
+
+Fix 2: domain cambiado de [('parent_id', '=', False)]
+  a [('parent_id', '=', False), ('id', 'in', allowed_exp_topic_ids)]
+  Error: mostraba todos los ~195 temas raíz del sistema.
+  Solución final: allowed_exp_topic_ids resuelve Licitación y Nota por XML ID.
 
 ---- Impacto técnico (implementado) ----
 

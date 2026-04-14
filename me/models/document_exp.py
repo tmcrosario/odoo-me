@@ -50,6 +50,19 @@ class DocumentExp(models.Model):
     #     help="Asunto específico del expediente"
     # )
 
+    # Temas raíz permitidos para expedientes (EXP) en este módulo.
+    # Se resuelven por XML ID para no depender de nombres ni de dependence_id.
+    _EXP_ROOT_TOPIC_XMLIDS = (
+        'tmc_data.tmc_document_topic_licitacion',
+        'tmc_data.tmc_document_topic_nota',
+    )
+
+    allowed_exp_topic_ids = fields.Many2many(
+        comodel_name='tmc.document_topic',
+        compute='_compute_allowed_exp_topic_ids',
+        string='Temas Permitidos EXP',
+    )
+
     # Campos proxy Many2one para selección de asunto (tema + subtema).
     # Envuelven main_topic_ids y secondary_topic_ids de tmc.document (Many2many)
     # para ofrecer selección única en la UI sin modificar el modelo base.
@@ -58,7 +71,7 @@ class DocumentExp(models.Model):
         string='Asunto',
         compute='_compute_main_topic_id',
         inverse='_set_main_topic_id',
-        domain="[('parent_id', '=', False)]",
+        domain="[('parent_id', '=', False), ('id', 'in', allowed_exp_topic_ids)]",
     )
     secondary_topic_id = fields.Many2one(
         comodel_name='tmc.document_topic',
@@ -100,6 +113,16 @@ class DocumentExp(models.Model):
     document_movement_ids = fields.One2many(
         "me.document_movement", "expediente_id", string="Movimientos"
     )
+
+    @api.depends()
+    def _compute_allowed_exp_topic_ids(self):
+        topics = self.env['tmc.document_topic']
+        for xmlid in self._EXP_ROOT_TOPIC_XMLIDS:
+            topic = self.env.ref(xmlid, raise_if_not_found=False)
+            if topic:
+                topics |= topic
+        for record in self:
+            record.allowed_exp_topic_ids = topics
 
     @api.depends('main_topic_ids')
     def _compute_main_topic_id(self):

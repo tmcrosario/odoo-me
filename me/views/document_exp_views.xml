@@ -33,6 +33,7 @@
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
                     <field name="allowed_sub_dependence_ids" invisible="1"/>
+                    <field name="allowed_exp_topic_ids" invisible="1"/>
 
                     <!-- Fase 1 — siempre visible -->
                     <group>
@@ -72,11 +73,6 @@
                         <group>
                             <field name="external_key"/>
                             <field name="fojas"/>
-                        </group>
-                    </group>
-                    <group invisible="not is_origin_complete">
-                        <group>
-                            <field name="document_topic_ids" invisible="1"/>
                         </group>
                     </group>
                     <notebook invisible="not id">

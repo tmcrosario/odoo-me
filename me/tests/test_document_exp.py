@@ -658,6 +658,25 @@ class TestTopicProxyFields(TransactionCase):
         self.assertFalse(record.main_topic_id)
         self.assertFalse(record.secondary_topic_id)
 
+    def test_allowed_exp_topic_ids_contains_licitacion_and_nota(self):
+        """
+        allowed_exp_topic_ids incluye exactamente los temas raíz Licitación y Nota,
+        resueltos por XML ID (tmc_data.tmc_document_topic_licitacion y _nota).
+        Requiere que los datos de tmc_data estén instalados.
+        """
+        record = self.env['me.document_exp'].new({})
+        topic_names = record.allowed_exp_topic_ids.mapped('name')
+        self.assertIn('Licitación', topic_names)
+        self.assertIn('Nota', topic_names)
+
+    def test_allowed_exp_topic_ids_excludes_other_root_topics(self):
+        """
+        allowed_exp_topic_ids no incluye temas raíz ajenos a EXP.
+        El tema de prueba topic_root (creado en setUp, sin XML ID) no debe aparecer.
+        """
+        record = self.env['me.document_exp'].new({})
+        self.assertNotIn(self.topic_root, record.allowed_exp_topic_ids)
+
     def test_main_topic_id_available_regardless_of_dependence(self):
         """
         main_topic_id no filtra por dependence_id.document_topic_ids.
