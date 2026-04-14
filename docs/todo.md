@@ -47,18 +47,82 @@ Impacto:
 [TODO]
 
 Contexto:
-Los movimientos representan la trazabilidad del documento.
+Los movimientos (me.document_movement) representan la trazabilidad física
+del expediente entre dependencias. Su integridad es crítica: un movimiento
+incorrecto o duplicado contamina la historia del documento.
 
-Objetivo:
-Validar que el sistema impida:
-- movimientos sin documento
-- duplicados
-- inconsistencias de fecha
+Modelo actual (me.document_movement):
+  expediente_id             Many2one  required=True  ondelete=cascade
+  date                      Datetime  required=True  default=now()
+  origin_dependence_id      Many2one  required=False  ← a corregir
+  destination_dependence_id Many2one  required=False  ← a corregir
+  user_id                   Many2one  default=usuario actual
 
-Criterios de aceptación:
-- constraint en modelo
-- validación backend
-- test asociado
+---- Decisiones cerradas ----
+
+A. Movimiento sin documento
+   Ya cubierto por expediente_id required=True + ondelete=cascade.
+   Odoo impone la constraint a nivel DB. No requiere cambios adicionales.
+
+B. Duplicado (opción a1)
+   Un movimiento duplicado es exactamente:
+     mismo expediente_id + mismo origin_dependence_id
+     + mismo destination_dependence_id + misma date (Datetime exacto)
+   Implementar con _sql_constraints UNIQUE sobre esos 4 campos.
+   No se usa ventana temporal ni comparación por día.
+   Nota: con origin y destination required (decisión C), no hay NULLs
+   en la constraint y el comportamiento de UNIQUE es predecible.
+
+C. Origen y destino obligatorios (opción c1)
+   origin_dependence_id y destination_dependence_id pasan a required=True.
+   Motivo: un movimiento sin origen o sin destino no tiene valor de
+   trazabilidad real. Los movimientos automáticos en create() ya los
+   setean explícitamente — compatible con este cambio.
+
+D. Fecha futura
+   date no puede ser posterior a now() al momento de guardar.
+   Validar con @api.constrains('date').
+
+E. Fecha anterior a intake_date del expediente
+   date.date() no puede ser anterior a expediente_id.intake_date.
+   date es Datetime, intake_date es Date — comparar truncando a Date.
+   Validar con @api.constrains('date', 'expediente_id').
+
+F. Orden cronológico entre movimientos (descartado para MVP)
+   No se exigirá orden cronológico entre movimientos del mismo expediente.
+   Los operadores pueden registrar movimientos retroactivamente.
+   Puede revisarse en una task futura.
+
+---- Criterios de aceptación ----
+
+Modelo (me/models/document_movement.py):
+- [x] expediente_id required=True ya está
+- [ ] origin_dependence_id: agregar required=True
+- [ ] destination_dependence_id: agregar required=True
+- [ ] _sql_constraints: UNIQUE(expediente_id, origin_dependence_id,
+      destination_dependence_id, date) con mensaje claro en español
+- [ ] @api.constrains('date'): date no puede ser futura
+- [ ] @api.constrains('date', 'expediente_id'):
+      date.date() >= expediente_id.intake_date
+
+Tests (archivo nuevo: me/tests/test_document_movement.py):
+- [ ] Crear movimiento sin origin_dependence_id lanza error
+- [ ] Crear movimiento sin destination_dependence_id lanza error
+- [ ] Crear dos movimientos idénticos (mismo exp+orig+dest+date) lanza error
+- [ ] Crear dos movimientos mismo exp+orig+dest pero fecha distinta no falla
+- [ ] Crear movimiento con date > now() lanza ValidationError
+- [ ] Crear movimiento con date.date() < expediente.intake_date lanza ValidationError
+- [ ] Crear movimiento con date.date() == expediente.intake_date no falla
+- [ ] Crear movimiento con todos los campos válidos no falla
+
+Impacto técnico:
+- models: me/models/document_movement.py
+  (required en origin/destination, _sql_constraints, 2 x @api.constrains)
+- create() en me.document_exp: los movimientos automáticos ya setean
+  origin_dependence_id y destination_dependence_id — sin impacto
+- tests: nuevo me/tests/test_document_movement.py
+- views: origin_dependence_id y destination_dependence_id ya aparecen
+  en la pestaña de movimientos — required=True no requiere cambios de vista
 
 --------------------------------------------------
 ### #003 – Integración con RAA
