@@ -767,7 +767,7 @@ B. Constraint required=True de jurisdiction_dependence cuando CM
 ### #013 – Selección de subtema en el campo asunto
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 El campo "Asunto" en el formulario de expediente muestra solo

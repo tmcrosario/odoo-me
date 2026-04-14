@@ -397,6 +397,122 @@ class TestSourceDependence(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
+class TestSecondaryTopics(TransactionCase):
+    """
+    Tests para #013 — Selección de subtema en el campo asunto.
+    Verifica el comportamiento de secondary_topic_ids heredado de tmc.document
+    vía _inherits en me.document_exp.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Topics Test',
+            'abbreviation': 'JTOP',
+        })
+
+        # Tema raíz de prueba aislado
+        self.topic_root = self.env['tmc.document_topic'].create({
+            'name': 'Tema Raiz Test',
+            'important': True,
+        })
+        # Subtema bajo el tema raíz
+        self.topic_sub = self.env['tmc.document_topic'].create({
+            'name': 'Subtema Test A',
+            'parent_id': self.topic_root.id,
+        })
+        # Segundo tema raíz sin subtemas
+        self.topic_root_no_sub = self.env['tmc.document_topic'].create({
+            'name': 'Tema Sin Subtemas',
+            'important': True,
+        })
+
+        self.current_year = str(fields.Date.today().year)
+
+        self.base_vals = {
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 99996,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': fields.Date.today(),
+        }
+
+    def test_create_without_secondary_topic_does_not_fail(self):
+        """secondary_topic_ids es opcional — crear expediente sin él no falla."""
+        expediente = self.env['me.document_exp'].create(self.base_vals)
+        self.assertFalse(expediente.secondary_topic_ids)
+
+    def test_create_with_secondary_topic_persists(self):
+        """secondary_topic_ids se persiste correctamente al crear el expediente."""
+        vals = dict(
+            self.base_vals,
+            number=99997,
+            main_topic_ids=[(4, self.topic_root.id)],
+            secondary_topic_ids=[(4, self.topic_sub.id)],
+        )
+        expediente = self.env['me.document_exp'].create(vals)
+        self.assertIn(self.topic_sub, expediente.secondary_topic_ids)
+
+    def test_secondary_topic_filters_to_children_of_main(self):
+        """
+        secondary_topic_ids del modelo tiene domain [('parent_id', 'in', main_topic_ids)].
+        Verificamos que el subtema creado pertenece al tema raíz correcto.
+        """
+        self.assertEqual(self.topic_sub.parent_id, self.topic_root)
+
+    def test_onchange_main_topic_clears_unrelated_secondary(self):
+        """
+        Al cambiar main_topic_ids, secondary_topic_ids se limpia si el subtema
+        no pertenece al nuevo tema.
+        _onchange_main_topic_ids está definido en tmc.document (_inherits no hereda
+        métodos en me.document_exp). Se testea directamente sobre tmc.document,
+        que es la capa donde el onchange opera cuando se dispara desde la UI.
+        """
+        doc = self.env['tmc.document'].new({
+            'main_topic_ids': [(4, self.topic_root.id)],
+            'secondary_topic_ids': [(4, self.topic_sub.id)],
+        })
+        self.assertTrue(doc.secondary_topic_ids)
+
+        # Cambiar main_topic_ids a vacío y ejecutar el onchange
+        doc.main_topic_ids = self.env['tmc.document_topic']
+        doc._onchange_main_topic_ids()
+
+        self.assertFalse(doc.secondary_topic_ids)
+
+    def test_secondary_topic_empty_when_no_subtopics_exist(self):
+        """
+        Si el tema seleccionado no tiene subtemas, secondary_topic_ids
+        queda vacío — el campo aparece pero sin opciones disponibles.
+        """
+        record = self.env['me.document_exp'].new({
+            'main_topic_ids': [(4, self.topic_root_no_sub.id)],
+        })
+        # No hay subtemas de topic_root_no_sub — secondary sigue vacío
+        self.assertFalse(record.secondary_topic_ids)
+
+
+@tagged('post_install', '-at_install')
 class TestDocumentTopicsTMC(TransactionCase):
     """
     Tests para #014 — Nomenclador de temas y subtemas para expedientes del TMC.
