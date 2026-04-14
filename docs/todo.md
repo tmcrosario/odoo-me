@@ -854,7 +854,7 @@ Impacto técnico:
 ### #014 – Nomenclador de temas y subtemas para expedientes del TMC
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 El modelo tmc.document_topic define los temas (nivel 1) y subtemas (nivel 2)

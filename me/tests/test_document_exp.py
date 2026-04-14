@@ -394,3 +394,87 @@ class TestSourceDependence(TransactionCase):
         vals = dict(self.base_vals, source_dependence_id=self.dep_child_a.id)
         expediente = self.env['me.document_exp'].create(vals)
         self.assertEqual(expediente.source_dependence_id, self.dep_child_a)
+
+
+@tagged('post_install', '-at_install')
+class TestDocumentTopicsTMC(TransactionCase):
+    """
+    Tests para #014 — Nomenclador de temas y subtemas para expedientes del TMC.
+    Verifica que los temas y subtemas cargados en odoo-tmc-data están disponibles
+    para la dependencia TMC.
+    Requiere que los datos de odoo-tmc-data estén instalados.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+
+    def test_tmc_has_licitacion_and_nota_topics(self):
+        """
+        Para dependence_id = TMC, document_topic_ids incluye al menos
+        tmc_document_topic_licitacion y tmc_document_topic_nota.
+        """
+        self.assertTrue(self.dep_tmc, "La dependencia TMC debe existir")
+        topic_names = self.dep_tmc.document_topic_ids.mapped('name')
+        self.assertIn('Licitación', topic_names)
+        self.assertIn('Nota', topic_names)
+
+    def test_licitacion_subtopics_include_expected(self):
+        """
+        Los subtemas de Licitación incluyen los 5 esperados:
+        Pública, Privada, Documentación, Descargo, Impugnación.
+        """
+        licitacion = self.env['tmc.document_topic'].search(
+            [('name', '=', 'Licitación'), ('parent_id', '=', False)], limit=1
+        )
+        self.assertTrue(licitacion, "El tema raíz 'Licitación' debe existir")
+        subtopic_names = licitacion.child_ids.mapped('name')
+        for expected in ('Pública', 'Privada', 'Documentación', 'Descargo', 'Impugnación'):
+            self.assertIn(
+                expected, subtopic_names,
+                f"El subtema '{expected}' debe existir bajo Licitación"
+            )
+
+    def test_nota_subtopics_include_all_four(self):
+        """
+        Los subtemas de Nota incluyen los 4 definidos:
+        Externa, Interna, Originada en el TMC, Informe.
+        """
+        nota = self.env['tmc.document_topic'].search(
+            [('name', '=', 'Nota'), ('parent_id', '=', False)], limit=1
+        )
+        self.assertTrue(nota, "El tema raíz 'Nota' debe existir")
+        subtopic_names = nota.child_ids.mapped('name')
+        for expected in ('Externa', 'Interna', 'Originada en el TMC', 'Informe'):
+            self.assertIn(
+                expected, subtopic_names,
+                f"El subtema '{expected}' debe existir bajo Nota"
+            )
+
+    def test_nota_is_root_topic(self):
+        """Nota es un tema raíz (parent_id = False)."""
+        nota = self.env['tmc.document_topic'].search(
+            [('name', '=', 'Nota'), ('parent_id', '=', False)], limit=1
+        )
+        self.assertTrue(nota, "El tema raíz 'Nota' debe existir sin parent")
+        self.assertFalse(nota.parent_id)
+
+    def test_nota_subtopics_have_nota_as_parent(self):
+        """
+        Cada subtema de Nota tiene parent_id apuntando al tema raíz 'Nota'.
+        Verifica la integridad de la jerarquía.
+        """
+        nota = self.env['tmc.document_topic'].search(
+            [('name', '=', 'Nota'), ('parent_id', '=', False)], limit=1
+        )
+        self.assertTrue(nota)
+        for subtopic_name in ('Externa', 'Interna', 'Originada en el TMC', 'Informe'):
+            subtopic = self.env['tmc.document_topic'].search(
+                [('name', '=', subtopic_name), ('parent_id', '=', nota.id)], limit=1
+            )
+            self.assertTrue(
+                subtopic,
+                f"El subtema '{subtopic_name}' debe existir con parent_id = Nota"
+            )
