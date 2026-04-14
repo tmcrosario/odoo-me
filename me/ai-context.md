@@ -90,6 +90,9 @@ Own fields (defined in `me.document_exp`):
 | `allowed_sub_dependence_ids` | Many2many(tmc.dependence) | No | computed; depends on `jurisdiction_dependence`; queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.id`; provides domain for `source_dependence_id` |
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
+| `main_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `main_topic_ids`; domain: root topics only, filtered to `allowed_exp_topic_ids`; cleared via `_onchange_main_topic_id` when changed |
+| `secondary_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `secondary_topic_ids`; domain: children of `main_topic_id`; cleared via `_onchange_main_topic_id` when `main_topic_id` changes |
+| `allowed_exp_topic_ids` | Many2many(tmc.document_topic) | No | computed; resolves Licitación and Nota by XML ID from tmc_data; independent of `dependence_id`; declared `invisible="1"` in view; provides domain for `main_topic_id` |
 
 Fields inherited from `tmc.document` (via delegation):
 
@@ -193,6 +196,26 @@ field `allowed_sub_dependence_ids` as the source of truth.
 Implementation: `document_exp.py:34–43`, `document_exp.py:106–116`, `document_exp.py:155–158`
 
 
+**Topic filtering for EXP documents**
+
+`main_topic_id` shows only root topics allowed for EXP documents: Licitación and Nota.
+These are resolved by XML external ID from the tmc_data module
+(`tmc_data.tmc_document_topic_licitacion`, `tmc_data.tmc_document_topic_nota`),
+NOT filtered by `dependence_id`. The allowed set is the same regardless of which
+origin dependence (DEM, TMC, CM) the expediente has.
+
+Do NOT use `document_topic_ids` for the domain of `main_topic_id` — that field
+filters by `dependence_id` and returns empty for non-TMC expedientes.
+
+`secondary_topic_id` is filtered to children of the selected `main_topic_id`.
+`_onchange_main_topic_id` clears `secondary_topic_id` when `main_topic_id` changes.
+
+The auxiliary field `allowed_exp_topic_ids` (declared `invisible="1"` in the view)
+is the source of truth — reference it in the domain, do not hardcode topic IDs.
+
+Implementation: `document_exp.py`, `_compute_allowed_exp_topic_ids()`, `_EXP_ROOT_TOPIC_XMLIDS`
+
+
 **Duplicate validation (warning only)**
 
 When `dependence_id + document_type_id + number + period` matches
@@ -228,7 +251,9 @@ Phase 1 — always visible: `dependence_id`, `document_type_id` (auto, readonly,
 dependence_id is set), `number`, `period`
 
 Phase 2 — visible when `is_origin_complete = True` (dependence_id + number + period complete):
-`jurisdiction_dependence`, `source_dependence_id` (optional, filtered), `intake_date`, topics, reference, date, external_key, fojas
+`jurisdiction_dependence`, `source_dependence_id` (optional, filtered to children of jurisdiction),
+`intake_date`, `main_topic_id` (optional), `secondary_topic_id` (visible when main_topic_id set),
+`document_object`, `date`, `external_key`, `fojas`
 
 - `is_valid` is still computed and exists in the model (controls functional completeness),
   but it is NOT the UI visibility control — do not use it for that purpose
