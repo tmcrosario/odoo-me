@@ -513,6 +513,117 @@ class TestSecondaryTopics(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
+class TestTopicProxyFields(TransactionCase):
+    """
+    Tests para los campos proxy main_topic_id y secondary_topic_id en me.document_exp.
+    Estos campos Many2one envuelven los Many2many subyacentes de tmc.document,
+    proporcionando selección única de tema y subtema sin modificar el modelo base.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Proxy Test',
+            'abbreviation': 'JPXY',
+        })
+
+        self.topic_root = self.env['tmc.document_topic'].create({
+            'name': 'Tema Proxy Test',
+            'important': True,
+        })
+        self.topic_sub = self.env['tmc.document_topic'].create({
+            'name': 'Subtema Proxy A',
+            'parent_id': self.topic_root.id,
+        })
+        self.topic_root_alt = self.env['tmc.document_topic'].create({
+            'name': 'Tema Alt Proxy',
+            'important': True,
+        })
+
+        self.current_year = str(fields.Date.today().year)
+
+        self.base_vals = {
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 99998,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': fields.Date.today(),
+        }
+
+    def test_main_topic_id_computes_from_main_topic_ids(self):
+        """main_topic_id retorna el primer elemento de main_topic_ids."""
+        expediente = self.env['me.document_exp'].create(dict(
+            self.base_vals,
+            main_topic_ids=[(6, 0, [self.topic_root.id])],
+        ))
+        self.assertEqual(expediente.main_topic_id, self.topic_root)
+
+    def test_secondary_topic_id_computes_from_secondary_topic_ids(self):
+        """secondary_topic_id retorna el primer elemento de secondary_topic_ids."""
+        expediente = self.env['me.document_exp'].create(dict(
+            self.base_vals,
+            number=99999,
+            main_topic_ids=[(6, 0, [self.topic_root.id])],
+            secondary_topic_ids=[(6, 0, [self.topic_sub.id])],
+        ))
+        self.assertEqual(expediente.secondary_topic_id, self.topic_sub)
+
+    def test_set_main_topic_id_writes_to_main_topic_ids(self):
+        """Asignar main_topic_id (inverse) actualiza main_topic_ids subyacente."""
+        expediente = self.env['me.document_exp'].create(self.base_vals)
+        expediente.main_topic_id = self.topic_root
+        self.assertIn(self.topic_root, expediente.main_topic_ids)
+
+    def test_set_secondary_topic_id_writes_to_secondary_topic_ids(self):
+        """Asignar secondary_topic_id (inverse) actualiza secondary_topic_ids subyacente."""
+        expediente = self.env['me.document_exp'].create(dict(
+            self.base_vals,
+            main_topic_ids=[(6, 0, [self.topic_root.id])],
+        ))
+        expediente.secondary_topic_id = self.topic_sub
+        self.assertIn(self.topic_sub, expediente.secondary_topic_ids)
+
+    def test_onchange_main_topic_id_clears_secondary(self):
+        """Al cambiar main_topic_id, secondary_topic_id se limpia vía onchange."""
+        record = self.env['me.document_exp'].new({
+            'main_topic_ids': [(4, self.topic_root.id)],
+            'secondary_topic_ids': [(4, self.topic_sub.id)],
+        })
+        self.assertTrue(record.secondary_topic_id)
+
+        record.main_topic_id = self.topic_root_alt
+        record._onchange_main_topic_id()
+
+        self.assertFalse(record.secondary_topic_id)
+
+    def test_secondary_topic_id_empty_when_no_main(self):
+        """secondary_topic_id es False cuando no hay tema principal seleccionado."""
+        record = self.env['me.document_exp'].new({})
+        self.assertFalse(record.main_topic_id)
+        self.assertFalse(record.secondary_topic_id)
+
+
+@tagged('post_install', '-at_install')
 class TestDocumentTopicsTMC(TransactionCase):
     """
     Tests para #014 — Nomenclador de temas y subtemas para expedientes del TMC.

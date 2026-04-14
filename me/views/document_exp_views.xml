@@ -62,9 +62,8 @@
                     <!-- Campos adicionales — visibles cuando is_origin_complete -->
                     <group invisible="not is_origin_complete">
                         <group>
-                            <field name="main_topic_ids" widget="many2many_tags" string="Asunto"/>
-                            <field name="secondary_topic_ids" widget="many2many_tags" nolabel="1"
-                                   invisible="not main_topic_ids"/>
+                            <field name="main_topic_id" string="Asunto"/>
+                            <field name="secondary_topic_id" invisible="not main_topic_id"/>
                             <field name="document_object" string="Referencia"/>
                         </group>
                         <group>

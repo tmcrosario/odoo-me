@@ -50,6 +50,24 @@ class DocumentExp(models.Model):
     #     help="Asunto específico del expediente"
     # )
 
+    # Campos proxy Many2one para selección de asunto (tema + subtema).
+    # Envuelven main_topic_ids y secondary_topic_ids de tmc.document (Many2many)
+    # para ofrecer selección única en la UI sin modificar el modelo base.
+    main_topic_id = fields.Many2one(
+        comodel_name='tmc.document_topic',
+        string='Asunto',
+        compute='_compute_main_topic_id',
+        inverse='_set_main_topic_id',
+        domain="[('parent_id', '=', False), ('id', 'in', document_topic_ids)]",
+    )
+    secondary_topic_id = fields.Many2one(
+        comodel_name='tmc.document_topic',
+        string='Especificación',
+        compute='_compute_secondary_topic_id',
+        inverse='_set_secondary_topic_id',
+        domain="[('parent_id', '=', main_topic_id)]",
+    )
+
     # NO re-declarar number aquí. Re-declararlo rompe el mecanismo _inherits:
     # el campo deja de ser proxy y Odoo no lo pasa a tmc.document en create(),
     # dejando tmc.document.number = 0 y generando name = "Unnamed Document".
@@ -82,6 +100,28 @@ class DocumentExp(models.Model):
     document_movement_ids = fields.One2many(
         "me.document_movement", "expediente_id", string="Movimientos"
     )
+
+    @api.depends('main_topic_ids')
+    def _compute_main_topic_id(self):
+        for record in self:
+            record.main_topic_id = record.main_topic_ids[:1]
+
+    def _set_main_topic_id(self):
+        for record in self:
+            record.main_topic_ids = [(6, 0, [record.main_topic_id.id])] if record.main_topic_id else [(5, 0, 0)]
+
+    @api.depends('secondary_topic_ids')
+    def _compute_secondary_topic_id(self):
+        for record in self:
+            record.secondary_topic_id = record.secondary_topic_ids[:1]
+
+    def _set_secondary_topic_id(self):
+        for record in self:
+            record.secondary_topic_ids = [(6, 0, [record.secondary_topic_id.id])] if record.secondary_topic_id else [(5, 0, 0)]
+
+    @api.onchange('main_topic_id')
+    def _onchange_main_topic_id(self):
+        self.secondary_topic_id = False
 
     @api.model
     def default_get(self, fields_list):
