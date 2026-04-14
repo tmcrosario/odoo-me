@@ -263,6 +263,42 @@ class TestDocumentExp(TransactionCase):
         expediente = self.env['me.document_exp'].create(self.valid_vals)
         self.assertFalse(expediente.source_dependence_id)
 
+    def test_dependence_invalid_abbreviation_raises(self):
+        """
+        Crear un expediente con una dependencia cuya abbreviation no está
+        en ['DEM', 'TMC', 'CM'] debe lanzar ValidationError.
+        """
+        dep_invalid = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Invalida Test',
+            'abbreviation': 'INV',
+        })
+        vals = dict(self.valid_vals, number=99990, dependence_id=dep_invalid.id)
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_dependence_valid_abbreviations_accepted(self):
+        """
+        Crear expedientes con abbreviation DEM, TMC y CM no lanza error.
+        DEM ya existe en setUp. TMC y CM se buscan o crean.
+        """
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        dep_cm = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'CM')], limit=1
+        )
+        if not dep_cm:
+            dep_cm = self.env['tmc.dependence'].create({
+                'name': 'Concejo Municipal Test',
+                'abbreviation': 'CM',
+            })
+
+        for number, dep in [(99988, self.dep_dem), (99989, dep_tmc), (99987, dep_cm)]:
+            exp = self.env['me.document_exp'].create(
+                dict(self.valid_vals, number=number, dependence_id=dep.id)
+            )
+            self.assertTrue(exp.id)
+
     def test_tmc_internal_dependences_include_expected_abbreviations(self):
         """
         Verifica que las dependencias internas de TMC incluyen las abreviaciones

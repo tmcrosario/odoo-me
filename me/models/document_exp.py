@@ -155,6 +155,20 @@ class DocumentExp(models.Model):
             else:
                 record.allowed_sub_dependence_ids = self.env['tmc.dependence'].browse()
 
+    _ALLOWED_DEPENDENCE_ABBREVIATIONS = frozenset({'DEM', 'TMC', 'CM'})
+
+    def _validate_dependence(self, dependence_id_val):
+        """Valida que la dependencia de origen sea DEM, TMC o CM."""
+        if not dependence_id_val:
+            return
+        dep = self.env['tmc.dependence'].browse(dependence_id_val)
+        if dep.abbreviation not in self._ALLOWED_DEPENDENCE_ABBREVIATIONS:
+            raise exceptions.ValidationError(_(
+                "La dependencia de origen '%(dep)s' no está permitida. "
+                "Solo se admiten: DEM, TMC, CM.",
+                dep=dep.abbreviation,
+            ))
+
     @api.constrains('intake_date')
     def _check_intake_date_not_future(self):
         for record in self:
@@ -235,6 +249,9 @@ class DocumentExp(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            if 'dependence_id' in vals:
+                self._validate_dependence(vals['dependence_id'])
         # _inherits maneja la creación de tmc.document automáticamente.
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
         records = super().create(vals_list)
@@ -285,6 +302,8 @@ class DocumentExp(models.Model):
         )
 
     def write(self, vals):
+        if 'dependence_id' in vals:
+            self._validate_dependence(vals['dependence_id'])
         # Separar la fecha del resto de campos
         date_val = vals.pop('date', None) if 'date' in vals else None
         

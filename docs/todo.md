@@ -94,7 +94,7 @@ Solución simple para MVP.
 ### #005 – Validación backend de origen
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Objetivo:
 Agregar validación en modelo.
@@ -103,6 +103,15 @@ Criterios:
 - constraint
 - mensaje claro
 - test
+
+Implementación:
+- _validate_dependence(): valida que dependence_id.abbreviation esté en
+  {'DEM', 'TMC', 'CM'}. Lanza ValidationError con mensaje claro.
+- Llamado explícitamente en create() y write() cuando 'dependence_id' está
+  en vals. Patrón elegido sobre @api.constrains porque dependence_id es
+  un campo delegado (_inherits) cuyos triggers no se propagan al hijo.
+- Tests: test_dependence_invalid_abbreviation_raises,
+  test_dependence_valid_abbreviations_accepted.
 
 --------------------------------------------------
 ### #006 – Nomenclador de dependencias del Tribunal
