@@ -76,6 +76,7 @@ Una tarea NO se considera completa si:
 - no tiene tests
 - no fue validada funcionalmente
 - no es consistente con workflows / narrative
+- requería actualización de documentación y esta no fue realizada o justificada
 
 ---
 
@@ -219,7 +220,11 @@ Salida requerida:
    - coherencia con workflows
    - coherencia con narrative
 
-5. Impacto en documentación
+5. Documentación:
+   - indicar qué archivos de documentación se ven impactados
+   - indicar cuáles fueron actualizados efectivamente
+   - si no se actualizó ninguno, justificar por qué
+   - indicar si la task puede cerrarse sin cambios de documentación o no
 
 6. Sugerencia de commit (obligatoria al cierre):
 
@@ -263,7 +268,10 @@ Salida requerida:
 1. Causa raíz
 2. Corrección
 3. Tests asociados
-4. Impacto en documentación
+4. Documentación:
+   - indicar qué archivos de documentación se ven impactados
+   - indicar cuáles fueron actualizados efectivamente
+   - si no se actualizó ninguno, justificar por qué
 5. Sugerencia de commit (obligatoria al cierre)
 
 commit name:
@@ -307,7 +315,8 @@ Salida requerida:
 2. Ejecutar modo definición (si aplica)
 3. Ejecutar modo implementación (con tests)
 4. Ejecutar revisión
-5. Commit manual
+5. Actualizar documentación si aplica
+6. Commit manual
 
 
 ## Regla adicional – Idioma del código
