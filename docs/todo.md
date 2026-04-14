@@ -258,7 +258,7 @@ Impacto técnico:
 ### #008 – Rediseño de vista form de expediente (fases de carga y fechas)
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 La vista form actual de me.document_exp muestra los campos en un orden
@@ -380,7 +380,7 @@ Impacto técnico:
 ### #009 – Selección jerárquica dependiente de jurisdicción
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 En la vista form de me.document_exp, `jurisdiction_dependence` permite
@@ -484,7 +484,7 @@ disponibles para TMC desde el momento en que #010 esté implementada.
 ### #010 – Cargar dependencias internas de TMC en el nomenclador
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 La task #009 agrega el campo source_dependence_id en me.document_exp,
@@ -569,6 +569,13 @@ Impacto técnico:
 --------------------------------------------------
 
 [IDEA]
+
+Nota de implementación:
+El modelo base me.document_movement y la pestaña "Movimientos" en la
+vista form están implementados (commit 7d6208f, [ADD] task #011 exp
+movements). Esta task define la evolución siguiente: enriquecer los
+movimientos con información del responsable operativo (receptor físico
+del expediente), que es distinto del usuario de sesión (user_id).
 
 Contexto:
 me.document_movement registra la trazabilidad del expediente entre
