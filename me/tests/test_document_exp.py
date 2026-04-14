@@ -658,6 +658,37 @@ class TestTopicProxyFields(TransactionCase):
         self.assertFalse(record.main_topic_id)
         self.assertFalse(record.secondary_topic_id)
 
+    def test_main_topic_id_available_regardless_of_dependence(self):
+        """
+        main_topic_id no filtra por dependence_id.document_topic_ids.
+        El mismo tema raíz debe ser seleccionable para expedientes de
+        cualquier dependencia (DEM, TMC, CM): los temas EXP son independientes
+        del organismo de origen.
+        """
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        dep_cm = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'CM')], limit=1
+        )
+        if not dep_cm:
+            dep_cm = self.env['tmc.dependence'].create({
+                'name': 'Concejo Municipal Test',
+                'abbreviation': 'CM',
+            })
+
+        for dep in (self.dep_dem, dep_tmc, dep_cm):
+            expediente = self.env['me.document_exp'].create(dict(
+                self.base_vals,
+                dependence_id=dep.id,
+                main_topic_ids=[(6, 0, [self.topic_root.id])],
+            ))
+            self.assertEqual(
+                expediente.main_topic_id,
+                self.topic_root,
+                f"El tema debe ser seleccionable para dependencia {dep.abbreviation}",
+            )
+
 
 @tagged('post_install', '-at_install')
 class TestDocumentTopicsTMC(TransactionCase):

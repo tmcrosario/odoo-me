@@ -58,7 +58,7 @@ class DocumentExp(models.Model):
         string='Asunto',
         compute='_compute_main_topic_id',
         inverse='_set_main_topic_id',
-        domain="[('parent_id', '=', False), ('id', 'in', document_topic_ids)]",
+        domain="[('parent_id', '=', False)]",
     )
     secondary_topic_id = fields.Many2one(
         comodel_name='tmc.document_topic',

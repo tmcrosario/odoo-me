@@ -787,122 +787,69 @@ definidos, pero no está expuesto en la vista de me.document_exp.
 El operador necesita poder elegir tema Y subtema al completar el asunto.
 Ejemplo: tema "Licitación" → subtema "Privada" o "Pública".
 
----- Análisis técnico del modelo heredado ----
+---- Decisiones de implementación ----
 
-tmc.document ya tiene los siguientes campos (accesibles en me.document_exp
-vía _inherits):
+1. secondary_topic_id es opcional.
+   No todo tema tiene subtemas definidos.
 
-  document_topic_ids:
-    related field — temas disponibles para dependence_id del documento
-    (todos los temas asociados a esa dependencia vía dependence_id.document_topic_ids)
+2. Campos proxy Many2one en me.document_exp:
+   main_topic_id (Many2one, compute+inverse) — envuelve main_topic_ids
+   secondary_topic_id (Many2one, compute+inverse) — envuelve secondary_topic_ids
+   Motivo: many2many_tags permite selección múltiple y siempre muestra
+   un input vacío extra que el operador interpreta como tercer nivel.
+   Los proxies Many2one garantizan selección única y dropdown estándar.
 
-  main_topic_ids:
-    Many2many(tmc.document_topic)
-    domain: [('parent_id', '=', False), ('id', 'in', document_topic_ids)]
-    → solo temas raíz (nivel 1, sin parent)
+3. Domain de main_topic_id: [('parent_id', '=', False)]
+   No filtrar por dependence_id.document_topic_ids.
+   Motivo: los temas EXP son independientes del organismo de origen —
+   el mismo conjunto de temas aplica para expedientes de DEM, TMC y CM.
+   Filtrar por dependence_id era un error conceptual (ver corrección #014).
 
-  secondary_topic_ids:
-    Many2many(tmc.document_topic)
-    domain: [('parent_id', 'in', main_topic_ids)]
-    → subtemas de los temas seleccionados
+4. Domain de secondary_topic_id: [('parent_id', '=', main_topic_id)]
+   Solo hijos directos del tema seleccionado. Un nivel.
 
-  _onchange_main_topic_ids (en tmc.document):
-    → limpia secondary_topic_ids al cambiar main_topic_ids
-    → retorna domain dinámico para secondary_topic_ids
-    → este comportamiento se hereda en me.document_exp vía _inherits
+5. Onchange main_topic_id → limpia secondary_topic_id.
 
-La ME view actualmente solo muestra main_topic_ids con string="Asunto".
-secondary_topic_ids no está en la vista.
-El mecanismo de filtrado y limpieza ya existe en el módulo base.
+6. Vista: main_topic_id string="Asunto", secondary_topic_id sin label
+   para que aparezca como refinamiento visual del asunto.
 
----- Decisiones ----
+---- Corrección post-implementación ----
 
-1. secondary_topic_ids es opcional.
-   No todo tema tiene subtemas definidos. El operador puede completar el
-   asunto con solo el tema general.
+Error detectado: la implementación inicial usaba
+  domain="[('parent_id', '=', False), ('id', 'in', document_topic_ids)]"
+en main_topic_id. Esto hacía que los temas dependieran del organismo
+de origen, dejando DEM y CM sin temas para EXP.
+Fix aplicado: domain simplificado a [('parent_id', '=', False)].
 
-2. Label visible: "Subtema".
+---- Impacto técnico (implementado) ----
 
-3. Widget: many2many_tags (igual que main_topic_ids).
-
-4. Visibilidad: visible solo cuando main_topic_ids no está vacío.
-   Si no hay tema seleccionado, el subtema no aplica.
-
-5. Sin cambios en el modelo.
-   secondary_topic_ids ya existe en tmc.document con domain correcto.
-   No se re-declara en me.document_exp.
-
----- Criterios de aceptación ----
-
-Vista:
-- [ ] Campo secondary_topic_ids en Fase 2, debajo de main_topic_ids,
-      con string="Subtema", widget="many2many_tags"
-- [ ] Invisible cuando main_topic_ids está vacío
-
-Comportamiento:
-- [ ] Al cambiar main_topic_ids, secondary_topic_ids se limpia
-      (onchange ya existe en tmc.document, hereda automáticamente)
-- [ ] Si el tema no tiene subtemas definidos, el campo aparece vacío
-      y el operador no puede seleccionar valores
-
-Tests:
-- [ ] secondary_topic_ids filtra correctamente a hijos del tema elegido
-- [ ] secondary_topic_ids se limpia al cambiar main_topic_ids
-- [ ] Expediente creado sin secondary_topic_ids no falla (campo opcional)
-- [ ] Expediente creado con secondary_topic_ids lo persiste correctamente
-
-Impacto técnico:
-- models: sin cambios (campo ya existe en tmc.document)
-- views: agregar secondary_topic_ids en Fase 2 en
-         me/views/document_exp_views.xml, debajo de main_topic_ids
-- workflows: actualizar Workflow 1 paso 6 (mención de subtema)
-- tests: casos listados arriba
-- documentación: ai-context.md (Fase 2 campos), system_narrative.md (sección 3.3)
+- models: main_topic_id, secondary_topic_id, _compute_*, _set_*, _onchange_*
+- views: campos Many2one en Fase 2, secondary invisible cuando sin main
+- tests: TestSecondaryTopics (lógica M2M base), TestTopicProxyFields (proxies)
+         incluye test_main_topic_id_available_regardless_of_dependence
 
 --------------------------------------------------
-### #014 – Nomenclador de temas y subtemas para expedientes del TMC
+### #014 – Nomenclador de temas y subtemas para expedientes
 --------------------------------------------------
 
 [DONE]
 
 Contexto:
 El modelo tmc.document_topic define los temas (nivel 1) y subtemas (nivel 2)
-disponibles para clasificar documentos. Cada dependencia en tmc.dependence
-tiene un campo document_topic_ids (Many2many) que determina qué temas son
-seleccionables cuando esa dependencia es el origen del documento.
+disponibles para clasificar expedientes. Los temas cargados corresponden al
+tipo de documento EXP y están disponibles para expedientes de cualquier
+organismo de origen (DEM, TMC, CM).
 
-En tmc.document, el campo document_topic_ids es un related sobre
-dependence_id.document_topic_ids. El domain de main_topic_ids filtra a los
-temas raíz de ese conjunto. Si una dependencia no tiene temas asignados,
-el campo asunto queda vacío y el operador no puede seleccionar ningún tema.
-
----- Análisis técnico ----
-
-Módulo y datos:
-  - Modelo: tmc.document_topic, definido en odoo-tmc
-  - Datos maestros: odoo-tmc-data/tmc_data/data/tmc/document_topic.xml
-    (más de 150 registros, noupdate="1", forcecreate="false")
-  - Vínculo temas ↔ dependencias: configurado en
-    odoo-tmc-data/tmc_data/data/tmc/dependence.xml
-    mediante document_topic_ids en cada registro de tmc.dependence
-
-Estado actual de TMC:
-  tmc_dependence_tmc (TRIBUNAL MUNICIPAL DE CUENTAS) NO tiene
-  document_topic_ids asignado en dependence.xml.
-  Consecuencia: para expedientes con dependence_id = TMC, el campo
-  "Asunto" (main_topic_ids) devuelve conjunto vacío — el operador
-  no puede seleccionar ningún tema.
-
-  El tema raíz tmc_document_topic_tmc ("Tribunal de Cuentas") existe en
-  document_topic.xml pero no está vinculado a tmc_dependence_tmc y no
-  tiene subtemas. No se usa ni se reutiliza en esta task.
-
-Relación con #013:
-  #013 resuelve la UX: exponer secondary_topic_ids en la vista.
-  Esta task (#014) resuelve los datos: qué temas existen y están
-  disponibles para TMC. Son independientes entre sí, pero #014 es
-  prerequisito funcional de #013 cuando la dependencia sea TMC —
-  sin los datos, #013 no tiene contenido que mostrar.
+Nota sobre la definición original:
+  La task fue inicialmente titulada "...para expedientes del TMC", lo que
+  generó el error de vincular los temas solo a la dependencia TMC.
+  La corrección conceptual es: estos temas pertenecen al tipo de documento EXP,
+  no a un organismo específico. En me.document_exp, el campo main_topic_id
+  usa domain [('parent_id', '=', False)] — sin filtrar por dependence_id —
+  por lo que los temas son accesibles para expedientes de DEM, TMC y CM
+  sin necesidad de vinculación adicional en dependence.xml.
+  El vínculo Licitación+Nota→TMC en dependence.xml queda como dato de
+  referencia para tmc.document genérico, pero no afecta me.document_exp.
 
 ---- Temas y subtemas a cargar ----
 
