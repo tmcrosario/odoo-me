@@ -1007,108 +1007,98 @@ Tests:
 - documentación: system_narrative.md sección 3.3 (agregar temas disponibles para TMC)
 
 --------------------------------------------------
-### #015 – Evolución de movimientos: fojas, receptor y ajuste TMC
+### #015 – Fojas en movimientos de expediente
 --------------------------------------------------
 
-[IDEA]
+[TODO]
 
 Contexto:
-Después de cerrar la integridad básica de me.document_movement (#002),
-se plantea una evolución funcional para enriquecer los movimientos con
-información operativa adicional: número de fojas al momento del pase,
-usuario receptor asociado a la dependencia destino, y corrección del
-comportamiento de movimientos automáticos cuando el expediente proviene
-de la propia TMC.
+En cada pase del expediente entre dependencias pueden agregarse fojas nuevas.
+Para mantener trazabilidad completa, cada movimiento debe registrar cuántas
+fojas tenía el expediente en ese momento — no el valor actual, sino el
+snapshot histórico al momento del pase.
 
-Esta idea agrupa tres componentes que pueden implementarse de forma
-independiente. La recomendación es analizar si dividir en sub-tasks
-antes de pasar a implementación (ver decisión D).
+Componentes descartados o delegados:
+- Ajuste TMC en create(): implementado en #016 [DONE]
+- Usuario receptor: delegado a #011 [IDEA] — no se resuelve aquí
 
----- Componente 1: Número de fojas en movimientos ----
+---- Decisiones cerradas ----
 
-Motivación:
-En cada pase del expediente entre oficinas pueden agregarse fojas nuevas.
-Para mantener la trazabilidad completa, cada movimiento debe registrar
-cuántas fojas tenía el expediente en ese momento exacto — no el valor
-actual del expediente, sino el valor histórico al momento del pase.
+A. Semántica del valor de fojas (cerrada: b1)
+   El campo fojas en cada movimiento almacena el TOTAL de fojas del
+   expediente en el momento exacto en que se crea ese movimiento.
+   No es un delta (fojas agregadas en ese pase) ni un ingreso libre.
+   Es un snapshot: se toma de expediente.fojas en el momento de crear
+   el movimiento.
 
-Comportamiento esperado:
-- Movimientos automáticos (los 2 generados en create()):
-  Toman el valor de expediente.fojas en el momento de la creación.
-  No son editables por el operador.
-- Movimientos manuales posteriores:
-  Toman expediente.fojas al momento en que se guarda el movimiento
-  (antes de que el operador cambie el valor en el expediente).
-  La editabilidad post-creación está abierta (ver decisión A).
+   Para movimientos automáticos: se toma record.fojas en create().
+   Para movimientos manuales: se pre-carga vía default_get usando
+   expediente_id del contexto; el operador puede corregirlo (ver B).
 
----- Componente 2: Usuario receptor (relacionado con #011) ----
+B. Editabilidad (cerrada: editable para manuales, no editable para automáticos)
+   - Movimientos automáticos (creados por create() de me.document_exp):
+     fojas queda bloqueado. El operador no puede modificarlo.
+     Implementación: campo is_automatic = True en esos movimientos;
+     la vista aplica readonly="is_automatic" sobre fojas.
+   - Movimientos manuales:
+     fojas es editable. El valor auto-sugerido puede corregirse si el
+     operador registra el pase retroactivamente o cometió un error.
+     Implementación: readonly="is_automatic" es False → campo libre.
 
-Este componente se solapa con #011 (Responsable operativo en movimientos).
-#011 ya tiene documentadas las decisiones abiertas completas sobre:
-  - qué entidad representa al receptor (res.users, tmc.hr.employee, tmc.hr.office)
-  - cómo vincular oficina con dependencia
-  - obligatoriedad y asignación automática vs. manual
+C. Valor cuando expediente.fojas no está cargado (cerrada: 0, sin error)
+   expediente.fojas es Integer — Odoo lo inicializa en 0 si no se cargó.
+   Si fojas == 0, el movimiento registra 0. No se lanza error ni aviso.
+   El campo es opcional: un movimiento con fojas=0 es válido.
 
-La diferencia con esta idea: el usuario plantea que la asignación del
-receptor sea automática desde la dependencia destino, y que solo el
-primer movimiento (el automático) tenga receptor no editable.
+D. División de la task (cerrada: no se divide)
+   Componente 3 ya está en #016 y componente 2 en #011.
+   #015 queda exclusivamente sobre fojas — un solo campo, un solo flujo.
+   No amerita subdivisión adicional.
 
-Estos matices deben incorporarse a #011 al cerrar sus decisiones,
-no resolverse aquí. Este componente queda delegado a #011.
+---- Decisiones Uncertain ----
 
----- Componente 3: Ajuste de movimientos automáticos para TMC ----
+E. Comportamiento de fojas al editar expediente.fojas después del pase
+   Si el operador cambia fojas en el expediente DESPUÉS de registrar un
+   movimiento manual, el movimiento retiene su valor original (snapshot).
+   Esto es correcto por diseño, pero puede generar confusión si el
+   operador espera que el movimiento refleje el valor actualizado.
+   No hay acción técnica necesaria — es solo un riesgo de UX a documentar.
 
-Extraído a #016. Ver esa task para la definición completa.
+---- Criterios de aceptación ----
 
----- Decisiones abiertas ----
+Modelo (me/models/document_movement.py):
+- [ ] Nuevo campo: fojas = fields.Integer(string="Fojas", default=0)
+- [ ] Nuevo campo: is_automatic = fields.Boolean(default=False)
+      (marca si el movimiento fue creado automáticamente por create())
+- [ ] default_get(): si expediente_id está en el contexto, pre-cargar
+      fojas con expediente_id.fojas
 
-A. Editabilidad de fojas en movimientos manuales
-   ¿El campo fojas en un movimiento manual es editable por el operador
-   después de creado, o queda congelado al valor de creación?
-   Opciones:
-   a1. No editable: igual que movimientos automáticos. Registro inmutable.
-   a2. Editable: el operador puede corregir si ingresó un valor incorrecto.
-   Impacto: afecta si se implementa readonly en vista o constraint en modelo.
+Modelo (me/models/document_exp.py — create()):
+- [ ] Al crear movimientos automáticos: pasar fojas=record.fojas,
+      is_automatic=True en el dict de valores de cada movimiento
 
-B. Semántica exacta del valor de fojas en movimientos manuales
-   ¿El valor de fojas en el movimiento es:
-   b1. El total de fojas del expediente al momento del pase
-       (se toma de expediente.fojas automáticamente)?
-   b2. Las fojas agregadas en ese pase en particular (delta)?
-   b3. Un valor que ingresa manualmente el operador al registrar el pase?
-   La opción b1 parece la más coherente con la descripción original,
-   pero debe confirmarse. b2 y b3 generan lógica adicional de cómputo o UI.
+Vista (me/views/document_exp_views.xml):
+- [ ] Columna fojas en la lista de movimientos
+- [ ] Campo fojas en el form de movimiento
+- [ ] is_automatic invisible="1" (campo auxiliar, nunca visible)
+- [ ] fojas con readonly="is_automatic" en lista y form
 
-C. Comportamiento de fojas cuando expediente.fojas no está cargado
-   ¿Qué valor se asigna al movimiento si expediente.fojas = 0 o False?
-   Opciones: 0 (default), None/False (campo vacío), error de validación.
+Tests (me/tests/test_document_movement.py o test_document_exp.py):
+- [ ] Movimiento automático tiene fojas == expediente.fojas al crear
+- [ ] Movimiento automático tiene is_automatic == True
+- [ ] Movimiento manual creado con fojas=0 (expediente sin fojas) no falla
+- [ ] Movimiento manual tiene is_automatic == False
+- [ ] Movimiento con expediente.fojas=5: fojas del movimiento == 5
 
-D. División de la task en sub-tasks
-   ¿Esta idea se implementa como una sola task (#015) o se divide en:
-   - #015a: fojas en movimientos
-   - #015b: ajuste de movimientos automáticos para TMC
-   (el componente de usuario receptor va a #011)
-   Criterio de corte: si tienen modelos y vistas distintas, separar.
-   Aquí: ambos tocan me.document_movement y create() de me.document_exp.
-   Un argumento para mantenerlos juntos; otro para separarlos por riesgo.
+---- Impacto técnico ----
 
----- Impacto técnico (preliminar) ----
-
-Componente 1 (fojas):
-- models: nuevo campo fojas en me.document_movement; lógica de default
-  en create() para tomar expediente.fojas
-- views: nueva columna en lista de movimientos; readonly condicional
-  (según decisión A)
-- tests: fojas en movimientos automáticos, fojas en movimientos manuales,
-  comportamiento con fojas=0
-
-Componente 3 (ajuste TMC): extraído a #016.
-
-Componente 2 (receptor): delegado a #011.
-
-Documentación:
-- system_narrative.md: sección 3.4 y 5.2 — agregar fojas en movimientos
-- ai-context.md: actualizar me.document_movement con nuevo campo
+- models: me/models/document_movement.py — 2 campos nuevos + default_get
+- models: me/models/document_exp.py — pasar fojas e is_automatic en create()
+- views: me/views/document_exp_views.xml — columna fojas + readonly condicional
+- tests: casos listados arriba
+- documentación:
+  - system_narrative.md: sección 5.2 — fojas en movimientos
+  - ai-context.md: actualizar tabla de campos de me.document_movement
 
 --------------------------------------------------
 ### #016 – Corregir movimientos automáticos cuando dependencia es TMC
