@@ -188,8 +188,8 @@ desde la pestaña "Movimientos" en el formulario.
 2. Navega a la pestaña "Movimientos" (visible solo cuando el registro está guardado).
 3. Agrega un nuevo movimiento en la lista editable:
    - `date` (requerido, default: ahora)
-   - `origin_dependence_id` (opcional)
-   - `destination_dependence_id` (opcional)
+   - `origin_dependence_id` (requerido)
+   - `destination_dependence_id` (requerido)
    - `user_id` (default: usuario activo)
 4. Guarda el movimiento.
 
@@ -198,13 +198,16 @@ desde la pestaña "Movimientos" en el formulario.
 **Observed in code:**
 - Lista editable de movimientos: `me/views/document_exp_views.xml:73–87`
 - Pestaña visible solo si el registro tiene id: `me/views/document_exp_views.xml:70`
-- Modelo `me.document_movement` sin métodos ni validaciones: `me/models/document_movement.py`
-- `origin_dependence_id` y `destination_dependence_id` no son requeridos: `me/models/document_movement.py:13–18`
+- `origin_dependence_id` y `destination_dependence_id` required=True: `me/models/document_movement.py`
+- Constraint UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date):
+  impide duplicados exactos — `me/models/document_movement.py` `_sql_constraints`
+- `_check_date_not_future`: rechaza date > now() — `me/models/document_movement.py`
+- `_check_date_not_before_intake`: rechaza date.date() < expediente.intake_date — `me/models/document_movement.py`
 
 **Uncertain / pending definition:**
 - No existen reglas de transición definidas en el código.
-  Cualquier combinación origen/destino es válida.
-- No existe validación de orden cronológico entre movimientos.
+  Cualquier combinación origen/destino es válida (solo se exige que ambos existan).
+- No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.
   (No hay campo `state` en el modelo.)
 - No está definido si el usuario puede editar o eliminar movimientos existentes.

@@ -107,10 +107,21 @@ Commented fields (currently inactive):
 **me.document_movement** (`me/models/document_movement.py`)
 
 Records each routing event of an expediente between organizational units.
-No inheritance, no methods, no constraints — pure audit record.
 
-Fields: `expediente_id`, `date`, `origin_dependence_id`,
-`destination_dependence_id`, `user_id`
+Fields:
+
+| Field | Required | Notes |
+|---|---|---|
+| `expediente_id` | Yes | Many2one(me.document_exp), ondelete=cascade |
+| `date` | Yes | Datetime, default=now(); cannot be future; cannot be before expediente.intake_date |
+| `origin_dependence_id` | Yes | Many2one(tmc.dependence) |
+| `destination_dependence_id` | Yes | Many2one(tmc.dependence) |
+| `user_id` | No | default=current user |
+
+Constraints:
+- `_sql_constraints`: UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date) — prevents exact duplicates at DB level
+- `_check_date_not_future`: date cannot be after now()
+- `_check_date_not_before_intake`: date.date() cannot be before expediente_id.intake_date
 
 Commented fields (currently inactive):
 - `notes` (Text) — was removed, do not re-add without explicit request
@@ -292,6 +303,8 @@ Design Constraints
 - ME extends `tmc.document` via `_inherits`, not `_inherit`
 - `me.document_exp.create()` always creates tmc.document + raa.registry_aa + up to 2 movements
 - document movements must always reference an expediente (ondelete=cascade)
+- movement origin and destination are required — do not propose optional M2one for these fields
+- movement date cannot be future and cannot be before expediente.intake_date
 - the dependence filter ['DEM', 'TMC', 'CM'] is hardcoded and intentional
 - do not update `date` via ORM — use the existing _update_document_date() method
 - do not re-add commented fields (notes, asunto) without explicit requirement

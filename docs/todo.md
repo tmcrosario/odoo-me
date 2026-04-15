@@ -44,18 +44,18 @@ Impacto:
 ### #002 – Integridad de movimientos
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 Los movimientos (me.document_movement) representan la trazabilidad física
 del expediente entre dependencias. Su integridad es crítica: un movimiento
 incorrecto o duplicado contamina la historia del documento.
 
-Modelo actual (me.document_movement):
+Modelo (me.document_movement):
   expediente_id             Many2one  required=True  ondelete=cascade
   date                      Datetime  required=True  default=now()
-  origin_dependence_id      Many2one  required=False  ← a corregir
-  destination_dependence_id Many2one  required=False  ← a corregir
+  origin_dependence_id      Many2one  required=True
+  destination_dependence_id Many2one  required=True
   user_id                   Many2one  default=usuario actual
 
 ---- Decisiones cerradas ----
@@ -97,23 +97,23 @@ F. Orden cronológico entre movimientos (descartado para MVP)
 
 Modelo (me/models/document_movement.py):
 - [x] expediente_id required=True ya está
-- [ ] origin_dependence_id: agregar required=True
-- [ ] destination_dependence_id: agregar required=True
-- [ ] _sql_constraints: UNIQUE(expediente_id, origin_dependence_id,
+- [x] origin_dependence_id: agregar required=True
+- [x] destination_dependence_id: agregar required=True
+- [x] _sql_constraints: UNIQUE(expediente_id, origin_dependence_id,
       destination_dependence_id, date) con mensaje claro en español
-- [ ] @api.constrains('date'): date no puede ser futura
-- [ ] @api.constrains('date', 'expediente_id'):
+- [x] @api.constrains('date'): date no puede ser futura
+- [x] @api.constrains('date', 'expediente_id'):
       date.date() >= expediente_id.intake_date
 
 Tests (archivo nuevo: me/tests/test_document_movement.py):
-- [ ] Crear movimiento sin origin_dependence_id lanza error
-- [ ] Crear movimiento sin destination_dependence_id lanza error
-- [ ] Crear dos movimientos idénticos (mismo exp+orig+dest+date) lanza error
-- [ ] Crear dos movimientos mismo exp+orig+dest pero fecha distinta no falla
-- [ ] Crear movimiento con date > now() lanza ValidationError
-- [ ] Crear movimiento con date.date() < expediente.intake_date lanza ValidationError
-- [ ] Crear movimiento con date.date() == expediente.intake_date no falla
-- [ ] Crear movimiento con todos los campos válidos no falla
+- [x] Crear movimiento sin origin_dependence_id lanza error
+- [x] Crear movimiento sin destination_dependence_id lanza error
+- [x] Crear dos movimientos idénticos (mismo exp+orig+dest+date) lanza error
+- [x] Crear dos movimientos mismo exp+orig+dest pero fecha distinta no falla
+- [x] Crear movimiento con date > now() lanza ValidationError
+- [x] Crear movimiento con date.date() < expediente.intake_date lanza ValidationError
+- [x] Crear movimiento con date.date() == expediente.intake_date no falla
+- [x] Crear movimiento con todos los campos válidos no falla
 
 Impacto técnico:
 - models: me/models/document_movement.py

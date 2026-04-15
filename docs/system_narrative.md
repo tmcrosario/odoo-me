@@ -108,11 +108,11 @@ Los dos primeros movimientos son generados por el sistema al momento de crear el
 Una vez guardado el expediente, el operador puede registrar movimientos adicionales desde la pestaña **Movimientos**. Cada movimiento registra:
 
 - Fecha y hora del movimiento
-- Dependencia de origen (opcional)
-- Dependencia de destino (opcional)
+- Dependencia de origen (obligatorio)
+- Dependencia de destino (obligatorio)
 - Usuario que registra el movimiento
 
-No existen reglas predefinidas que indiquen qué dependencias son válidas como origen o destino en movimientos manuales. El operador puede registrar cualquier combinación.
+El sistema valida que la fecha del movimiento no sea futura y no sea anterior a la fecha de ingreso del expediente. No existen restricciones predefinidas sobre qué combinaciones de origen y destino son válidas: el operador puede registrar cualquier par de dependencias.
 
 ---
 
@@ -139,6 +139,7 @@ No existe un campo de **estado actual** del expediente. El sistema no infiere au
 | Registro automático en RAA | Todo expediente queda registrado en el sistema RAA al momento de su creación. |
 | Aviso de duplicado | Si ya existe un expediente con igual origen, número y período, el sistema avisa pero no bloquea el guardado. |
 | Fecha del documento | La fecha puede ser distinta a la fecha de registro en el sistema (incluye fechas pasadas). |
+| Integridad de movimientos | Origen y destino son obligatorios en todo movimiento. La fecha no puede ser futura ni anterior a la fecha de ingreso. No se permiten movimientos duplicados (mismo expediente + origen + destino + fecha exacta). |
 
 ---
 
@@ -154,9 +155,9 @@ No existe un ciclo de vida formal del expediente (abierto, en proceso, cerrado, 
 
 El sistema registra todos los movimientos del expediente, pero no calcula automáticamente en qué dependencia se encuentra actualmente. Para saberlo, el operador debe revisar el último movimiento del historial manualmente.
 
-### 8.3 Sin restricciones en movimientos manuales
+### 8.3 Sin validación de continuidad entre movimientos
 
-No hay validación de origen/destino en movimientos manuales. No se verifica si el destino del movimiento anterior coincide con el origen del siguiente. No se controla el orden cronológico entre movimientos.
+Origen y destino son obligatorios en cada movimiento y las fechas tienen restricciones básicas (no futuras, no anteriores al ingreso). Sin embargo, no se verifica que el destino de un movimiento coincida con el origen del siguiente. El orden cronológico entre movimientos tampoco está validado: el operador puede registrar movimientos retroactivamente en cualquier orden.
 
 ### 8.4 Sin restricción técnica de append-only en movimientos
 
