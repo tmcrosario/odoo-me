@@ -1174,3 +1174,91 @@ Tests (me/tests/test_document_exp.py o test_document_movement.py):
 - workflows.md: Workflow 4 — agregar rama para dependence_id=TMC
 
 --------------------------------------------------
+### #017 – Campos obligatorios en Fase 2 del expediente
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+Al cargar un expediente en la vista form, la Fase 2 muestra campos que
+deberían ser obligatorios para garantizar la completitud funcional del
+registro. Tres campos fueron detectados como opcionales cuando no deberían
+serlo: source_dependence_id, date y fojas.
+
+Relación con tasks anteriores:
+- #009 decidió source_dependence_id como opcional (decisión 5).
+  Esta task revisa esa decisión con criterio condicional.
+- #008 implementó intake_date como required=True. date es un campo distinto
+  (la fecha del documento, la que figura en el papel), que queda
+  required=False en me.document_exp.
+
+---- Decisiones cerradas ----
+
+A. fojas = required en vista y modelo
+   required=True en la definición del campo Integer.
+   El valor 0 es aceptado (significa 0 fojas — válido, sin error).
+   No se impone valor mínimo.
+   La vista hereda required automáticamente del modelo.
+
+B. date = required en vista + validación manual en create() y write()
+   View: required="1" en la línea del campo date.
+   Backend: validación manual — NOT @api.constrains('date'), porque date
+   es campo delegado via _inherits de tmc.document y los constrains no
+   se propagan al modelo hijo (mismo patrón que #005 para dependence_id).
+   Implementación:
+     - create(): verificar que date esté en vals antes de super()
+     - write(): verificar en el bloque de extracción de date_val
+
+C. source_dependence_id = required condicional (cuando hay opciones)
+   Required SOLO cuando allowed_sub_dependence_ids es no vacío.
+   Motivo: si la jurisdicción no tiene hijos en el nomenclador,
+   el campo required bloquea la creación sin que el operador pueda
+   seleccionar nada — comportamiento inaceptable.
+   View: required="allowed_sub_dependence_ids" (truthy cuando la lista
+   tiene items; allowed_sub_dependence_ids ya está declarado invisible).
+   Backend: @api.constrains('source_dependence_id', 'jurisdiction_dependence')
+   — campo propio de me.document_exp, constraint sí funciona.
+   Condición: if record.allowed_sub_dependence_ids and not
+   record.source_dependence_id → raise ValidationError.
+
+---- Criterios de aceptación ----
+
+Modelo (me/models/document_exp.py):
+- [ ] fojas: agregar required=True a la definición del campo Integer
+- [ ] date: agregar check manual en create() antes de super()
+      que lanza ValidationError si date no está en vals o es falsy
+- [ ] date: agregar check en write() en el bloque de extracción de date_val
+      que lanza ValidationError si date_val es None/False
+- [ ] source_dependence_id: agregar @api.constrains(
+      'source_dependence_id', 'jurisdiction_dependence')
+      con condición: if record.allowed_sub_dependence_ids and not
+      record.source_dependence_id → raise ValidationError
+
+Vista (me/views/document_exp_views.xml):
+- [ ] date: agregar required="1"
+- [ ] source_dependence_id: agregar required="allowed_sub_dependence_ids"
+- [ ] fojas: heredará required del modelo (verificar que aparece con *)
+
+Tests (me/tests/test_document_exp.py):
+- [ ] Crear expediente sin date lanza ValidationError
+- [ ] Crear expediente con date válida no falla
+- [ ] Crear expediente con fojas=0 no falla (0 es válido)
+- [ ] Crear expediente con jurisdiction que tiene hijos y sin
+      source_dependence_id lanza ValidationError
+- [ ] Crear expediente con jurisdiction sin hijos y sin
+      source_dependence_id no falla (conditional required)
+- [ ] Crear expediente con jurisdiction que tiene hijos y con
+      source_dependence_id válido no falla
+
+---- Impacto técnico ----
+
+- models: me/models/document_exp.py — 3 cambios (fojas required,
+  date validation manual, source_dependence_id constraint)
+- views: me/views/document_exp_views.xml — required en date y
+  source_dependence_id
+- tests: casos listados arriba
+- documentación: ai-context.md — actualizar tabla de campos:
+  fojas (agregar Required: Sí), date (agregar nota de required),
+  source_dependence_id (actualizar Required: condicional)
+
+--------------------------------------------------
