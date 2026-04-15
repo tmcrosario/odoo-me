@@ -37,6 +37,28 @@ Its goal is to keep the codebase:
 - Avoid putting business rules only in domains or onchange methods
 - If a rule is important, validate it in backend too
 
+### SQL Constraints (Odoo 19)
+
+`_sql_constraints` is **not supported** in Odoo 19 and has no effect.
+Use `models.Constraint(...)` as a class attribute instead:
+
+```python
+# WRONG — has no effect in Odoo 19:
+_sql_constraints = [
+    ('unique_foo', 'UNIQUE(field_a, field_b)', 'Message'),
+]
+
+# CORRECT — Odoo 19:
+_unique_foo = models.Constraint(
+    'UNIQUE(field_a, field_b)',
+    'Message',
+)
+```
+
+The attribute name must start with `_`. The database constraint name will be
+`{model._table}_{name_without_leading_underscore}`.
+The message is shown to the user when the constraint is violated.
+
 ---
 
 ## Python Style

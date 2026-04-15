@@ -5,14 +5,11 @@ class Movement(models.Model):
     _name = "me.document_movement"
     _description = "Movimiento de Expediente"
 
-    _sql_constraints = [
-        (
-            'unique_movement',
-            'UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date)',
-            'Ya existe un movimiento idéntico para este expediente '
-            '(mismo origen, destino y fecha exacta).',
-        ),
-    ]
+    _unique_movement = models.Constraint(
+        'UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date)',
+        'Ya existe un movimiento idéntico para este expediente '
+        '(mismo origen, destino y fecha exacta).',
+    )
 
     expediente_id = fields.Many2one(
         "me.document_exp", string="Expediente", required=True, ondelete="cascade"

@@ -119,9 +119,12 @@ Fields:
 | `user_id` | No | default=current user |
 
 Constraints:
-- `_sql_constraints`: UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date) — prevents exact duplicates at DB level
+- `_unique_movement` (models.Constraint): UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date) — prevents exact duplicates at DB level
 - `_check_date_not_future`: date cannot be after now()
 - `_check_date_not_before_intake`: date.date() cannot be before expediente_id.intake_date
+
+Note: In Odoo 19, use `models.Constraint(...)` as a class attribute — NOT `_sql_constraints`.
+`_sql_constraints` is deprecated and has no effect. See `docs/coding_standards.md`.
 
 Commented fields (currently inactive):
 - `notes` (Text) — was removed, do not re-add without explicit request
