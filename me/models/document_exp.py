@@ -361,6 +361,12 @@ class DocumentExp(models.Model):
         self.document_id.invalidate_recordset(['date'])
 
     def write(self, vals):
+        if 'fojas' in vals and not self.env.user.has_group('base.group_system'):
+            raise exceptions.ValidationError(_(
+                "El número de fojas del expediente no puede modificarse después "
+                "de su creación. Las variaciones deben registrarse desde los "
+                "movimientos. Solo un administrador puede corregir este valor."
+            ))
         if 'dependence_id' in vals:
             self._validate_dependence(vals['dependence_id'])
         # Separar la fecha del resto de campos

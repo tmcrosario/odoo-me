@@ -966,3 +966,101 @@ class TestDocumentTopicsTMC(TransactionCase):
                 subtopic,
                 f"El subtema '{subtopic_name}' debe existir con parent_id = Nota"
             )
+
+
+@tagged('post_install', '-at_install')
+class TestFojasLock(TransactionCase):
+    """Tests para fix #017 — fojas en expediente bloqueado después de creación.
+
+    Regla: fojas puede cargarse al crear el expediente. Una vez creado,
+    solo un administrador (base.group_system) puede modificar el valor.
+    Los usuarios regulares reciben ValidationError al intentar modificarlo.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        # Jurisdicción sin hijos para no disparar constraint de source_dependence_id
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Fojas Lock Test',
+            'abbreviation': 'JFLK',
+        })
+
+        self.current_year = str(fields.Date.today().year)
+        self.today = fields.Date.today()
+
+        self.expediente = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 66661,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 3,
+        })
+
+        # Usuario con acceso de escritura a los modelos pero sin base.group_system.
+        # tmc.group_manager tiene write en tmc.document; también necesita acceso
+        # a me.document_exp (el módulo me no tiene security file aún).
+        self.regular_user = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Usuario Regular Test',
+            'login': 'regular_fojas_lock_test@test.com',
+            'group_ids': [(6, 0, [self.env.ref('tmc.group_manager').id])],
+        })
+        # Conceder acceso temporal a me.document_exp para tmc.group_manager
+        # (el módulo me no define su propio security file aún).
+        me_model = self.env['ir.model'].search(
+            [('model', '=', 'me.document_exp')], limit=1
+        )
+        self.env['ir.model.access'].create({
+            'name': 'test_fojas_lock_me_exp_access',
+            'model_id': me_model.id,
+            'group_id': self.env.ref('tmc.group_manager').id,
+            'perm_read': True,
+            'perm_write': True,
+            'perm_create': True,
+            'perm_unlink': True,
+        })
+
+    def test_create_with_fojas_works(self):
+        """Crear expediente con fojas cargado no lanza error."""
+        self.assertEqual(self.expediente.fojas, 3)
+
+    def test_regular_user_cannot_write_fojas(self):
+        """Usuario sin base.group_system no puede modificar fojas después de crear."""
+        with self.assertRaises(ValidationError):
+            self.expediente.with_user(self.regular_user).write({'fojas': 10})
+
+    def test_admin_can_write_fojas(self):
+        """Usuario con base.group_system puede modificar fojas después de crear."""
+        # El usuario de test (uid=1) pertenece a base.group_system
+        self.expediente.write({'fojas': 10})
+        self.assertEqual(self.expediente.fojas, 10)
+
+    def test_regular_user_can_write_other_fields(self):
+        """La restricción de fojas no bloquea otros campos para usuarios regulares."""
+        self.expediente.with_user(self.regular_user).write({
+            'document_object': 'Referencia de prueba',
+        })
+        self.assertEqual(self.expediente.document_object, 'Referencia de prueba')

@@ -73,7 +73,7 @@
                         </group>
                         <group>
                             <field name="external_key"/>
-                            <field name="fojas" required="1"/>
+                            <field name="fojas" required="1" readonly="id"/>
                         </group>
                     </group>
                     <notebook invisible="not id">
