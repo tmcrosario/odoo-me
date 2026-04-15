@@ -1005,3 +1005,182 @@ Tests:
 - views: sin cambios de código
 - tests: casos listados arriba (en odoo-me o en odoo-tmc-data, según convenga)
 - documentación: system_narrative.md sección 3.3 (agregar temas disponibles para TMC)
+
+--------------------------------------------------
+### #015 – Evolución de movimientos: fojas, receptor y ajuste TMC
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+Después de cerrar la integridad básica de me.document_movement (#002),
+se plantea una evolución funcional para enriquecer los movimientos con
+información operativa adicional: número de fojas al momento del pase,
+usuario receptor asociado a la dependencia destino, y corrección del
+comportamiento de movimientos automáticos cuando el expediente proviene
+de la propia TMC.
+
+Esta idea agrupa tres componentes que pueden implementarse de forma
+independiente. La recomendación es analizar si dividir en sub-tasks
+antes de pasar a implementación (ver decisión D).
+
+---- Componente 1: Número de fojas en movimientos ----
+
+Motivación:
+En cada pase del expediente entre oficinas pueden agregarse fojas nuevas.
+Para mantener la trazabilidad completa, cada movimiento debe registrar
+cuántas fojas tenía el expediente en ese momento exacto — no el valor
+actual del expediente, sino el valor histórico al momento del pase.
+
+Comportamiento esperado:
+- Movimientos automáticos (los 2 generados en create()):
+  Toman el valor de expediente.fojas en el momento de la creación.
+  No son editables por el operador.
+- Movimientos manuales posteriores:
+  Toman expediente.fojas al momento en que se guarda el movimiento
+  (antes de que el operador cambie el valor en el expediente).
+  La editabilidad post-creación está abierta (ver decisión A).
+
+---- Componente 2: Usuario receptor (relacionado con #011) ----
+
+Este componente se solapa con #011 (Responsable operativo en movimientos).
+#011 ya tiene documentadas las decisiones abiertas completas sobre:
+  - qué entidad representa al receptor (res.users, tmc.hr.employee, tmc.hr.office)
+  - cómo vincular oficina con dependencia
+  - obligatoriedad y asignación automática vs. manual
+
+La diferencia con esta idea: el usuario plantea que la asignación del
+receptor sea automática desde la dependencia destino, y que solo el
+primer movimiento (el automático) tenga receptor no editable.
+
+Estos matices deben incorporarse a #011 al cerrar sus decisiones,
+no resolverse aquí. Este componente queda delegado a #011.
+
+---- Componente 3: Ajuste de movimientos automáticos para TMC ----
+
+Extraído a #016. Ver esa task para la definición completa.
+
+---- Decisiones abiertas ----
+
+A. Editabilidad de fojas en movimientos manuales
+   ¿El campo fojas en un movimiento manual es editable por el operador
+   después de creado, o queda congelado al valor de creación?
+   Opciones:
+   a1. No editable: igual que movimientos automáticos. Registro inmutable.
+   a2. Editable: el operador puede corregir si ingresó un valor incorrecto.
+   Impacto: afecta si se implementa readonly en vista o constraint en modelo.
+
+B. Semántica exacta del valor de fojas en movimientos manuales
+   ¿El valor de fojas en el movimiento es:
+   b1. El total de fojas del expediente al momento del pase
+       (se toma de expediente.fojas automáticamente)?
+   b2. Las fojas agregadas en ese pase en particular (delta)?
+   b3. Un valor que ingresa manualmente el operador al registrar el pase?
+   La opción b1 parece la más coherente con la descripción original,
+   pero debe confirmarse. b2 y b3 generan lógica adicional de cómputo o UI.
+
+C. Comportamiento de fojas cuando expediente.fojas no está cargado
+   ¿Qué valor se asigna al movimiento si expediente.fojas = 0 o False?
+   Opciones: 0 (default), None/False (campo vacío), error de validación.
+
+D. División de la task en sub-tasks
+   ¿Esta idea se implementa como una sola task (#015) o se divide en:
+   - #015a: fojas en movimientos
+   - #015b: ajuste de movimientos automáticos para TMC
+   (el componente de usuario receptor va a #011)
+   Criterio de corte: si tienen modelos y vistas distintas, separar.
+   Aquí: ambos tocan me.document_movement y create() de me.document_exp.
+   Un argumento para mantenerlos juntos; otro para separarlos por riesgo.
+
+---- Impacto técnico (preliminar) ----
+
+Componente 1 (fojas):
+- models: nuevo campo fojas en me.document_movement; lógica de default
+  en create() para tomar expediente.fojas
+- views: nueva columna en lista de movimientos; readonly condicional
+  (según decisión A)
+- tests: fojas en movimientos automáticos, fojas en movimientos manuales,
+  comportamiento con fojas=0
+
+Componente 3 (ajuste TMC): extraído a #016.
+
+Componente 2 (receptor): delegado a #011.
+
+Documentación:
+- system_narrative.md: sección 3.4 y 5.2 — agregar fojas en movimientos
+- ai-context.md: actualizar me.document_movement con nuevo campo
+
+--------------------------------------------------
+### #016 – Corregir movimientos automáticos cuando dependencia es TMC
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+Al crear un expediente en me.document_exp, create() genera dos movimientos
+automáticos que documentan el ingreso físico del expediente:
+
+  Movimiento 1: jurisdiction_dependence → TMC
+  Movimiento 2: TMC → Mesa de Entradas
+
+Este comportamiento es correcto cuando el expediente proviene de DEM o CM,
+donde jurisdiction_dependence es una dependencia distinta a TMC.
+
+Sin embargo, cuando dependence_id = TMC, jurisdiction_dependence también
+es TMC (el propio Tribunal), por lo que el Movimiento 1 resulta en:
+
+  Movimiento 1: TMC → TMC   ← sin sentido funcional
+
+Un expediente no puede "pasar" de una dependencia a sí misma.
+Este movimiento contamina la trazabilidad del expediente.
+
+---- Comportamiento esperado ----
+
+Si dependence_id.abbreviation == 'TMC':
+  Generar únicamente:
+    Movimiento 1: TMC → Mesa de Entradas
+  Omitir el movimiento TMC → TMC.
+
+Si dependence_id.abbreviation != 'TMC' (DEM, CM):
+  Comportamiento actual sin cambios:
+    Movimiento 1: jurisdiction_dependence → TMC
+    Movimiento 2: TMC → Mesa de Entradas
+
+La condición se evalúa sobre dependence_id del expediente (el origen
+del documento), no sobre jurisdiction_dependence.
+
+---- Implementación esperada ----
+
+Archivo: me/models/document_exp.py, método create()
+
+La lógica actual crea ambos movimientos incondicionalmente.
+Debe reemplazarse por un condicional:
+  - Si dependence_id == TMC: crear solo el movimiento TMC → ME.
+  - Si dependence_id != TMC: crear ambos movimientos (comportamiento actual).
+
+Las dependencias TMC y ME ya se buscan por abbreviation ('TMC', 'ME') —
+el patrón de búsqueda no cambia.
+
+---- Criterios de aceptación ----
+
+Modelo (me/models/document_exp.py):
+- [ ] create() no genera movimiento TMC→TMC cuando dependence_id = TMC
+- [ ] create() genera un único movimiento TMC→ME cuando dependence_id = TMC
+- [ ] create() mantiene comportamiento actual (2 movimientos) para DEM y CM
+
+Tests (me/tests/test_document_exp.py o test_document_movement.py):
+- [ ] Expediente con dependence_id=TMC: exactamente 2 movimientos totales,
+      el primero con origin=TMC y destination=ME
+- [ ] Expediente con dependence_id=TMC: no existe movimiento con
+      origin=TMC y destination=TMC
+- [ ] Expediente con dependence_id=DEM: sigue generando 2 movimientos
+      (jurisdiction→TMC, TMC→ME) — regresión
+
+---- Impacto técnico ----
+
+- models: me/models/document_exp.py — condicional en create()
+- tests: 3 casos nuevos (ver arriba)
+- views: sin cambios
+- workflows.md: Workflow 4 — agregar rama para dependence_id=TMC
+
+--------------------------------------------------
