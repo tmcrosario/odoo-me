@@ -112,6 +112,43 @@ class TestDocumentExp(TransactionCase):
         self.assertIn(self.dep_tmc, destinations)
         self.assertIn(self.dep_mesa, destinations)
 
+    def test_create_tmc_generates_one_movement(self):
+        """
+        Cuando dependence_id = TMC, create() genera exactamente 1 movimiento automático:
+        TMC → Mesa de Entradas.
+        No debe crearse el movimiento TMC → TMC (origen == destino, sin sentido funcional).
+        """
+        tmc_vals = dict(
+            self.valid_vals,
+            number=99992,
+            dependence_id=self.dep_tmc.id,
+            jurisdiction_dependence=self.dep_tmc.id,
+        )
+        expediente = self.env['me.document_exp'].create(tmc_vals)
+        movements = expediente.document_movement_ids
+
+        self.assertEqual(len(movements), 1)
+        mov = movements[0]
+        self.assertEqual(mov.origin_dependence_id, self.dep_tmc)
+        self.assertEqual(mov.destination_dependence_id, self.dep_mesa)
+
+    def test_create_tmc_no_self_movement(self):
+        """
+        Cuando dependence_id = TMC, no debe existir ningún movimiento
+        con origin == destination == TMC.
+        """
+        tmc_vals = dict(
+            self.valid_vals,
+            number=99993,
+            dependence_id=self.dep_tmc.id,
+            jurisdiction_dependence=self.dep_tmc.id,
+        )
+        expediente = self.env['me.document_exp'].create(tmc_vals)
+        self_movements = expediente.document_movement_ids.filtered(
+            lambda m: m.origin_dependence_id == m.destination_dependence_id
+        )
+        self.assertFalse(self_movements)
+
     def test_invalid_number_raises(self):
         """
         Verifica que la creación falla si number=0.

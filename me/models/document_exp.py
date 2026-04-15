@@ -285,8 +285,16 @@ class DocumentExp(models.Model):
             self.env["raa.registry_aa"].create({
                 "document_id": record.document_id.id,
             })
-            # Crear el primer movimiento automáticamente: jurisdicción → TMC
-            if record.jurisdiction_dependence and tmc_dependence:
+            # Movimientos automáticos de ingreso.
+            # Si el expediente proviene de TMC, jurisdiction_dependence == TMC,
+            # por lo que el movimiento jurisdicción→TMC sería TMC→TMC (sin sentido).
+            # En ese caso se genera únicamente el movimiento TMC→ME.
+            origin_is_tmc = (
+                tmc_dependence and
+                record.dependence_id == tmc_dependence
+            )
+            if not origin_is_tmc and record.jurisdiction_dependence and tmc_dependence:
+                # Movimiento 1 (solo para DEM/CM): jurisdicción → TMC
                 self.env['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
@@ -294,7 +302,7 @@ class DocumentExp(models.Model):
                     'destination_dependence_id': tmc_dependence.id,
                     'user_id': self.env.uid,
                 })
-            # Crear el segundo movimiento automáticamente: TMC → Mesa de Entradas
+            # Movimiento final: TMC → Mesa de Entradas (siempre, si existen ambas dependencias)
             if tmc_dependence and mesa_entrada_dependence:
                 self.env['me.document_movement'].create({
                     'expediente_id': record.id,

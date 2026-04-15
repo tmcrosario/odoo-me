@@ -1169,8 +1169,8 @@ Modelo (me/models/document_exp.py):
 - [ ] create() mantiene comportamiento actual (2 movimientos) para DEM y CM
 
 Tests (me/tests/test_document_exp.py o test_document_movement.py):
-- [ ] Expediente con dependence_id=TMC: exactamente 2 movimientos totales,
-      el primero con origin=TMC y destination=ME
+- [ ] Expediente con dependence_id=TMC: exactamente 1 movimiento automático,
+      con origin=TMC y destination=ME
 - [ ] Expediente con dependence_id=TMC: no existe movimiento con
       origin=TMC y destination=TMC
 - [ ] Expediente con dependence_id=DEM: sigue generando 2 movimientos

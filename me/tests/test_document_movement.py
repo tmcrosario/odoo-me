@@ -117,8 +117,10 @@ class TestDocumentMovement(TransactionCase):
 
     def test_same_path_different_date_does_not_raise(self):
         """Crear dos movimientos mismo exp+orig+dest pero fecha distinta no falla."""
-        date1 = fields.Datetime.now()
-        date2 = date1 + timedelta(hours=1)
+        # Ambas fechas deben ser pasadas (>= intake_date) y distintas entre sí.
+        # Usar horas del mismo día para no cruzar la restricción de fecha futura.
+        date1 = fields.Datetime.from_string(str(self.today) + ' 08:00:00')
+        date2 = fields.Datetime.from_string(str(self.today) + ' 09:00:00')
         self._make_movement(date=date1)
         mov2 = self._make_movement(date=date2)
         self.assertTrue(mov2.id)
