@@ -23,10 +23,31 @@ class Movement(models.Model):
     destination_dependence_id = fields.Many2one(
         "tmc.dependence", string="Dependencia Destino", required=True
     )
+    fojas = fields.Integer(
+        string="Fojas",
+        default=0,
+        help="Total de fojas del expediente en el momento de este movimiento (snapshot)",
+    )
+    is_automatic = fields.Boolean(
+        default=False,
+        help="True cuando el movimiento fue generado automáticamente al crear el expediente",
+    )
     # notes = fields.Text(string="Observaciones")
     user_id = fields.Many2one(
         "res.users", string="Usuario", default=lambda self: self.env.user
     )
+
+    @api.model
+    def default_get(self, fields_list):
+        defaults = super().default_get(fields_list)
+        if 'fojas' in fields_list:
+            # La vista pasa {'default_expediente_id': id}; super() lo resuelve
+            # y lo entrega como defaults['expediente_id'].
+            expediente_id = defaults.get('expediente_id')
+            if expediente_id:
+                expediente = self.env['me.document_exp'].browse(expediente_id)
+                defaults['fojas'] = expediente.fojas
+        return defaults
 
     @api.constrains('date')
     def _check_date_not_future(self):

@@ -1010,7 +1010,7 @@ Tests:
 ### #015 – Fojas en movimientos de expediente
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 En cada pase del expediente entre dependencias pueden agregarse fojas nuevas.
@@ -1024,31 +1024,49 @@ Componentes descartados o delegados:
 
 ---- Decisiones cerradas ----
 
-A. Semántica del valor de fojas (cerrada: b1)
-   El campo fojas en cada movimiento almacena el TOTAL de fojas del
-   expediente en el momento exacto en que se crea ese movimiento.
-   No es un delta (fojas agregadas en ese pase) ni un ingreso libre.
-   Es un snapshot: se toma de expediente.fojas en el momento de crear
-   el movimiento.
+A. Semántica del campo fojas en movimientos
+   El campo fojas en me.document_movement almacena el TOTAL de fojas del
+   expediente en el momento exacto en que se registra ese movimiento.
+   No es un delta (fojas agregadas en ese pase). No es un ingreso libre
+   sin referencia. Es un snapshot: captura el estado del expediente en
+   ese instante de tiempo.
+   Motivo: la trazabilidad requiere saber cuántas fojas circularon con
+   el expediente en cada pase — si el expediente creció, queda registrado.
 
-   Para movimientos automáticos: se toma record.fojas en create().
-   Para movimientos manuales: se pre-carga vía default_get usando
-   expediente_id del contexto; el operador puede corregirlo (ver B).
+B. Valor por defecto de fojas
 
-B. Editabilidad (cerrada: editable para manuales, no editable para automáticos)
-   - Movimientos automáticos (creados por create() de me.document_exp):
-     fojas queda bloqueado. El operador no puede modificarlo.
-     Implementación: campo is_automatic = True en esos movimientos;
-     la vista aplica readonly="is_automatic" sobre fojas.
-   - Movimientos manuales:
-     fojas es editable. El valor auto-sugerido puede corregirse si el
-     operador registra el pase retroactivamente o cometió un error.
-     Implementación: readonly="is_automatic" es False → campo libre.
+   Movimientos automáticos (creados por create() de me.document_exp):
+     fojas se inyecta explícitamente como record.fojas al construir el
+     dict de cada movimiento automático en create(). No depende de ningún
+     default del campo — el valor real del expediente en ese instante se
+     pasa directamente.
+     Si expediente.fojas == 0 (campo no completado o expediente nuevo),
+     el movimiento registra 0. Correcto: 0 fojas es un estado válido.
 
-C. Valor cuando expediente.fojas no está cargado (cerrada: 0, sin error)
-   expediente.fojas es Integer — Odoo lo inicializa en 0 si no se cargó.
-   Si fojas == 0, el movimiento registra 0. No se lanza error ni aviso.
-   El campo es opcional: un movimiento con fojas=0 es válido.
+   Movimientos manuales (agregados por el operador en el tab de movimientos):
+     fojas se pre-carga vía default_get() usando el expediente del contexto.
+     La vista pasa el contexto {'default_expediente_id': id}.
+     Odoo resuelve 'default_expediente_id' en super().default_get() y lo
+     entrega como defaults['expediente_id']. La implementación lee ese valor
+     para resolver expediente.fojas y devolverlo como default de fojas.
+     Si no hay contexto (movimiento creado fuera de la vista del expediente),
+     fojas cae al default=0 del campo. No es un error.
+
+C. Editabilidad de fojas
+
+   Movimientos automáticos:
+     fojas es readonly. El operador no puede modificarlo.
+     Motivo: el valor fue tomado en el momento exacto del create(); editarlo
+     después rompería la semántica de snapshot.
+     Implementación: is_automatic = True en esos movimientos;
+     la vista aplica readonly="is_automatic" sobre fojas en lista y form.
+
+   Movimientos manuales:
+     fojas es editable. El valor pre-cargado (por default_get) puede
+     corregirse si el operador registra el pase retroactivamente o si
+     cometió un error en el conteo.
+     Implementación: is_automatic = False por default → readonly="is_automatic"
+     evalúa a False → campo editable.
 
 D. División de la task (cerrada: no se divide)
    Componente 3 ya está en #016 y componente 2 en #011.
@@ -1057,48 +1075,58 @@ D. División de la task (cerrada: no se divide)
 
 ---- Decisiones Uncertain ----
 
-E. Comportamiento de fojas al editar expediente.fojas después del pase
-   Si el operador cambia fojas en el expediente DESPUÉS de registrar un
-   movimiento manual, el movimiento retiene su valor original (snapshot).
-   Esto es correcto por diseño, pero puede generar confusión si el
-   operador espera que el movimiento refleje el valor actualizado.
-   No hay acción técnica necesaria — es solo un riesgo de UX a documentar.
+E. Snapshot vs. valor actualizado: riesgo de UX
+   Si el operador modifica expediente.fojas DESPUÉS de registrar un
+   movimiento, el movimiento retiene su valor original (snapshot).
+   Esto es correcto por diseño. Sin embargo puede generar confusión si
+   el operador espera que el movimiento refleje el valor actualizado.
+   No hay acción técnica necesaria — es un riesgo de UX a documentar
+   en el manual de operación, no en el código.
 
 ---- Criterios de aceptación ----
 
 Modelo (me/models/document_movement.py):
-- [ ] Nuevo campo: fojas = fields.Integer(string="Fojas", default=0)
-- [ ] Nuevo campo: is_automatic = fields.Boolean(default=False)
-      (marca si el movimiento fue creado automáticamente por create())
-- [ ] default_get(): si expediente_id está en el contexto, pre-cargar
-      fojas con expediente_id.fojas
+- [x] Nuevo campo: fojas = fields.Integer(string="Fojas", default=0)
+- [x] Nuevo campo: is_automatic = fields.Boolean(default=False)
+      (True cuando el movimiento fue creado por create() de me.document_exp)
+- [x] default_get(): leer defaults.get('expediente_id') — resuelto por
+      super().default_get() desde el contexto {'default_expediente_id': id}
+      que pone la vista — y pre-cargar fojas = expediente.fojas.
+      Si defaults no tiene expediente_id, fojas queda en el default=0 del campo.
 
 Modelo (me/models/document_exp.py — create()):
-- [ ] Al crear movimientos automáticos: pasar fojas=record.fojas,
+- [x] Al crear movimientos automáticos: incluir fojas=record.fojas e
       is_automatic=True en el dict de valores de cada movimiento
 
 Vista (me/views/document_exp_views.xml):
-- [ ] Columna fojas en la lista de movimientos
-- [ ] Campo fojas en el form de movimiento
-- [ ] is_automatic invisible="1" (campo auxiliar, nunca visible)
-- [ ] fojas con readonly="is_automatic" en lista y form
+- [x] Agregar columna fojas en la lista de movimientos (tab Movimientos)
+- [x] Agregar campo fojas en el form inline de movimiento
+- [x] is_automatic con invisible="1" en lista (column_invisible) y form
+- [x] fojas con readonly="is_automatic" en lista y form
 
-Tests (me/tests/test_document_movement.py o test_document_exp.py):
-- [ ] Movimiento automático tiene fojas == expediente.fojas al crear
-- [ ] Movimiento automático tiene is_automatic == True
-- [ ] Movimiento manual creado con fojas=0 (expediente sin fojas) no falla
-- [ ] Movimiento manual tiene is_automatic == False
-- [ ] Movimiento con expediente.fojas=5: fojas del movimiento == 5
+Tests (me/tests/test_document_movement.py — clase TestFojasMovimiento):
+- [x] Crear expediente con fojas=5: ambos movimientos automáticos tienen fojas == 5
+- [x] Movimientos automáticos tienen is_automatic == True
+- [x] Movimiento manual (creado sin is_automatic) tiene is_automatic == False
+- [x] Movimiento manual creado explícitamente con fojas=0 no falla
+- [x] Crear expediente con fojas=0 (default): movimientos automáticos tienen fojas == 0
+- [x] default_get() pre-carga fojas desde el contexto default_expediente_id
+
+Nota sobre tests existentes:
+  El setUp de TestDocumentMovement crea un expediente sin fojas explícitas
+  (fojas=0 por default de #017). Los movimientos automáticos creados en ese
+  setUp tendrán fojas=0. Los tests de esa clase no verifican fojas — no se rompen.
+  Los nuevos tests deben crear expedientes con fojas=5 para el caso no trivial.
 
 ---- Impacto técnico ----
 
 - models: me/models/document_movement.py — 2 campos nuevos + default_get
 - models: me/models/document_exp.py — pasar fojas e is_automatic en create()
 - views: me/views/document_exp_views.xml — columna fojas + readonly condicional
-- tests: casos listados arriba
+- tests: casos listados arriba (en test_document_movement.py, nueva clase)
 - documentación:
-  - system_narrative.md: sección 5.2 — fojas en movimientos
   - ai-context.md: actualizar tabla de campos de me.document_movement
+    (agregar fojas e is_automatic)
 
 --------------------------------------------------
 ### #016 – Corregir movimientos automáticos cuando dependencia es TMC

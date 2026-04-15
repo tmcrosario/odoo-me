@@ -324,6 +324,8 @@ class DocumentExp(models.Model):
                     'origin_dependence_id': record.jurisdiction_dependence.id,
                     'destination_dependence_id': tmc_dependence.id,
                     'user_id': self.env.uid,
+                    'fojas': record.fojas,
+                    'is_automatic': True,
                 })
             # Movimiento final: TMC → Mesa de Entradas (siempre, si existen ambas dependencias)
             if tmc_dependence and mesa_entrada_dependence:
@@ -333,6 +335,8 @@ class DocumentExp(models.Model):
                     'origin_dependence_id': tmc_dependence.id,
                     'destination_dependence_id': mesa_entrada_dependence.id,
                     'user_id': self.env.uid,
+                    'fojas': record.fojas,
+                    'is_automatic': True,
                 })
         return records
 

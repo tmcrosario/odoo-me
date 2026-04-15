@@ -155,3 +155,148 @@ class TestDocumentMovement(TransactionCase):
         self.assertEqual(mov.expediente_id, self.expediente)
         self.assertEqual(mov.origin_dependence_id, self.dep_dem)
         self.assertEqual(mov.destination_dependence_id, self.dep_other)
+
+
+@tagged('post_install', '-at_install')
+class TestFojasMovimiento(TransactionCase):
+    """Tests para #015 — campo fojas en me.document_movement.
+
+    Verifica:
+    - snapshot semántico: movimientos automáticos heredan record.fojas de create()
+    - is_automatic distingue movimientos automáticos de manuales
+    - default=0 cuando fojas no está cargado
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        if not self.dep_tmc:
+            self.dep_tmc = self.env['tmc.dependence'].create({
+                'name': 'TMC',
+                'abbreviation': 'TMC',
+            })
+
+        self.dep_mesa = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ME')], limit=1
+        )
+        if not self.dep_mesa:
+            self.dep_mesa = self.env['tmc.dependence'].create({
+                'name': 'Mesa de Entradas',
+                'abbreviation': 'ME',
+            })
+
+        # Jurisdicción sin hijos en el nomenclador para no disparar
+        # _check_source_dependence_required (#017)
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Fojas Test',
+            'abbreviation': 'JFOJ',
+        })
+
+        self.dep_other = self.env['tmc.dependence'].create({
+            'name': 'Otra Dep Fojas Test',
+            'abbreviation': 'OFOJ',
+        })
+
+        self.current_year = str(fields.Date.today().year)
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+
+    def _make_expediente(self, fojas=0, number=77770):
+        return self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': fojas,
+        })
+
+    def test_automatic_movements_have_is_automatic_true(self):
+        """Los movimientos generados por create() tienen is_automatic == True."""
+        exp = self._make_expediente(number=77771)
+        for mov in exp.document_movement_ids:
+            self.assertTrue(
+                mov.is_automatic,
+                f"Movimiento {mov.id} debería tener is_automatic=True",
+            )
+
+    def test_automatic_movements_snapshot_fojas_nonzero(self):
+        """Movimientos automáticos capturan el valor real de fojas=5 del expediente."""
+        exp = self._make_expediente(fojas=5, number=77772)
+        for mov in exp.document_movement_ids:
+            self.assertEqual(
+                mov.fojas, 5,
+                f"Movimiento {mov.id} debería tener fojas=5 (snapshot)",
+            )
+
+    def test_automatic_movements_fojas_zero_when_not_loaded(self):
+        """Movimientos automáticos registran fojas=0 cuando el expediente no tiene fojas."""
+        exp = self._make_expediente(fojas=0, number=77773)
+        for mov in exp.document_movement_ids:
+            self.assertEqual(mov.fojas, 0)
+
+    def test_manual_movement_has_is_automatic_false(self):
+        """Movimiento creado manualmente tiene is_automatic == False."""
+        exp = self._make_expediente(number=77774)
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+        })
+        self.assertFalse(mov.is_automatic)
+
+    def test_manual_movement_fojas_zero_by_default(self):
+        """Movimiento manual sin fojas explícito usa default=0."""
+        exp = self._make_expediente(fojas=5, number=77775)
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+        })
+        # Sin contexto default_expediente_id, fojas cae al default=0 del campo
+        self.assertEqual(mov.fojas, 0)
+
+    def test_manual_movement_fojas_explicit_zero_does_not_raise(self):
+        """Movimiento manual con fojas=0 explícito no lanza error."""
+        exp = self._make_expediente(number=77776)
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+            'fojas': 0,
+        })
+        self.assertEqual(mov.fojas, 0)
+
+    def test_default_get_preloads_fojas_from_context(self):
+        """default_get() pre-carga fojas desde el expediente cuando está en el contexto."""
+        exp = self._make_expediente(fojas=7, number=77777)
+        defaults = self.env['me.document_movement'].with_context(
+            default_expediente_id=exp.id
+        ).default_get(['fojas', 'expediente_id'])
+        self.assertEqual(defaults.get('fojas'), 7)

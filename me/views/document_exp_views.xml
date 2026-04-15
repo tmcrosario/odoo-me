@@ -80,16 +80,20 @@
                         <page string="Movimientos">
                             <field name="document_movement_ids" mode="list,form" context="{'default_expediente_id': id}">
                                 <list editable="bottom">
+                                    <field name="is_automatic" column_invisible="1"/>
                                     <field name="date"/>
                                     <field name="origin_dependence_id"/>
                                     <field name="destination_dependence_id"/>
+                                    <field name="fojas" readonly="is_automatic"/>
                                     <field name="user_id"/>
                                 </list>
                                 <form>
                                     <group>
+                                        <field name="is_automatic" invisible="1"/>
                                         <field name="date"/>
                                         <field name="origin_dependence_id"/>
                                         <field name="destination_dependence_id"/>
+                                        <field name="fojas" readonly="is_automatic"/>
                                         <field name="user_id"/>
                                     </group>
                                 </form>
