@@ -354,6 +354,7 @@ class DocumentExp(models.Model):
             "UPDATE tmc_document SET date = %s WHERE id = %s",
             (date_str, self.document_id.id)
         )
+        self.document_id.invalidate_recordset(['date'])
 
     def write(self, vals):
         if 'dependence_id' in vals:

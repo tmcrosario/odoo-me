@@ -806,6 +806,16 @@ class TestRequiredFields017(TransactionCase):
         exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88892))
         self.assertTrue(exp.id)
 
+    def test_date_persists_after_create(self):
+        """La fecha debe persistirse y leerse correctamente via ORM después de create().
+
+        Regresión: _update_document_date() actualizaba la DB via SQL pero no invalidaba
+        el cache ORM. La relectura del campo retornaba False (valor cacheado antes del
+        UPDATE), vaciando visualmente la fecha en el formulario tras el save.
+        """
+        exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88897))
+        self.assertEqual(exp.date, self.today)
+
     def test_create_with_fojas_zero_does_not_raise(self):
         """Crear expediente con fojas=0 no falla (0 es valor válido)."""
         exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88893, fojas=0))
