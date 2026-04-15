@@ -77,6 +77,7 @@ class TestDocumentMovement(TransactionCase):
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur.id,
             'intake_date': self.today,
+            'date': self.today,
         })
 
     def _make_movement(self, **kwargs):

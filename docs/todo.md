@@ -1177,7 +1177,7 @@ Tests (me/tests/test_document_exp.py o test_document_movement.py):
 ### #017 – Campos obligatorios en Fase 2 del expediente
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 Al cargar un expediente en la vista form, la Fase 2 muestra campos que
@@ -1208,6 +1208,10 @@ B. date = required en vista + validación manual en create() y write()
    Implementación:
      - create(): verificar que date esté en vals antes de super()
      - write(): verificar en el bloque de extracción de date_val
+   Nota técnica: date se extrae de vals ANTES de llamar super().create()
+   para evitar que tmc.document.create() lo procese como objeto datetime.date
+   (tmc.document espera string para hacer slicing [:4] al comparar con period).
+   Se aplica vía SQL con _update_document_date() igual que write().
 
 C. source_dependence_id = required condicional (cuando hay opciones)
    Required SOLO cuando allowed_sub_dependence_ids es no vacío.
@@ -1224,30 +1228,30 @@ C. source_dependence_id = required condicional (cuando hay opciones)
 ---- Criterios de aceptación ----
 
 Modelo (me/models/document_exp.py):
-- [ ] fojas: agregar required=True a la definición del campo Integer
-- [ ] date: agregar check manual en create() antes de super()
+- [x] fojas: agregar default=0 (required en vista; Integer required=True rechaza 0)
+- [x] date: agregar check manual en create() antes de super()
       que lanza ValidationError si date no está en vals o es falsy
-- [ ] date: agregar check en write() en el bloque de extracción de date_val
+- [x] date: agregar check en write() en el bloque de extracción de date_val
       que lanza ValidationError si date_val es None/False
-- [ ] source_dependence_id: agregar @api.constrains(
+- [x] source_dependence_id: agregar @api.constrains(
       'source_dependence_id', 'jurisdiction_dependence')
       con condición: if record.allowed_sub_dependence_ids and not
       record.source_dependence_id → raise ValidationError
 
 Vista (me/views/document_exp_views.xml):
-- [ ] date: agregar required="1"
-- [ ] source_dependence_id: agregar required="allowed_sub_dependence_ids"
-- [ ] fojas: heredará required del modelo (verificar que aparece con *)
+- [x] date: agregar required="1"
+- [x] source_dependence_id: agregar required="allowed_sub_dependence_ids"
+- [x] fojas: agregar required="1" en la vista
 
 Tests (me/tests/test_document_exp.py):
-- [ ] Crear expediente sin date lanza ValidationError
-- [ ] Crear expediente con date válida no falla
-- [ ] Crear expediente con fojas=0 no falla (0 es válido)
-- [ ] Crear expediente con jurisdiction que tiene hijos y sin
+- [x] Crear expediente sin date lanza ValidationError
+- [x] Crear expediente con date válida no falla
+- [x] Crear expediente con fojas=0 no falla (0 es válido)
+- [x] Crear expediente con jurisdiction que tiene hijos y sin
       source_dependence_id lanza ValidationError
-- [ ] Crear expediente con jurisdiction sin hijos y sin
+- [x] Crear expediente con jurisdiction sin hijos y sin
       source_dependence_id no falla (conditional required)
-- [ ] Crear expediente con jurisdiction que tiene hijos y con
+- [x] Crear expediente con jurisdiction que tiene hijos y con
       source_dependence_id válido no falla
 
 ---- Impacto técnico ----

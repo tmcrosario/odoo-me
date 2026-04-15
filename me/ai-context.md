@@ -81,12 +81,12 @@ Own fields (defined in `me.document_exp`):
 | `jurisdiction_dependence` | Many2one(tmc.dependence) | Yes | origin of first automatic movement |
 | `intake_date` | Date | Yes | date of physical receipt at Mesa de Entradas; no default; future dates rejected |
 | `external_key` | Char | No | identifier used by the Municipality |
-| `fojas` | Integer | No | number of pages |
+| `fojas` | Yes (view) | Integer; number of pages; default=0; 0 is valid; required="1" in view only — Integer required=True at model level would reject 0 |
 | `number` | Integer | Yes | inherited from tmc.document, required enforced here |
 | `is_valid` | Boolean | No | computed: True when 5 fields complete (dependence_id, document_type_id, number, period, jurisdiction_dependence) |
 | `is_origin_complete` | Boolean | No | computed: True when 3 fields complete (dependence_id, number, period); controls UI progression |
 | `computed_name` | Char | No | computed: format EXP-XXXXXX-ABR/YEAR; shown as soon as dependence_id + number + period are set |
-| `source_dependence_id` | Many2one(tmc.dependence) | No | optional; filtered to children of `jurisdiction_dependence` via `allowed_sub_dependence_ids`; cleared when `jurisdiction_dependence` changes |
+| `source_dependence_id` | Many2one(tmc.dependence) | Conditional | required when `allowed_sub_dependence_ids` is non-empty (i.e. jurisdiction has children in nomenclator); enforced by `@api.constrains` + `required="allowed_sub_dependence_ids"` in view; cleared when `jurisdiction_dependence` changes |
 | `allowed_sub_dependence_ids` | Many2many(tmc.dependence) | No | computed; depends on `jurisdiction_dependence`; queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.id`; provides domain for `source_dependence_id` |
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
@@ -201,8 +201,9 @@ which queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.
 and maps `.dependence_id`. The view applies this as a domain filter.
 
 When `jurisdiction_dependence` changes, `_onchange_jurisdiction_dependence()` clears
-`source_dependence_id` to prevent stale values. The field is optional — expedientes
-can be created without it.
+`source_dependence_id` to prevent stale values. The field is conditionally required:
+mandatory when the selected jurisdiction has sub-dependences in `tmc.dependence_order`;
+optional when it has none (the constraint would block creation with no options to choose from).
 
 Do not hardcode a domain on `source_dependence_id` in the view — use the computed
 field `allowed_sub_dependence_ids` as the source of truth.
@@ -265,9 +266,9 @@ Phase 1 — always visible: `dependence_id`, `document_type_id` (auto, readonly,
 dependence_id is set), `number`, `period`
 
 Phase 2 — visible when `is_origin_complete = True` (dependence_id + number + period complete):
-`jurisdiction_dependence`, `source_dependence_id` (optional, filtered to children of jurisdiction),
+`jurisdiction_dependence`, `source_dependence_id` (required when jurisdiction has children, otherwise optional),
 `intake_date`, `main_topic_id` (optional), `secondary_topic_id` (visible when main_topic_id set),
-`document_object`, `date`, `external_key`, `fojas`
+`document_object`, `date` (required), `external_key`, `fojas` (required in view, 0 is valid)
 
 - `is_valid` is still computed and exists in the model (controls functional completeness),
   but it is NOT the UI visibility control — do not use it for that purpose

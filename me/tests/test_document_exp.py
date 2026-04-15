@@ -73,6 +73,7 @@ class TestDocumentExp(TransactionCase):
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur.id,
             'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
         }
 
     def test_create_expediente_basic(self):
@@ -123,6 +124,7 @@ class TestDocumentExp(TransactionCase):
             number=99992,
             dependence_id=self.dep_tmc.id,
             jurisdiction_dependence=self.dep_tmc.id,
+            source_dependence_id=self.dep_mesa.id,
         )
         expediente = self.env['me.document_exp'].create(tmc_vals)
         movements = expediente.document_movement_ids
@@ -142,6 +144,7 @@ class TestDocumentExp(TransactionCase):
             number=99993,
             dependence_id=self.dep_tmc.id,
             jurisdiction_dependence=self.dep_tmc.id,
+            source_dependence_id=self.dep_mesa.id,
         )
         expediente = self.env['me.document_exp'].create(tmc_vals)
         self_movements = expediente.document_movement_ids.filtered(
@@ -428,6 +431,8 @@ class TestSourceDependence(TransactionCase):
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur_test.id,
             'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
+            'source_dependence_id': self.dep_child_a.id,
         }
 
     def test_allowed_sub_dependence_ids_returns_children(self):
@@ -528,6 +533,7 @@ class TestSecondaryTopics(TransactionCase):
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur.id,
             'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
         }
 
     def test_create_without_secondary_topic_does_not_fail(self):
@@ -641,6 +647,7 @@ class TestTopicProxyFields(TransactionCase):
             'period': self.current_year,
             'jurisdiction_dependence': self.dep_jur.id,
             'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
         }
 
     def test_main_topic_id_computes_from_main_topic_ids(self):
@@ -713,6 +720,127 @@ class TestTopicProxyFields(TransactionCase):
         """
         record = self.env['me.document_exp'].new({})
         self.assertNotIn(self.topic_root, record.allowed_exp_topic_ids)
+
+
+@tagged('post_install', '-at_install')
+class TestRequiredFields017(TransactionCase):
+    """Tests para #017 — Campos obligatorios en Fase 2 del expediente.
+
+    Cubre las reglas:
+    - date: required, validación manual en create() y write()
+    - fojas: default=0, required en vista; 0 es valor válido
+    - source_dependence_id: required condicional cuando la jurisdicción
+      tiene hijos en tmc.dependence_order
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        # Jurisdicción sin hijos en el nomenclador
+        self.dep_jur_no_children = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Sin Hijos 017',
+            'abbreviation': 'JSH017',
+        })
+
+        # Jurisdicción con hijos en el nomenclador
+        self.dep_jur_with_children = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Con Hijos 017',
+            'abbreviation': 'JCH017',
+        })
+        self.dep_sub = self.env['tmc.dependence'].create({
+            'name': 'Sub Dependencia 017',
+            'abbreviation': 'SUB017',
+        })
+        self.env['tmc.dependence_order'].create({
+            'code': '9.98.01',
+            'parent_id': self.dep_jur_with_children.id,
+            'dependence_id': self.dep_sub.id,
+        })
+
+        self.topic_root = self.env['tmc.document_topic'].create({
+            'name': 'Tema Root 017',
+            'important': True,
+        })
+
+        self.current_year = str(fields.Date.today().year)
+        self.today = fields.Date.today()
+
+        # Vals base válidos (jurisdiction sin hijos)
+        self.base_vals = {
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 88890,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur_no_children.id,
+            'intake_date': self.today,
+            'date': self.today,
+        }
+
+    def test_create_without_date_raises(self):
+        """Crear expediente sin date lanza ValidationError."""
+        vals = dict(self.base_vals, number=88891)
+        del vals['date']
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_create_with_date_does_not_raise(self):
+        """Crear expediente con date válida no falla."""
+        exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88892))
+        self.assertTrue(exp.id)
+
+    def test_create_with_fojas_zero_does_not_raise(self):
+        """Crear expediente con fojas=0 no falla (0 es valor válido)."""
+        exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88893, fojas=0))
+        self.assertTrue(exp.id)
+        self.assertEqual(exp.fojas, 0)
+
+    def test_create_jurisdiction_with_children_without_source_raises(self):
+        """Crear expediente con jurisdicción que tiene hijos y sin
+        source_dependence_id lanza ValidationError."""
+        vals = dict(
+            self.base_vals,
+            number=88894,
+            jurisdiction_dependence=self.dep_jur_with_children.id,
+        )
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_create_jurisdiction_without_children_no_source_does_not_raise(self):
+        """Crear expediente con jurisdicción sin hijos y sin source_dependence_id
+        no falla (conditional required — no hay opciones disponibles)."""
+        exp = self.env['me.document_exp'].create(dict(self.base_vals, number=88895))
+        self.assertTrue(exp.id)
+        self.assertFalse(exp.source_dependence_id)
+
+    def test_create_jurisdiction_with_children_and_source_does_not_raise(self):
+        """Crear expediente con jurisdicción con hijos y source_dependence_id
+        válido no falla."""
+        exp = self.env['me.document_exp'].create(dict(
+            self.base_vals,
+            number=88896,
+            jurisdiction_dependence=self.dep_jur_with_children.id,
+            source_dependence_id=self.dep_sub.id,
+        ))
+        self.assertTrue(exp.id)
+        self.assertEqual(exp.source_dependence_id, self.dep_sub)
 
     def test_main_topic_id_available_regardless_of_dependence(self):
         """

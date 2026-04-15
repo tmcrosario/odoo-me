@@ -43,6 +43,7 @@ class DocumentExp(models.Model):
     )
     fojas = fields.Integer(
         string="Número de fojas",
+        default=0,
         help="Número de fojas del expediente"
     )
     # asunto = fields.Char(
@@ -234,6 +235,15 @@ class DocumentExp(models.Model):
         """Limpiar repartición al cambiar jurisdicción para evitar datos inconsistentes"""
         self.source_dependence_id = False
 
+    @api.constrains('source_dependence_id', 'jurisdiction_dependence')
+    def _check_source_dependence_required(self):
+        for record in self:
+            if record.allowed_sub_dependence_ids and not record.source_dependence_id:
+                raise exceptions.ValidationError(
+                    _("The source dependence (Repartición) is required "
+                      "when the selected jurisdiction has sub-dependences available.")
+                )
+
     @api.onchange('dependence_id')
     def _onchange_dependence(self):
         """Configurar el tipo de documento cuando se selecciona dependencia"""
@@ -272,12 +282,25 @@ class DocumentExp(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # Validate and extract date before calling super().
+        # tmc.document.create() expects date as a string and runs a period-match
+        # check; passing a datetime.date object or mismatched year raises UserError.
+        # We bypass it entirely by removing date from vals and applying it via SQL
+        # after creation — same pattern as write() / _update_document_date().
+        dates = []
         for vals in vals_list:
+            if not vals.get('date'):
+                raise exceptions.ValidationError(
+                    _("The document date is required.")
+                )
+            dates.append(vals.pop('date'))
             if 'dependence_id' in vals:
                 self._validate_dependence(vals['dependence_id'])
         # _inherits maneja la creación de tmc.document automáticamente.
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
         records = super().create(vals_list)
+        for record, date_val in zip(records, dates):
+            record._update_document_date(date_val)
         tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
         mesa_entrada_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         for record in records:
@@ -336,7 +359,12 @@ class DocumentExp(models.Model):
         if 'dependence_id' in vals:
             self._validate_dependence(vals['dependence_id'])
         # Separar la fecha del resto de campos
-        date_val = vals.pop('date', None) if 'date' in vals else None
+        date_in_vals = 'date' in vals
+        date_val = vals.pop('date', None) if date_in_vals else None
+        if date_in_vals and not date_val:
+            raise exceptions.ValidationError(
+                _("The document date is required.")
+            )
         
         doc_fields = [
             "dependence_id", "document_type_id", "number", "period", "document_object"
