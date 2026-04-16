@@ -1073,15 +1073,15 @@ D. División de la task (cerrada: no se divide)
    #015 queda exclusivamente sobre fojas — un solo campo, un solo flujo.
    No amerita subdivisión adicional.
 
----- Decisiones Uncertain ----
+---- Nota operativa ----
 
-E. Snapshot vs. valor actualizado: riesgo de UX
-   Si el operador modifica expediente.fojas DESPUÉS de registrar un
-   movimiento, el movimiento retiene su valor original (snapshot).
-   Esto es correcto por diseño. Sin embargo puede generar confusión si
-   el operador espera que el movimiento refleje el valor actualizado.
-   No hay acción técnica necesaria — es un riesgo de UX a documentar
-   en el manual de operación, no en el código.
+E. Snapshot vs. valor actualizado
+   El campo fojas en cada movimiento registra el total de fojas del expediente
+   en el momento exacto del pase — no se actualiza si expediente.fojas cambia
+   después. Esto es correcto por diseño (decisión A).
+   El operador debe saber que el valor en movimientos históricos refleja el
+   estado en ese instante, no el valor actual del expediente.
+   Punto a cubrir en el manual de operación; no requiere cambios técnicos.
 
 ---- Criterios de aceptación ----
 
