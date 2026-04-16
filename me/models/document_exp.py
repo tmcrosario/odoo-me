@@ -304,8 +304,10 @@ class DocumentExp(models.Model):
         tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
         mesa_entrada_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         for record in records:
-            # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py)
-            self.env["raa.registry_aa"].create({
+            # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py).
+            # sudo() necesario: la creación RAA es un efecto interno del sistema;
+            # el usuario no necesita permisos en raa.registry_aa para crear expedientes.
+            self.env["raa.registry_aa"].sudo().create({
                 "document_id": record.document_id.id,
             })
             # Movimientos automáticos de ingreso.

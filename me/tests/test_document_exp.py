@@ -1061,9 +1061,14 @@ class TestFojasLock(TransactionCase):
         })
         self.assertEqual(self.expediente.document_object, 'Referencia de prueba')
 
-    def test_operator_cannot_write_fojas_access_error(self):
-        """me.group_user recibe AccessError al intentar write() — perm_write=0."""
-        with self.assertRaises(AccessError):
+    def test_operator_cannot_write_fojas(self):
+        """me.group_user no puede modificar fojas — recibe ValidationError.
+
+        Nota: el check has_group('me.group_manager') en write() se ejecuta antes
+        de super().write(), por lo que cualquier usuario sin me.group_manager
+        recibe ValidationError (no AccessError) al intentar modificar fojas.
+        """
+        with self.assertRaises(ValidationError):
             self.expediente.with_user(self.operator_user).write({'fojas': 10})
 
     def test_operator_can_create_expediente(self):
