@@ -355,3 +355,44 @@ The repository also contains:
 - **tmc** (odoo-tmc repository):
   provides the base document system. Read for context,
   do not modify.
+
+
+
+--------------------------------------------------
+Grupos y política de permisos
+--------------------------------------------------
+
+Los grupos de ME usan `res.groups.privilege` (patrón Odoo 19), definidos en
+`me/security/me_groups.xml`. Las reglas de acceso están en
+`me/security/ir.model.access.csv`.
+
+Grupos:
+
+  me.group_user (operador): R_C_ en document_exp y document_movement.
+    Registra ingresos y pases. No puede editar ni eliminar registros existentes.
+    implied_ids: tmc.group_user (necesario para crear tmc.document via _inherits).
+
+  me.group_manager (gestor): RWCU en document_exp y document_movement.
+    Supervisa y corrige. Puede modificar fojas post-creación (excepción operativa).
+    implied_ids: me.group_user + tmc.group_manager (necesario para write en tmc.document).
+
+  me.group_read_only: R___ en ambos modelos.
+
+Cadena de implicación:
+  me.group_manager → me.group_user → tmc.group_user → base.group_user
+  me.group_manager → tmc.group_manager → tmc.group_user
+
+Dependencia con TMC:
+  me.document_exp usa _inherits sobre tmc.document. Cualquier write() sobre
+  campos delegados (dependence_id, number, period, document_object, etc.)
+  requiere perm_write=1 en tmc.document. Solo tmc.group_manager lo tiene.
+  Por eso me.group_manager implica tmc.group_manager vía implied_ids.
+  me.group_user implica tmc.group_user, que tiene perm_create=1 en tmc.document
+  (necesario para que el operador pueda crear expedientes via _inherits).
+
+Restricción de fojas:
+  write() en me.document_exp verifica has_group('me.group_manager').
+  me.group_user no tiene perm_write en me.document_exp → recibe AccessError
+  antes de llegar al check. El check protege contra me.group_manager que
+  intente modificar fojas accidentalmente vía API; el gestor puede corregirlo
+  cuando es un error operativo real.

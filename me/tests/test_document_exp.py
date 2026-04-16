@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from odoo import fields
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
@@ -970,11 +970,12 @@ class TestDocumentTopicsTMC(TransactionCase):
 
 @tagged('post_install', '-at_install')
 class TestFojasLock(TransactionCase):
-    """Tests para fix #017 — fojas en expediente bloqueado después de creación.
+    """Tests para #018 — matriz de permisos de me y restricción de fojas.
 
     Regla: fojas puede cargarse al crear el expediente. Una vez creado,
-    solo un administrador (base.group_system) puede modificar el valor.
-    Los usuarios regulares reciben ValidationError al intentar modificarlo.
+    solo me.group_manager puede modificar el valor.
+    me.group_user tiene perm_write=0 en me.document_exp → AccessError antes
+    de llegar al check de fojas.
     """
 
     def setUp(self):
@@ -1018,49 +1019,83 @@ class TestFojasLock(TransactionCase):
             'fojas': 3,
         })
 
-        # Usuario con acceso de escritura a los modelos pero sin base.group_system.
-        # tmc.group_manager tiene write en tmc.document; también necesita acceso
-        # a me.document_exp (el módulo me no tiene security file aún).
-        self.regular_user = self.env['res.users'].with_context(
+        # Gestor ME: CRUD en me.document_exp y me.document_movement.
+        # implied_ids: me.group_user → tmc.group_user; tmc.group_manager (para write en tmc.document)
+        self.manager_user = self.env['res.users'].with_context(
             no_reset_password=True
         ).create({
-            'name': 'Usuario Regular Test',
-            'login': 'regular_fojas_lock_test@test.com',
-            'group_ids': [(6, 0, [self.env.ref('tmc.group_manager').id])],
+            'name': 'Gestor ME Test',
+            'login': 'manager_fojas_lock_test@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_manager').id])],
         })
-        # Conceder acceso temporal a me.document_exp para tmc.group_manager
-        # (el módulo me no define su propio security file aún).
-        me_model = self.env['ir.model'].search(
-            [('model', '=', 'me.document_exp')], limit=1
-        )
-        self.env['ir.model.access'].create({
-            'name': 'test_fojas_lock_me_exp_access',
-            'model_id': me_model.id,
-            'group_id': self.env.ref('tmc.group_manager').id,
-            'perm_read': True,
-            'perm_write': True,
-            'perm_create': True,
-            'perm_unlink': True,
+
+        # Operador ME: R_C_ en me.document_exp y me.document_movement.
+        # implied_ids: tmc.group_user (para crear tmc.document via _inherits)
+        self.operator_user = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Operador ME Test',
+            'login': 'operator_fojas_lock_test@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
         })
 
     def test_create_with_fojas_works(self):
         """Crear expediente con fojas cargado no lanza error."""
         self.assertEqual(self.expediente.fojas, 3)
 
-    def test_regular_user_cannot_write_fojas(self):
-        """Usuario sin base.group_system no puede modificar fojas después de crear."""
-        with self.assertRaises(ValidationError):
-            self.expediente.with_user(self.regular_user).write({'fojas': 10})
+    def test_manager_can_write_fojas(self):
+        """me.group_manager puede corregir fojas post-creación."""
+        self.expediente.with_user(self.manager_user).write({'fojas': 10})
+        self.assertEqual(self.expediente.fojas, 10)
 
     def test_admin_can_write_fojas(self):
-        """Usuario con base.group_system puede modificar fojas después de crear."""
+        """Usuario con base.group_system puede modificar fojas (implica me.group_manager)."""
         # El usuario de test (uid=1) pertenece a base.group_system
         self.expediente.write({'fojas': 10})
         self.assertEqual(self.expediente.fojas, 10)
 
-    def test_regular_user_can_write_other_fields(self):
-        """La restricción de fojas no bloquea otros campos para usuarios regulares."""
-        self.expediente.with_user(self.regular_user).write({
+    def test_manager_can_write_other_fields(self):
+        """me.group_manager puede editar campos que no son fojas."""
+        self.expediente.with_user(self.manager_user).write({
             'document_object': 'Referencia de prueba',
         })
         self.assertEqual(self.expediente.document_object, 'Referencia de prueba')
+
+    def test_operator_cannot_write_fojas_access_error(self):
+        """me.group_user recibe AccessError al intentar write() — perm_write=0."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'fojas': 10})
+
+    def test_operator_can_create_expediente(self):
+        """me.group_user puede crear expedientes (perm_create=1)."""
+        new_exp = self.env['me.document_exp'].with_user(self.operator_user).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 77771,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 5,
+        })
+        self.assertEqual(new_exp.fojas, 5)
+
+    def test_manager_can_create_and_edit_without_tmc_manual_assignment(self):
+        """me.group_manager puede crear y editar sin asignación manual de tmc.group_manager.
+
+        implied_ids en me.group_manager incluye tmc.group_manager, que otorga
+        perm_write en tmc.document (necesario para campos delegados via _inherits).
+        """
+        new_exp = self.env['me.document_exp'].with_user(self.manager_user).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 88881,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 2,
+        })
+        # Editar un campo delegado (tmc.document) — requiere tmc.group_manager via implied_ids
+        new_exp.with_user(self.manager_user).write({'document_object': 'Test objeto'})
+        self.assertEqual(new_exp.document_object, 'Test objeto')

@@ -1294,3 +1294,148 @@ Tests (me/tests/test_document_exp.py):
   source_dependence_id (actualizar Required: condicional)
 
 --------------------------------------------------
+### #018 – Matriz de permisos de módulo me
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+El módulo me define tres grupos funcionales (me.group_user, me.group_manager,
+me.group_read_only) pero no tiene ir.model.access.csv. Los grupos son
+asignables en la UI pero no controlan ningún modelo. Esto genera tres
+problemas concretos detectados en el análisis de permisos post-#017:
+
+Problema 1 — grupos sin efecto real:
+  me.group_user y me.group_manager no gatan acceso a me.document_exp ni a
+  me.document_movement. En Odoo, un modelo sin ir.model.access es accesible
+  exclusivamente por administradores técnicos (base.group_system). Cualquier
+  usuario en me.group_manager que intente acceder a un expediente por API
+  recibe AccessError.
+
+Problema 2 — dependencia oculta con tmc.group_manager:
+  me.document_exp usa _inherits sobre tmc.document. El ORM ejecuta
+  tmc.document.write() para campos delegados (dependence_id, number, period,
+  document_object, etc.). tmc.group_user tiene perm_write=0 sobre tmc.document;
+  solo tmc.group_manager tiene perm_write=1. Un me.group_manager que no sea
+  también tmc.group_manager recibirá AccessError al editar un expediente,
+  aunque tenga permisos correctos en los modelos de me.
+
+Problema 3 — base.group_system como bypass funcional:
+  El único has_group() en todo el sistema (write() en me.document_exp, para
+  restringir edición de fojas post-creación) referencia base.group_system,
+  el grupo técnico de configuración de Odoo. Esto impide que un me.group_manager
+  corrija un error operativo en fojas sin intervención del admin técnico.
+  Es aceptable como parche provisional; no como política durable.
+
+Relación con otras tasks:
+  - #015 implementó snapshot de fojas en movimientos (depende de permisos
+    para que la restricción de escritura sea operativa con usuarios reales)
+  - #017 implementó base.group_system para fojas (el parche que esta task resuelve)
+  - #011 (responsable operativo, [IDEA]) puede verse afectado por el modelo de
+    grupos que se defina aquí
+
+---- Decisiones cerradas ----
+
+A. Separación funcional me.group_user vs me.group_manager (cerrada)
+
+   me.group_user (operador):
+     Registra ingresos y pases. No corrige registros existentes.
+     Permisos: read + create en ambos modelos; sin write ni unlink.
+     Implica tmc.group_user para poder crear tmc.document vía _inherits.
+
+   me.group_manager (gestor):
+     Supervisa y corrige. Tiene acceso completo (CRUD).
+     Implica tmc.group_manager para poder editar tmc.document vía _inherits.
+     Es el único rol funcional de ME que puede corregir fojas post-creación
+     (ver decisión C).
+
+   Matriz de permisos:
+
+     me.document_exp:
+       me.group_manager   → R W C U (1,1,1,1)
+       me.group_user      → R _ C _ (1,0,1,0)
+       me.group_read_only → R _ _ _ (1,0,0,0)
+
+     me.document_movement:
+       me.group_manager   → R W C U (1,1,1,1)
+       me.group_user      → R _ C _ (1,0,1,0)
+       me.group_read_only → R _ _ _ (1,0,0,0)
+
+   Patrón coherente con tmc (tmc.group_user: R_C_ en tmc.document).
+
+   Implied_ids resultante:
+     me.group_manager → tmc.group_manager (decisión B) → tmc.group_user → base.group_user
+     me.group_user    → tmc.group_user (nuevo) → base.group_user
+
+B. me.group_manager implica tmc.group_manager (cerrada)
+   me.document_exp usa _inherits sobre tmc.document. Editar cualquier campo
+   delegado (dependence_id, number, period, document_object) requiere
+   perm_write=1 sobre tmc.document, que solo tiene tmc.group_manager.
+   Decisión: agregar implied_ids = [(4, ref('tmc.group_manager'))] en
+   me.group_manager. Un ME manager obtiene la capacidad de escritura sobre
+   tmc.document automáticamente, sin asignación manual doble.
+   Motivo: preferir un sistema que no pueda quedar mal configurado por omisión.
+
+C. me.group_manager puede corregir fojas post-creación (cerrada)
+   Con A definida, me.group_user nunca llega al check de fojas en write()
+   porque no tiene perm_write en me.document_exp (AccessError antes).
+   me.group_manager es el nivel más alto del módulo y el responsable de
+   correcciones excepcionales. No se crea me.group_admin separado.
+   Decisión: reemplazar has_group('base.group_system') por
+   has_group('me.group_manager') en write() de me.document_exp.
+
+---- Decisiones secundarias (no bloquean) ----
+
+D. ¿Debe me agregar una regla para base.group_erp_manager?
+   RAA lo tiene (CRUD en todos sus modelos). TMC no lo tiene.
+   Puede agregarse junto con el ir.model.access.csv por consistencia con RAA,
+   o postergar. No bloquea la primera implementación.
+   Estado: postergar o agregar en la misma iteración.
+
+---- Criterios de aceptación ----
+
+Seguridad (me/security/):
+- [x] Crear ir.model.access.csv con las reglas de la matriz (decisión A):
+      me.document_exp y me.document_movement para manager, user y read_only
+- [x] Agregar implied_ids = [(4, ref('tmc.group_manager'))] en me.group_manager
+      en me_groups.xml (decisión B)
+- [x] Agregar implied_ids = [(4, ref('tmc.group_user'))] en me.group_user
+      en me_groups.xml (necesario para que el operador pueda crear tmc.document)
+
+Modelo (me/models/document_exp.py):
+- [x] Reemplazar has_group('base.group_system') por has_group('me.group_manager')
+      en el check de fojas en write() (decisión C)
+
+Tests (me/tests/test_document_exp.py):
+- [x] Simplificar TestFojasLock.setUp(): eliminar la creación dinámica de
+      ir.model.access (ya no necesaria cuando exista ir.model.access.csv)
+- [x] Verificar que un usuario con me.group_manager (sin base.group_system,
+      sin asignación manual adicional de tmc.group_manager) puede crear y
+      editar expedientes — tmc.group_manager se obtiene por implied_ids
+- [x] Verificar que me.group_user (operador) puede crear expedientes pero
+      no puede editarlos ni eliminarlos
+- [x] Verificar que me.group_manager puede corregir fojas post-creación
+- [x] Verificar que me.group_user no puede corregir fojas post-creación
+      (AccessError por perm_write=0, no ValidationError)
+
+Documentación:
+- [x] Actualizar me/ai-context.md: sección de grupos y política de permisos
+- [x] Documentar implied_ids: me.group_manager → tmc.group_manager,
+      me.group_user → tmc.group_user
+
+---- Impacto técnico ----
+
+- security: me/security/ir.model.access.csv — nuevo archivo (6 reglas mínimo)
+- security: me/security/me_groups.xml — implied_ids en manager y user
+- models: me/models/document_exp.py — has_group → me.group_manager
+- tests: me/tests/test_document_exp.py — simplificar y ampliar TestFojasLock
+- documentación: me/ai-context.md
+
+Condición de [DONE]:
+  Un usuario con me.group_manager (sin base.group_system, sin asignación
+  manual adicional) puede crear y editar expedientes, y puede corregir fojas.
+  Un usuario con me.group_user puede crear expedientes y movimientos, pero no
+  puede editarlos ni corregir fojas.
+  Todo el acceso a modelos está controlado por ir.model.access.
+
+--------------------------------------------------
