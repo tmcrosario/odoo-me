@@ -4,18 +4,21 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 14.0-20220727\n"
+"Project-Id-Version: Odoo Server 19.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-05 15:36+0000\n"
-"PO-Revision-Date: 2022-08-05 12:37-0300\n"
+"POT-Creation-Date: 2026-04-16 00:00+0000\n"
+"PO-Revision-Date: 2026-04-16 00:00-0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es_AR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: \n"
-"X-Generator: Poedit 3.1.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ---------------------------------------------------------------------------
+# Module category and privilege
+# ---------------------------------------------------------------------------
 
 #. module: me
 #: model:ir.module.category,name:me.module_category_me
@@ -23,22 +26,346 @@ msgid "ME"
 msgstr "Mesa de Entrada"
 
 #. module: me
+#: model:ir.module.category,description:me.module_category_me
+msgid "Document Intake Management System"
+msgstr "Sistema de Mesa de Entrada"
+
+# ---------------------------------------------------------------------------
+# Groups
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: model:res.groups,name:me.group_user
+msgid "User"
+msgstr "Usuario"
+
+#. module: me
 #: model:res.groups,name:me.group_manager
 msgid "Manager"
 msgstr "Responsable"
-
-#. module: me
-#: model:ir.module.category,description:me.module_category_me
-#: model:ir.ui.menu,name:me.me_menu
-msgid "Mesa de Entrada"
-msgstr ""
 
 #. module: me
 #: model:res.groups,name:me.group_read_only
 msgid "Read Only"
 msgstr "Sólo Lectura"
 
+# ---------------------------------------------------------------------------
+# Menus
+# ---------------------------------------------------------------------------
+
 #. module: me
-#: model:res.groups,name:me.group_user
+#: model:ir.ui.menu,name:me.me_menu
+msgid "Intake Register"
+msgstr "Mesa de Entrada"
+
+#. module: me
+#: model:ir.ui.menu,name:me.me_menu_reg_exp
+msgid "Expediente Registry"
+msgstr "Registro de Expedientes"
+
+# ---------------------------------------------------------------------------
+# Actions
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: model:ir.actions.act_window,name:me.document_exp_action_view_form
+msgid "Expediente Registry"
+msgstr "Registro de Expedientes"
+
+#. module: me
+#: model:ir.actions.act_window,help:me.document_exp_action_view_form
+msgid "Create a new expediente"
+msgstr "Crear un nuevo expediente"
+
+# ---------------------------------------------------------------------------
+# me.document_exp — field labels
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Expediente Name"
+msgstr "Nombre del Expediente"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Fill in the basic fields to generate the name"
+msgstr "Complete los campos básicos para generar el nombre"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__external_key
+msgid "External Key"
+msgstr "Clave Externa"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__external_key
+msgid "Used by the municipality to identify expedientes"
+msgstr "Utilizada por la municipalidad para identificar expedientes"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__jurisdiction_dependence
+msgid "Jurisdiction"
+msgstr "Jurisdicción"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__jurisdiction_dependence
+msgid "Jurisdiction dependence for this expediente"
+msgstr "Dependencia de jurisdicción para este expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__source_dependence_id
+msgid "Source Dependence"
+msgstr "Repartición"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__source_dependence_id
+msgid "Specific dependence within the jurisdiction that originated the expediente"
+msgstr "Repartición específica dentro de la jurisdicción que originó el expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__fojas
+msgid "Page Count"
+msgstr "Fojas"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__fojas
+msgid "Number of pages in the expediente"
+msgstr "Número de fojas del expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__main_topic_id
+msgid "Subject"
+msgstr "Asunto"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__secondary_topic_id
+msgid "Specification"
+msgstr "Especificación"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__intake_date
+msgid "Intake Date"
+msgstr "Fecha de Ingreso"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__intake_date
+msgid "Date when the expediente was physically received at the Intake Register"
+msgstr "Fecha en que el expediente fue físicamente recibido en la Mesa de Entrada"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__is_valid
+msgid "Valid Expediente"
+msgstr "Expediente Válido"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__is_valid
+msgid "Indicates whether the expediente has all basic fields filled"
+msgstr "Indica si el expediente tiene todos los campos básicos completos"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__is_origin_complete
+msgid "Complete Origin"
+msgstr "Origen Completo"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__computed_name
+msgid "Expediente Name"
+msgstr "Nombre del Expediente"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__computed_name
+msgid "Expediente name computed in real time"
+msgstr "Nombre del expediente generado en tiempo real"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_movement_ids
+msgid "Movements"
+msgstr "Movimientos"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__allowed_sub_dependence_ids
+msgid "Allowed Source Dependences"
+msgstr "Reparticiones Permitidas"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__allowed_exp_topic_ids
+msgid "Allowed EXP Topics"
+msgstr "Temas Permitidos EXP"
+
+# ---------------------------------------------------------------------------
+# me.document_exp — view labels (XML overrides)
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_tree
+msgid "Document"
+msgstr "Documento"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_tree
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Subject"
+msgstr "Asunto"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_tree
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Reference"
+msgstr "Referencia"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Document Date"
+msgstr "Fecha del Documento"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Date of the document or procedure"
+msgstr "Fecha del documento o trámite"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Movements"
+msgstr "Movimientos"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Related Documents"
+msgstr "Documentos Relacionados"
+
+# ---------------------------------------------------------------------------
+# me.document_movement — field labels
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: model:ir.model,name:me.model_me_document_movement
+msgid "Expediente Movement"
+msgstr "Movimiento de Expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__expediente_id
+msgid "Expediente"
+msgstr "Expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__date
+msgid "Date"
+msgstr "Fecha"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__origin_dependence_id
+msgid "Origin Dependence"
+msgstr "Dependencia Origen"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__destination_dependence_id
+msgid "Destination Dependence"
+msgstr "Dependencia Destino"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__fojas
+msgid "Page Count"
+msgstr "Fojas"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_movement__fojas
+msgid "Total page count of the expediente at the time of this movement (snapshot)"
+msgstr "Total de fojas del expediente en el momento de este movimiento (instantánea)"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_movement__is_automatic
+msgid "True when the movement was automatically generated upon expediente creation"
+msgstr "Verdadero cuando el movimiento fue generado automáticamente al crear el expediente"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__user_id
 msgid "User"
 msgstr "Usuario"
+
+# ---------------------------------------------------------------------------
+# Validation errors — me.document_exp
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "The document date is required."
+msgstr "La fecha del documento es obligatoria."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "Intake date cannot be in the future."
+msgstr "La fecha de ingreso no puede ser una fecha futura."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The origin dependence '%(dep)s' is not allowed. "
+"Only DEM, TMC and CM are accepted."
+msgstr ""
+"La dependencia de origen '%(dep)s' no está permitida. "
+"Solo se aceptan DEM, TMC y CM."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The source dependence is required "
+"when the selected jurisdiction has sub-dependences available."
+msgstr ""
+"La repartición es obligatoria "
+"cuando la jurisdicción seleccionada tiene reparticiones disponibles."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The page count of the expediente cannot be modified after creation. "
+"Variations must be recorded through movements. "
+"Only an Intake Register manager can correct this value."
+msgstr ""
+"El número de fojas del expediente no puede modificarse después de la creación. "
+"Las variaciones deben registrarse a través de movimientos. "
+"Solo un responsable de Mesa de Entrada puede corregir este valor."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "Existing Expediente"
+msgstr "Expediente Existente"
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "An expediente with this data already exists. Please verify the information."
+msgstr "Ya existe un expediente con estos datos. Por favor, verifique la información."
+
+# ---------------------------------------------------------------------------
+# Validation errors — me.document_movement
+# ---------------------------------------------------------------------------
+
+#. module: me
+#: code:addons/me/models/document_movement.py:0
+#, python-format
+msgid "Movement date cannot be in the future."
+msgstr "La fecha del movimiento no puede ser una fecha futura."
+
+#. module: me
+#: code:addons/me/models/document_movement.py:0
+#, python-format
+msgid ""
+"Movement date cannot be earlier than "
+"the expediente intake date (%(intake)s)."
+msgstr ""
+"La fecha del movimiento no puede ser anterior "
+"a la fecha de ingreso del expediente (%(intake)s)."
+
+#. module: me
+#: constraint:me.document_movement:0
+msgid ""
+"An identical movement already exists for this expediente "
+"(same origin, destination and exact date)."
+msgstr ""
+"Ya existe un movimiento idéntico para este expediente "
+"(misma origen, destino y fecha exacta)."

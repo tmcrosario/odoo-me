@@ -319,7 +319,7 @@ Salida requerida:
 6. Commit manual
 
 
-## Regla adicional – Idioma del código
+## Regla adicional – Idioma del código y textos del sistema
 
 Todo el código generado debe estar en inglés.
 
@@ -331,9 +331,13 @@ Aplica a:
 - tests
 - XML ids
 - comentarios técnicos
+- mensajes de error (`ValidationError`, `UserError`, etc.)
+- labels técnicos o textos definidos en código/Python/XML que luego puedan traducirse
+
+No escribir mensajes hardcodeados en español dentro del código fuente.
+La localización al español debe resolverse mediante el mecanismo de traducciones de Odoo.
 
 El español se usa solo para:
 - documentación
 - backlog
 - descripciones funcionales
-- textos visibles al usuario cuando corresponda

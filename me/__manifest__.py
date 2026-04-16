@@ -1,7 +1,7 @@
 {
     "name": "TMC ME",
     "version": "19.0.1.0.0",
-    "summary": "Sistema de Mesa de Entrada",
+    "summary": "Document Intake Management System",
     "author": "Tribunal Municipal de Cuentas - Municipalidad de Rosario",
     "website": "https://www.tmcrosario.gob.ar",
     "license": "AGPL-3",

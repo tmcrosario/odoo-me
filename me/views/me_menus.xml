@@ -2,12 +2,12 @@
 <odoo>
 
     <menuitem id="me_menu"
-        name="Mesa de Entrada"
+        name="Intake Register"
         sequence="10"
         groups="me.group_manager,me.group_user,me.group_read_only" />
 
     <menuitem id="me_menu_reg_exp"
-        name="Registro de Expedientes"
+        name="Expediente Registry"
         sequence="10"
         parent="me_menu"
         action="document_exp_action_view_form"

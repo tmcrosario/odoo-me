@@ -1294,6 +1294,46 @@ Tests (me/tests/test_document_exp.py):
   source_dependence_id (actualizar Required: condicional)
 
 --------------------------------------------------
+### #019 – i18n: normalización de strings del módulo me
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Todos los strings del módulo me estaban hardcodeados en español, en
+contraste con el stack tmc (inglés). La normalización alinea el módulo
+con el idioma fuente del stack y mueve las traducciones a es_AR.po.
+
+Alcance:
+- me/models/document_exp.py: string= y help= de todos los campos a inglés;
+  mensajes de ValidationError a inglés; warning dict con _()
+- me/models/document_movement.py: _description, constraint message,
+  string=/help= de todos los campos, ValidationErrors a inglés
+- me/views/document_exp_views.xml: remover overrides string= redundantes
+  (cuando el modelo ya define el label correcto); mantener overrides
+  semánticamente distintos (Reference, Subject, Document Date)
+- me/views/me_menus.xml: "Mesa de Entrada" → "Intake Register",
+  "Registro de Expedientes" → "Expediente Registry"
+- me/__manifest__.py: summary → "Document Intake Management System"
+- me/i18n/es_AR.po: reescritura completa (5 entradas Odoo 14 → 60+ entradas)
+- me/tests/test_document_exp.py: actualizar string "Documento sin nombre"
+  → "Unnamed Document" en test_computed_name_empty_when_phase1_incomplete
+
+Vocabulario base del stack (consistencia con tmc):
+- "Repartición" → "Source Dependence" (técnico); "Repartición" (es_AR.po)
+- "Jurisdicción" → "Jurisdiction"
+- "Fojas" → "Page Count" (técnico); "Fojas" (es_AR.po)
+- "Mesa de Entrada" → "Intake Register" (fuente); traducción → "Mesa de Entrada"
+- "Expediente" → se mantiene como término de dominio
+
+Estrategia XML:
+  No duplicar string= en XML cuando el campo ya define el label correcto en
+  Python. Mantener solo overrides que difieren semánticamente del modelo
+  (Reference vs Object, Subject vs Topics, Document Date vs Date).
+
+Resultado de tests: 0 failed, 0 error(s) of 74 tests.
+
+--------------------------------------------------
 ### #018 – Matriz de permisos de módulo me
 --------------------------------------------------
 

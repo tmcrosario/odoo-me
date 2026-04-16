@@ -3,38 +3,38 @@ from odoo import _, api, exceptions, fields, models
 
 class Movement(models.Model):
     _name = "me.document_movement"
-    _description = "Movimiento de Expediente"
+    _description = "Expediente Movement"
 
     _unique_movement = models.Constraint(
         'UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date)',
-        'Ya existe un movimiento idéntico para este expediente '
-        '(mismo origen, destino y fecha exacta).',
+        'An identical movement already exists for this expediente '
+        '(same origin, destination and exact date).',
     )
 
     expediente_id = fields.Many2one(
         "me.document_exp", string="Expediente", required=True, ondelete="cascade"
     )
     date = fields.Datetime(
-        string="Fecha", default=fields.Datetime.now, required=True
+        string="Date", default=fields.Datetime.now, required=True
     )
     origin_dependence_id = fields.Many2one(
-        "tmc.dependence", string="Dependencia Origen", required=True
+        "tmc.dependence", string="Origin Dependence", required=True
     )
     destination_dependence_id = fields.Many2one(
-        "tmc.dependence", string="Dependencia Destino", required=True
+        "tmc.dependence", string="Destination Dependence", required=True
     )
     fojas = fields.Integer(
-        string="Fojas",
+        string="Page Count",
         default=0,
-        help="Total de fojas del expediente en el momento de este movimiento (snapshot)",
+        help="Total page count of the expediente at the time of this movement (snapshot)",
     )
     is_automatic = fields.Boolean(
         default=False,
-        help="True cuando el movimiento fue generado automáticamente al crear el expediente",
+        help="True when the movement was automatically generated upon expediente creation",
     )
-    # notes = fields.Text(string="Observaciones")
+    # notes = fields.Text(string="Notes")
     user_id = fields.Many2one(
-        "res.users", string="Usuario", default=lambda self: self.env.user
+        "res.users", string="User", default=lambda self: self.env.user
     )
 
     @api.model
@@ -54,7 +54,7 @@ class Movement(models.Model):
         for record in self:
             if record.date and record.date > fields.Datetime.now():
                 raise exceptions.ValidationError(
-                    _("La fecha del movimiento no puede ser una fecha futura.")
+                    _("Movement date cannot be in the future.")
                 )
 
     @api.constrains('date', 'expediente_id')
@@ -67,7 +67,7 @@ class Movement(models.Model):
                 and record.date.date() < record.expediente_id.intake_date
             ):
                 raise exceptions.ValidationError(
-                    _("La fecha del movimiento no puede ser anterior "
-                      "a la fecha de ingreso del expediente (%(intake)s).",
+                    _("Movement date cannot be earlier than "
+                      "the expediente intake date (%(intake)s).",
                       intake=record.expediente_id.intake_date)
                 )

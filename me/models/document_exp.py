@@ -10,41 +10,41 @@ class DocumentExp(models.Model):
         "tmc.document",
         required=True,
         ondelete="cascade",
-        string="Documento",
+        string="Document",
     )
-    
-    # Campo para filtrar dependencias permitidas
+
+    # Field for filtering allowed dependences
     allowed_dependence_ids = fields.Many2many(
         'tmc.dependence',
         compute='_compute_allowed_dependencies',
-        string='Dependencias Permitidas'
+        string='Allowed Dependences'
     )
 
-    # Campos específicos del expediente
+    # Expediente-specific fields
     external_key = fields.Char(
-        string="Clave Externa",
-        help="lo usa la Muni para identificar los expedientes"
+        string="External Key",
+        help="Used by the municipality to identify expedientes"
     )
     jurisdiction_dependence = fields.Many2one(
         'tmc.dependence',
-        string="Jurisdicción",
+        string="Jurisdiction",
         required=True,
-        help="Dependencia de jurisdicción del expediente"
+        help="Jurisdiction dependence for this expediente"
     )
     source_dependence_id = fields.Many2one(
         'tmc.dependence',
-        string="Repartición",
-        help="Repartición específica dentro de la jurisdicción que origina el expediente",
+        string="Source Dependence",
+        help="Specific dependence within the jurisdiction that originated the expediente",
     )
     allowed_sub_dependence_ids = fields.Many2many(
         'tmc.dependence',
         compute='_compute_allowed_sub_dependences',
-        string='Reparticiones Permitidas',
+        string='Allowed Source Dependences',
     )
     fojas = fields.Integer(
-        string="Número de fojas",
+        string="Page Count",
         default=0,
-        help="Número de fojas del expediente"
+        help="Number of pages in the expediente"
     )
     # asunto = fields.Char(
     #     string="Asunto",
@@ -61,22 +61,22 @@ class DocumentExp(models.Model):
     allowed_exp_topic_ids = fields.Many2many(
         comodel_name='tmc.document_topic',
         compute='_compute_allowed_exp_topic_ids',
-        string='Temas Permitidos EXP',
+        string='Allowed EXP Topics',
     )
 
-    # Campos proxy Many2one para selección de asunto (tema + subtema).
-    # Envuelven main_topic_ids y secondary_topic_ids de tmc.document (Many2many)
-    # para ofrecer selección única en la UI sin modificar el modelo base.
+    # Proxy Many2one fields for subject selection (topic + subtopic).
+    # Wrap main_topic_ids and secondary_topic_ids from tmc.document (Many2many)
+    # to provide single-value selection in the UI without modifying the base model.
     main_topic_id = fields.Many2one(
         comodel_name='tmc.document_topic',
-        string='Asunto',
+        string='Subject',
         compute='_compute_main_topic_id',
         inverse='_set_main_topic_id',
         domain="[('parent_id', '=', False), ('id', 'in', allowed_exp_topic_ids)]",
     )
     secondary_topic_id = fields.Many2one(
         comodel_name='tmc.document_topic',
-        string='Especificación',
+        string='Specification',
         compute='_compute_secondary_topic_id',
         inverse='_set_secondary_topic_id',
         domain="[('parent_id', '=', main_topic_id)]",
@@ -89,30 +89,30 @@ class DocumentExp(models.Model):
     # number = fields.Integer(required=True)
 
     intake_date = fields.Date(
-        string="Fecha de Ingreso",
+        string="Intake Date",
         required=True,
-        help="Fecha en que el expediente fue recibido físicamente en Mesa de Entradas",
+        help="Date when the expediente was physically received at the Intake Register",
     )
 
     is_valid = fields.Boolean(
         compute="_compute_is_valid",
-        string="Expediente Válido",
-        help="Indica si el expediente tiene todos los campos básicos completos"
+        string="Valid Expediente",
+        help="Indicates whether the expediente has all basic fields filled"
     )
 
     is_origin_complete = fields.Boolean(
         compute="_compute_is_origin_complete",
-        string="Origen Completo",
+        string="Complete Origin",
     )
 
     computed_name = fields.Char(
         compute="_compute_name",
-        string="Nombre del Expediente",
-        help="Nombre del expediente generado en tiempo real"
+        string="Expediente Name",
+        help="Expediente name computed in real time"
     )
 
     document_movement_ids = fields.One2many(
-        "me.document_movement", "expediente_id", string="Movimientos"
+        "me.document_movement", "expediente_id", string="Movements"
     )
 
     @api.depends()
@@ -188,8 +188,8 @@ class DocumentExp(models.Model):
         dep = self.env['tmc.dependence'].browse(dependence_id_val)
         if dep.abbreviation not in self._ALLOWED_DEPENDENCE_ABBREVIATIONS:
             raise exceptions.ValidationError(_(
-                "La dependencia de origen '%(dep)s' no está permitida. "
-                "Solo se admiten: DEM, TMC, CM.",
+                "The origin dependence '%(dep)s' is not allowed. "
+                "Only DEM, TMC and CM are accepted.",
                 dep=dep.abbreviation,
             ))
 
@@ -198,7 +198,7 @@ class DocumentExp(models.Model):
         for record in self:
             if record.intake_date and record.intake_date > fields.Date.today():
                 raise exceptions.ValidationError(
-                    _("La fecha de ingreso no puede ser una fecha futura.")
+                    _("Intake date cannot be in the future.")
                 )
 
     @api.depends('dependence_id', 'number', 'period')
@@ -228,7 +228,7 @@ class DocumentExp(models.Model):
                 dep_abbr = record.dependence_id.abbreviation
                 record.computed_name = f"EXP-{str(record.number).zfill(6)}-{dep_abbr}/{record.period}"
             else:
-                record.computed_name = "Documento sin nombre"
+                record.computed_name = "Unnamed Document"
 
     @api.onchange('jurisdiction_dependence')
     def _onchange_jurisdiction_dependence(self):
@@ -240,7 +240,7 @@ class DocumentExp(models.Model):
         for record in self:
             if record.allowed_sub_dependence_ids and not record.source_dependence_id:
                 raise exceptions.ValidationError(
-                    _("The source dependence (Repartición) is required "
+                    _("The source dependence is required "
                       "when the selected jurisdiction has sub-dependences available.")
                 )
 
@@ -275,8 +275,8 @@ class DocumentExp(models.Model):
             if existing_doc:
                 return {
                     'warning': {
-                        'title': 'Expediente existente',
-                        'message': 'Ya existe un expediente con estos datos. Verifique la información.'
+                        'title': _('Existing Expediente'),
+                        'message': _('An expediente with this data already exists. Please verify the information.')
                     }
                 }
 
@@ -365,9 +365,9 @@ class DocumentExp(models.Model):
     def write(self, vals):
         if 'fojas' in vals and not self.env.user.has_group('me.group_manager'):
             raise exceptions.ValidationError(_(
-                "El número de fojas del expediente no puede modificarse después "
-                "de su creación. Las variaciones deben registrarse desde los "
-                "movimientos. Solo un gestor de Mesa de Entradas puede corregir este valor."
+                "The page count of the expediente cannot be modified after creation. "
+                "Variations must be recorded through movements. "
+                "Only an Intake Register manager can correct this value."
             ))
         if 'dependence_id' in vals:
             self._validate_dependence(vals['dependence_id'])

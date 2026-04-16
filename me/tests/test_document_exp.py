@@ -275,7 +275,7 @@ class TestDocumentExp(TransactionCase):
             'number': 42,
             # period ausente
         })
-        self.assertEqual(record.computed_name, "Documento sin nombre")
+        self.assertEqual(record.computed_name, "Unnamed Document")
 
     def test_tmc_has_eleven_internal_dependences_in_nomenclator(self):
         """
