@@ -13,11 +13,18 @@ class DocumentExp(models.Model):
         string="Document",
     )
 
-    # Field for filtering allowed dependences
+    # Field for filtering allowed dependences (origin: DEM, TMC, CM)
     allowed_dependence_ids = fields.Many2many(
         'tmc.dependence',
         compute='_compute_allowed_dependencies',
         string='Allowed Dependences'
+    )
+
+    # Field for filtering jurisdiction (first-level nodes 1.XX.00 in the nomenclator)
+    allowed_jurisdiction_ids = fields.Many2many(
+        'tmc.dependence',
+        compute='_compute_allowed_jurisdictions',
+        string='Allowed Jurisdictions',
     )
 
     # Expediente-specific fields
@@ -161,11 +168,22 @@ class DocumentExp(models.Model):
     @api.depends()
     def _compute_allowed_dependencies(self):
         """Computar las dependencias permitidas para expedientes"""
+        allowed_deps = self.env['tmc.dependence'].search([
+            ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
+        ])
         for record in self:
-            allowed_deps = self.env['tmc.dependence'].search([
-                ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
-            ])
             record.allowed_dependence_ids = allowed_deps
+
+    @api.depends()
+    def _compute_allowed_jurisdictions(self):
+        adm = self.env.ref('tmc_data.tmc_dependence_adm', raise_if_not_found=False)
+        if adm:
+            orders = self.env['tmc.dependence_order'].search([('parent_id', '=', adm.id)])
+            jurisdictions = orders.mapped('dependence_id')
+        else:
+            jurisdictions = self.env['tmc.dependence'].browse()
+        for record in self:
+            record.allowed_jurisdiction_ids = jurisdictions
 
     @api.depends('jurisdiction_dependence')
     def _compute_allowed_sub_dependences(self):
@@ -238,7 +256,9 @@ class DocumentExp(models.Model):
     @api.constrains('source_dependence_id', 'jurisdiction_dependence')
     def _check_source_dependence_required(self):
         for record in self:
-            if record.allowed_sub_dependence_ids and not record.source_dependence_id:
+            if (record.allowed_sub_dependence_ids
+                    and not record.source_dependence_id
+                    and record.dependence_id.abbreviation not in ('CM', 'TMC')):
                 raise exceptions.ValidationError(
                     _("The source dependence is required "
                       "when the selected jurisdiction has sub-dependences available.")
@@ -246,15 +266,24 @@ class DocumentExp(models.Model):
 
     @api.onchange('dependence_id')
     def _onchange_dependence(self):
-        """Configurar el tipo de documento cuando se selecciona dependencia"""
+        """Set document_type_id and auto-assign jurisdiction for TMC/CM."""
         self.document_type_id = False
         if self.dependence_id:
-            # Buscar el tipo de documento "Expediente"
             exp_type = self.env['tmc.document_type'].search([
                 ('abbreviation', '=', 'EXP')
             ], limit=1)
             if exp_type:
                 self.document_type_id = exp_type
+            abbr = self.dependence_id.abbreviation
+            if abbr == 'TMC':
+                self.jurisdiction_dependence = self.dependence_id
+            elif abbr == 'CM':
+                self.jurisdiction_dependence = self.dependence_id
+                self.source_dependence_id = False
+            else:
+                self.jurisdiction_dependence = False
+        else:
+            self.jurisdiction_dependence = False
         return {
             'domain': {
                 'document_type_id': [('abbreviation', '=', 'EXP')]
@@ -296,6 +325,14 @@ class DocumentExp(models.Model):
             dates.append(vals.pop('date'))
             if 'dependence_id' in vals:
                 self._validate_dependence(vals['dependence_id'])
+            # Auto-assign jurisdiction_dependence for TMC and CM when not provided.
+            # The form onchange handles the UI case; this backup covers API calls.
+            if not vals.get('jurisdiction_dependence'):
+                dep_id = vals.get('dependence_id')
+                if dep_id:
+                    dep = self.env['tmc.dependence'].browse(dep_id)
+                    if dep.abbreviation in ('TMC', 'CM'):
+                        vals['jurisdiction_dependence'] = dep.id
         # _inherits maneja la creación de tmc.document automáticamente.
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
         records = super().create(vals_list)

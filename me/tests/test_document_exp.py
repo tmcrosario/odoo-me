@@ -1104,3 +1104,161 @@ class TestFojasLock(TransactionCase):
         # Editar un campo delegado (tmc.document) — requiere tmc.group_manager via implied_ids
         new_exp.with_user(self.manager_user).write({'document_object': 'Test objeto'})
         self.assertEqual(new_exp.document_object, 'Test objeto')
+
+
+@tagged('post_install', '-at_install')
+class TestJurisdictionConditional012(TransactionCase):
+    """Tests para #012 — Comportamiento condicional de jurisdicción y repartición.
+
+    Cubre:
+    - allowed_jurisdiction_ids: retorna las ~21 jurisdicciones madre del nomenclador
+    - Regla 1 TMC: auto-asignación de jurisdiction_dependence = TMC
+    - Regla 2 CM: auto-asignación interna CM, movimiento CM→TMC generado
+    - Regla 3 domain: DEM sin jurisdiction_dependence falla (required=True)
+    - onchange: comportamiento de _onchange_dependence para TMC y DEM
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Departamento Ejecutivo Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        if not self.dep_tmc:
+            self.dep_tmc = self.env['tmc.dependence'].create({
+                'name': 'TMC Test',
+                'abbreviation': 'TMC',
+            })
+
+        self.dep_cm = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'CM')], limit=1
+        )
+        if not self.dep_cm:
+            self.dep_cm = self.env['tmc.dependence'].create({
+                'name': 'Concejo Municipal Test',
+                'abbreviation': 'CM',
+            })
+
+        self.dep_mesa = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ME')], limit=1
+        )
+        if not self.dep_mesa:
+            self.dep_mesa = self.env['tmc.dependence'].create({
+                'name': 'Mesa de Entradas Test',
+                'abbreviation': 'ME',
+            })
+
+        # Jurisdicción de prueba aislada (no es hijo de ADM → no aparece en allowed_jurisdiction_ids)
+        self.dep_jur_test = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion 012 Test',
+            'abbreviation': 'J012',
+        })
+
+        self.current_year = str(fields.Date.today().year)
+        self.today = fields.Date.today()
+
+    def _make_vals(self, number, dep_id, **extra):
+        vals = {
+            'dependence_id': dep_id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'intake_date': self.today,
+            'date': self.today,
+        }
+        vals.update(extra)
+        return vals
+
+    def test_allowed_jurisdiction_ids_includes_major_bodies(self):
+        """allowed_jurisdiction_ids retorna las ~21 jurisdicciones madre del nomenclador.
+        Requiere tmc_data: incluye secretarías además de DEM/TMC/CM."""
+        record = self.env['me.document_exp'].new({})
+        jur_ids = record.allowed_jurisdiction_ids
+        abbrs = jur_ids.mapped('abbreviation')
+        self.assertIn('DEM', abbrs)
+        self.assertIn('TMC', abbrs)
+        self.assertIn('CM', abbrs)
+        # Should include more than just DEM/TMC/CM (Secretarías, etc.)
+        self.assertGreater(len(jur_ids), 3)
+
+    def test_create_tmc_auto_assigns_jurisdiction(self):
+        """create() con dependence_id=TMC sin jurisdiction_dependence
+        auto-asigna jurisdiction_dependence = TMC record."""
+        exp = self.env['me.document_exp'].create(
+            self._make_vals(55552, self.dep_tmc.id)
+        )
+        self.assertEqual(exp.jurisdiction_dependence, self.dep_tmc)
+
+    def test_create_cm_auto_assigns_jurisdiction(self):
+        """create() con dependence_id=CM sin jurisdiction_dependence
+        auto-asigna jurisdiction_dependence = CM record."""
+        exp = self.env['me.document_exp'].create(
+            self._make_vals(55553, self.dep_cm.id)
+        )
+        self.assertEqual(exp.jurisdiction_dependence, self.dep_cm)
+
+    def test_create_cm_generates_cm_tmc_and_tmc_me_movements(self):
+        """Expediente CM genera 2 movimientos: CM→TMC y TMC→ME."""
+        exp = self.env['me.document_exp'].create(
+            self._make_vals(55554, self.dep_cm.id)
+        )
+        movements = exp.document_movement_ids
+        self.assertEqual(len(movements), 2)
+        origins = movements.mapped('origin_dependence_id')
+        destinations = movements.mapped('destination_dependence_id')
+        self.assertIn(self.dep_cm, origins)
+        self.assertIn(self.dep_tmc, destinations)
+        self.assertIn(self.dep_tmc, origins)
+        self.assertIn(self.dep_mesa, destinations)
+
+    def test_create_dem_without_jurisdiction_raises(self):
+        """create() con dependence_id=DEM sin jurisdiction_dependence falla
+        (DEM no es auto-asignado, required=True activo)."""
+        with self.assertRaises(Exception):
+            self.env['me.document_exp'].create(
+                self._make_vals(55555, self.dep_dem.id)
+            )
+
+    def test_create_dem_with_jurisdiction_succeeds(self):
+        """create() con dependence_id=DEM y jurisdiction_dependence explícito no falla."""
+        exp = self.env['me.document_exp'].create(
+            self._make_vals(55556, self.dep_dem.id,
+                            jurisdiction_dependence=self.dep_jur_test.id)
+        )
+        self.assertEqual(exp.jurisdiction_dependence, self.dep_jur_test)
+
+    def test_onchange_dependence_tmc_sets_jurisdiction(self):
+        """_onchange_dependence con TMC auto-completa jurisdiction_dependence = TMC."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_tmc.id,
+        })
+        record._onchange_dependence()
+        self.assertEqual(record.jurisdiction_dependence, self.dep_tmc)
+
+    def test_onchange_dependence_tmc_to_dem_clears_jurisdiction(self):
+        """Cambiar dependence_id de TMC a DEM limpia jurisdiction_dependence."""
+        record = self.env['me.document_exp'].new({
+            'dependence_id': self.dep_tmc.id,
+            'jurisdiction_dependence': self.dep_tmc.id,
+        })
+        record.dependence_id = self.dep_dem
+        record._onchange_dependence()
+        self.assertFalse(record.jurisdiction_dependence)

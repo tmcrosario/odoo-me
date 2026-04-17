@@ -759,7 +759,7 @@ Impacto técnico:
 ### #012 – Comportamiento condicional de jurisdicción y repartición
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
 Contexto:
 El campo jurisdiction_dependence actualmente no tiene domain filter en la
@@ -768,73 +768,124 @@ comportamiento diferenciado según la dependencia de origen elegida en Fase 1.
 
 Se definen tres reglas funcionales que condicionan la visibilidad y el valor
 de jurisdiction_dependence y source_dependence_id según el valor de
-dependence_id:
+dependence_id.
+
+---- Datos del nomenclador ----
+
+tmc.dependence_order contiene ~204 registros jerárquicos.
+Los 21 registros con código 1.XX.00 (hijos directos de Administración Central)
+son las "jurisdicciones madre":
+  1.01.00 CONCEJO MUNICIPAL (CM)
+  1.02.00 DEPARTAMENTO EJECUTIVO (DEM)
+  1.03.00 SECRETARÍA DE HACIENDA Y ECONOMÍA
+  1.04.00 SECRETARÍA DE PLANEAMIENTO
+  1.05.00 SECRETARÍA DE GOBIERNO
+  1.06.00 SECRETARÍA DE OBRAS PÚBLICAS
+  1.07.00 SECRETARÍA DE AMBIENTE
+  1.08.00 SECRETARÍA DE SALUD PÚBLICA
+  1.09.00 DESARROLLO SOCIAL / PROMOCIÓN SOCIAL
+  1.10.00 SECRETARÍA DE PRODUCCIÓN
+  1.11.00 SECRETARÍA DE CULTURA Y EDUCACIÓN
+  1.12.00 SECRETARÍA GENERAL
+  1.13.00 TRIBUNAL MUNICIPAL DE CUENTAS (TMC)
+  1.14.00–1.17.00 Turismo, Control, Transporte, Economía Social
+  1.90.00, 1.91.00 Servicios de deuda / Tesorería
+
+Sub-dependencias (2do nivel y más profundos) deben aparecer únicamente
+en source_dependence_id, no en jurisdiction_dependence.
 
 ---- Reglas ----
 
 1. Expedientes del TMC — auto-asignación de jurisdicción
    Cuando dependence_id.abbreviation == 'TMC', jurisdiction_dependence
-   debe asignarse automáticamente a "TRIBUNAL MUNICIPAL DE CUENTAS"
-   (tmc_dependence_tmc) y ser readonly para el operador.
-   Si el operador cambia dependence_id (Fase 1), jurisdiction_dependence
-   se limpia y vuelve a ser editable.
+   se asigna automáticamente al registro TMC y es readonly para el operador.
+   Al cambiar dependence_id a otro valor, jurisdiction_dependence se limpia.
 
-2. Expedientes del Concejo Municipal — ocultamiento de campos
-   Cuando dependence_id.abbreviation == 'CM', los campos
-   jurisdiction_dependence y source_dependence_id no deben mostrarse.
-   Motivo: en ese contexto esos campos no aplican.
+2. Expedientes del Concejo Municipal — ocultamiento y auto-asignación
+   Cuando dependence_id.abbreviation == 'CM':
+   - jurisdiction_dependence y source_dependence_id se ocultan en la vista
+   - jurisdiction_dependence se auto-asigna al registro CM internamente
+   - El sistema genera el movimiento automático CM→TMC normalmente
+   El operador nunca ve ni edita esos campos para expedientes CM.
 
-3. Campo jurisdicción restringido a nodos madre del nomenclador
-   jurisdiction_dependence debe mostrar solo las dependencias que son
-   nodos padre en el nomenclador institucional (jurisdicciones madre),
-   no subdependencias. Las subdependencias (reparticiones, oficinas,
-   direcciones internas) deben aparecer exclusivamente en
-   source_dependence_id, filtradas por la jurisdicción elegida.
+3. Campo jurisdicción restringido a jurisdicciones madre del nomenclador
+   jurisdiction_dependence muestra solo los 21 registros 1.XX.00.
+   Las sub-dependencias (2do nivel o más) no deben aparecer aquí;
+   pertenecen exclusivamente a source_dependence_id.
 
----- Decisiones abiertas ----
+---- Decisiones cerradas ----
 
-A. Definición técnica de "jurisdicción madre"
-   El modelo tmc.dependence es plano. La jerarquía está en
-   tmc.dependence_order. Las "madres" son dependencias que tienen
-   hijos en ese modelo (aparecen como parent_id de otros registros)
-   y cuyo código termina en .00 (e.g., 1.02.00, 1.13.00).
+A. "Jurisdicciones madre" = hijos directos de tmc_dependence_adm en el nomenclador
+   Campo computed nuevo `allowed_jurisdiction_ids` que consulta:
+     tmc.dependence_order donde parent_id == tmc_dependence_adm
+   y mapea .dependence_id. Retorna los ~21 registros 1.XX.00 dinámicamente.
+   Usa env.ref('tmc_data.tmc_dependence_adm', raise_if_not_found=False),
+   patrón ya establecido en _EXP_ROOT_TOPIC_XMLIDS.
+   Sin hardcoding de abbreviations. No toca odoo-tmc.
 
-   Opciones técnicas:
-   - Lista fija hardcoded (igual que el filtro de dependence_id):
-     simple, requiere mantenimiento manual si el nomenclador crece.
-   - Campo computed que consulta tmc.dependence_order:
-     más dinámico, requiere definir el criterio exacto de "madre".
-   - Flag is_jurisdiction en tmc.dependence (en odoo-tmc):
-     más limpio, pero toca el módulo base.
+B. Caso CM: auto-asignar jurisdiction_dependence = CM, ocultar campos, mantener movimiento
+   jurisdiction_dependence conserva required=True — siempre tiene valor:
+   - DEM: el operador lo elige manualmente
+   - TMC: auto-asignado por onchange
+   - CM: auto-asignado por onchange (y backup en create() para API)
+   El movimiento CM→TMC se genera porque jurisdiction_dependence == CM record.
+   El operador no ve el campo.
+   source_dependence_id queda vacío para CM.
 
-   Esta decisión determina cómo se filtra el domain de
-   jurisdiction_dependence y bloquea la implementación hasta cerrarse.
+   Constraint _check_source_dependence_required (de #017): agregar excepción CM
+   para que no exija source_dependence_id cuando dependence_id == CM.
 
-B. Constraint required=True de jurisdiction_dependence cuando CM
-   jurisdiction_dependence tiene required=True en el modelo.
-   Ocultarlo sin resolver ese constraint provoca que create() falle.
+---- Criterios de aceptación ----
 
-   Opciones:
-   - Auto-asignar a la dependencia CM misma al ocultar el campo:
-     satisface el required sin cambiar el modelo; simple pero semánticamente
-     impreciso (jurisdiction = dependence en ese caso).
-   - Cambiar required=False y agregar constraint condicional:
-     campo obligatorio solo cuando dependence_id.abbreviation != 'CM'.
-     Requiere cambio en el modelo.
+Modelo (me/models/document_exp.py):
+- [ ] Nuevo campo allowed_jurisdiction_ids: Many2many computed, sin argumentos en
+      @api.depends(), consulta tmc.dependence_order hijos de tmc_dependence_adm
+- [ ] _onchange_dependence (extender el existente):
+      - si TMC: jurisdiction_dependence = registro TMC
+      - si CM: jurisdiction_dependence = registro CM, limpiar source_dependence_id
+      - cualquier otro caso: limpiar jurisdiction_dependence
+- [ ] create(): backup — si dependence_id es TMC o CM y jurisdiction_dependence
+      no viene en vals, auto-asignarlo antes de super().create()
+- [ ] _check_source_dependence_required: agregar condición
+      `and record.dependence_id.abbreviation != 'CM'`
 
-   Esta decisión bloquea las reglas 1 y 2 hasta cerrarse.
+Vista (me/views/document_exp_views.xml):
+- [ ] Agregar <field name="allowed_jurisdiction_ids" invisible="1"/>
+- [ ] jurisdiction_dependence: domain="[('id', 'in', allowed_jurisdiction_ids)]"
+      readonly="dependence_id.abbreviation == 'TMC'"
+- [ ] Grupo Fase 2 (jurisdiction + source): ajustar invisible a
+      "not is_origin_complete or dependence_id.abbreviation == 'CM'"
+
+Tests (me/tests/test_document_exp.py):
+- [ ] allowed_jurisdiction_ids incluye HAC, GOB, DEM, CM, TMC y otras
+      (no solo las 3 de dependence_id)
+- [ ] Crear expediente con dependence_id=TMC: jurisdiction_dependence == TMC,
+      1 solo movimiento automático (TMC→ME)
+- [ ] Crear expediente con dependence_id=CM: jurisdiction_dependence == CM,
+      movimiento automático CM→TMC generado, source_dependence_id vacío sin error
+- [ ] Crear expediente con dependence_id=DEM sin jurisdiction_dependence:
+      falla (required=True sigue activo para DEM)
+- [ ] onchange dependence_id→TMC: jurisdiction_dependence auto-completado
+- [ ] onchange dependence_id TMC→DEM: jurisdiction_dependence limpiado
+
+---- Nota operativa ----
+
+Para expedientes CM, jurisdiction_dependence queda con valor CM en la DB
+aunque el operador nunca lo ve. Es el origen del movimiento 1 (CM→TMC).
+El movimiento TMC→ME (movimiento 2) siempre se genera para todos los orígenes:
+  DEM: movimiento 1 = jurisdiction→TMC, movimiento 2 = TMC→ME
+  TMC: solo movimiento TMC→ME (movimiento 1 omitido por origin_is_tmc)
+  CM:  movimiento 1 = CM→TMC, movimiento 2 = TMC→ME
 
 ---- Impacto técnico ----
 
-- models: onchange sobre dependence_id para auto-asignar o limpiar
-          jurisdiction_dependence; posible cambio de required;
-          posible computed field para domain de jurisdicciones madre
-- views: readonly/invisible condicionales según dependence_id;
-         domain filtrado en jurisdiction_dependence
-- workflows: actualizar Workflow 1 Fase 2 y Workflow 6 Fase 2
-- tests: auto-asignación TMC, bloqueo de edición manual, ocultamiento CM,
-         filtro de jurisdicciones madre en el domain
-- documentación: ai-context.md, workflows.md, system_narrative.md
+- models: me/models/document_exp.py
+  (campo allowed_jurisdiction_ids, extender _onchange_dependence,
+   backup en create(), excepción CM en constraint)
+- views: me/views/document_exp_views.xml
+  (allowed_jurisdiction_ids invisible, domain, readonly TMC, invisible CM)
+- tests: me/tests/test_document_exp.py (6 tests nuevos)
+- documentación: docs/todo.md (esta task)
 
 --------------------------------------------------
 ### #013 – Selección de subtema en el campo asunto
