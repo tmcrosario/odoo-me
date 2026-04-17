@@ -32,6 +32,7 @@
                     </div>
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
+                    <field name="dependence_abbreviation" invisible="1"/>
                     <field name="allowed_sub_dependence_ids" invisible="1"/>
                     <field name="allowed_exp_topic_ids" invisible="1"/>
                     <field name="allowed_jurisdiction_ids" invisible="1"/>
@@ -48,15 +49,18 @@
                         </group>
                     </group>
 
-                    <!-- Fase 2 — visible cuando is_origin_complete y dependencia no es CM -->
-                    <group invisible="not is_origin_complete or dependence_id.abbreviation == 'CM'">
+                    <!-- Fase 2 — visible cuando is_origin_complete (para todos los orígenes) -->
+                    <!-- Para CM: jurisdiction y source ocultos individualmente; intake_date siempre visible -->
+                    <group invisible="not is_origin_complete">
                         <group>
                             <field name="jurisdiction_dependence"
                                    domain="[('id', 'in', allowed_jurisdiction_ids)]"
-                                   readonly="dependence_id.abbreviation == 'TMC'"/>
+                                   readonly="dependence_abbreviation == 'TMC'"
+                                   invisible="dependence_abbreviation == 'CM'"/>
                             <field name="source_dependence_id"
                                    domain="[('id', 'in', allowed_sub_dependence_ids)]"
-                                   required="allowed_sub_dependence_ids"/>
+                                   required="allowed_sub_dependence_ids"
+                                   invisible="dependence_abbreviation == 'CM'"/>
                         </group>
                         <group>
                             <field name="intake_date"/>

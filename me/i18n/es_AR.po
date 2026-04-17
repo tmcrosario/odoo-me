@@ -167,6 +167,11 @@ msgid "Complete Origin"
 msgstr "Origen Completo"
 
 #. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__dependence_abbreviation
+msgid "Origin Abbreviation"
+msgstr "Abreviatura de Origen"
+
+#. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_exp__computed_name
 msgid "Expediente Name"
 msgstr "Nombre del Expediente"

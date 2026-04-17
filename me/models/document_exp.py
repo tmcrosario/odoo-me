@@ -112,6 +112,11 @@ class DocumentExp(models.Model):
         string="Complete Origin",
     )
 
+    dependence_abbreviation = fields.Char(
+        compute="_compute_dependence_abbreviation",
+        string="Origin Abbreviation",
+    )
+
     computed_name = fields.Char(
         compute="_compute_name",
         string="Expediente Name",
@@ -225,6 +230,11 @@ class DocumentExp(models.Model):
             record.is_origin_complete = bool(
                 record.dependence_id and record.number and record.period
             )
+
+    @api.depends('dependence_id')
+    def _compute_dependence_abbreviation(self):
+        for record in self:
+            record.dependence_abbreviation = record.dependence_id.abbreviation or ''
 
     @api.depends('dependence_id', 'document_type_id', 'number', 'period', 'jurisdiction_dependence')
     def _compute_is_valid(self):
