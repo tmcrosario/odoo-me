@@ -32,11 +32,16 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 **Fase 2 (visible cuando `is_origin_complete = True`):**
 
-6. El usuario completa `jurisdiction_dependence` e `intake_date` (ambos obligatorios).
-   Opcionalmente, completa `source_dependence_id` ("Repartición"), cuyas opciones
-   están filtradas a las dependencias hijas de `jurisdiction_dependence` según el
-   nomenclador (`tmc.dependence_order`). Al cambiar `jurisdiction_dependence`,
-   `source_dependence_id` se limpia automáticamente.
+6. El usuario completa `intake_date` (obligatorio).
+   Según la dependencia de origen elegida en Fase 1:
+   - **DEM**: el usuario selecciona `jurisdiction_dependence` (obligatorio, filtrado a las
+     ~21 jurisdicciones madre del nomenclador) y opcionalmente `source_dependence_id`
+     (filtrado a hijos de la jurisdicción según `tmc.dependence_order`).
+   - **TMC**: `jurisdiction_dependence` se auto-asigna a TMC y es readonly.
+     `source_dependence_id` no es requerido.
+   - **CM**: `jurisdiction_dependence` y `source_dependence_id` no se muestran.
+     El sistema los completa internamente (jurisdiction = CM, source = vacío).
+   Al cambiar `jurisdiction_dependence`, `source_dependence_id` se limpia automáticamente.
 7. Si los 5 campos básicos están completos y existe un expediente con los mismos datos,
    el sistema emite un **warning** (no bloquea).
 8. El usuario guarda el formulario → se ejecuta `create()`.
@@ -132,47 +137,56 @@ el registro ME. No es un workflow independiente.
 ## 4. Inicialización de movimientos automáticos (sub-paso de Workflow 1)
 
 Ocurre dentro de `me.document_exp.create()` después del paso RAA.
-Crea dos movimientos automáticos que registran la trayectoria inicial del expediente.
+Crea movimientos automáticos que registran la trayectoria inicial del expediente.
+El número y recorrido depende de la dependencia de origen (`dependence_id`).
 
 ### Pasos
 
-**Movimiento 1 — Jurisdicción → TMC:**
+**Rama DEM (y cualquier origen distinto de TMC):**
 
-1. El sistema busca `tmc.dependence` con `abbreviation = 'TMC'`.
-2. Si existe `jurisdiction_dependence` en el expediente y existe TMC, crea un movimiento:
+1. El sistema busca `tmc.dependence` con `abbreviation = 'TMC'` y con `abbreviation = 'ME'`.
+2. Crea Movimiento 1 (jurisdicción → TMC):
    - origen: `jurisdiction_dependence`
-   - destino: `tmc.dependence (TMC)`
-   - fecha: `Datetime.now()`
-   - usuario: usuario activo (`self.env.uid`)
+   - destino: TMC
+   - `fojas`: `record.fojas` (snapshot en el momento de creación)
+   - `is_automatic`: True
+3. Crea Movimiento 2 (TMC → Mesa de Entradas):
+   - origen: TMC
+   - destino: Mesa de Entradas
+   - `fojas`: `record.fojas`
+   - `is_automatic`: True
 
-**Movimiento 2 — TMC → Mesa de Entradas:**
+**Rama TMC (dependence_id == TMC):**
 
-3. El sistema busca `tmc.dependence` con `abbreviation = 'ME'`.
-4. Si existen ambas dependencias (TMC y Mesa de Entradas), crea un segundo movimiento:
-   - origen: `tmc.dependence (TMC)`
-   - destino: `tmc.dependence (Mesa de Entradas)`
-   - fecha: `Datetime.now()`
-   - usuario: usuario activo
+1. El sistema detecta que el origen es TMC (`origin_is_tmc = True`).
+2. **Omite el Movimiento 1** — el recorrido TMC→TMC no tiene sentido funcional.
+3. Crea únicamente Movimiento TMC → Mesa de Entradas (mismo formato que Movimiento 2 arriba).
+
+**Rama CM (dependence_id == CM):**
+
+1. `jurisdiction_dependence` fue auto-asignado a CM por `_onchange_dependence` o
+   por el backup en `create()` antes de llamar a `super()`.
+2. Crea Movimiento 1: CM → TMC (`jurisdiction_dependence = CM` como origen).
+3. Crea Movimiento 2: TMC → Mesa de Entradas.
+
+En todos los casos, los movimientos son condicionales: si TMC o ME no existen en la
+base de datos, se omiten silenciosamente sin error.
 
 ### Evidence
 
 **Observed in code:**
-- Búsqueda de TMC: `me/models/document_exp.py:142`
-- Búsqueda de Mesa de Entradas por nombre: `me/models/document_exp.py:143`
-- Movimiento 1 (jurisdicción → TMC): `me/models/document_exp.py:144–151`
-- Movimiento 2 (TMC → Mesa de Entradas): `me/models/document_exp.py:153–160`
-- Ambos movimientos son condicionales — no se crean si las dependencias no existen.
+- Condicional `origin_is_tmc`: `me/models/document_exp.py`, método `create()`
+- Movimiento 1 omitido para TMC: `if not origin_is_tmc and record.jurisdiction_dependence`
+- Backup auto-asignación CM/TMC: pre-super() loop en `create()`
+- Campos `fojas` e `is_automatic` incluidos en cada movimiento automático
 
 **Inferred:**
-- Si `tmc.dependence (TMC)` no existe en la base de datos, ninguno de los dos movimientos se crea sin error.
-- Si `Mesa de Entradas` no existe (o su nombre difiere), solo se crea el movimiento 1.
+- Si `tmc.dependence (TMC)` no existe, ningún movimiento se crea (ninguno de los dos).
+- Si `Mesa de Entradas` no existe (abbreviation='ME'), solo se crea el Movimiento 1 (DEM/CM).
 
 **Uncertain / pending definition:**
-- La búsqueda de `Mesa de Entradas` usa `ilike` (búsqueda parcial, case-insensitive).
-  Si existen múltiples dependencias con ese nombre en el nombre, se usará la primera encontrada (`limit=1`).
-  No está definido si esto es correcto o un riesgo.
 - No está definido si la ausencia de estos movimientos es un estado válido del expediente.
-- No hay constraint que garantice que estos movimientos existan en el expediente.
+- No hay constraint que garantice que estos movimientos existan.
 
 
 --------------------------------------------------
@@ -228,7 +242,7 @@ según el estado de completitud de la Fase 1 del expediente.
 
 1. El usuario ve `dependence_id`, `document_type_id` (readonly, visible al seleccionar dependence_id),
    `number`, `period`.
-2. `computed_name` muestra "Documento sin nombre" hasta que los 3 campos de Fase 1 estén completos.
+2. `computed_name` muestra "Unnamed Document" hasta que los 3 campos de Fase 1 estén completos.
 
 **Fase 2 — visible cuando `is_origin_complete = True`:**
 

@@ -71,9 +71,10 @@ Cuando el operador guarda el expediente por primera vez, el sistema realiza auto
 
 2. **Registra el expediente en el sistema RAA** (Registro de Actos Administrativos), asociándolo al acto correspondiente.
 
-3. **Genera dos movimientos iniciales** que documentan el ingreso físico del expediente:
-   - El primero registra que el expediente llega desde su jurisdicción de origen hacia el TMC.
-   - El segundo registra el traspaso del TMC hacia la Mesa de Entradas.
+3. **Genera movimientos iniciales** que documentan el ingreso físico del expediente. El número y recorrido depende de la dependencia de origen:
+   - **DEM (y otras jurisdicciones):** dos movimientos — jurisdicción de origen → TMC, luego TMC → Mesa de Entradas.
+   - **TMC:** un único movimiento — TMC → Mesa de Entradas (se omite el movimiento TMC→TMC, que no tiene sentido funcional).
+   - **CM:** dos movimientos — CM → TMC, luego TMC → Mesa de Entradas. La jurisdicción se asigna automáticamente como CM sin intervención del operador.
 
 Estas tres acciones son automáticas, atómicas (ocurren todas juntas o ninguna) y transparentes para el operador. No requieren intervención adicional.
 
@@ -135,7 +136,8 @@ No existe un campo de **estado actual** del expediente. El sistema no infiere au
 | Tipo de documento automático | Al seleccionar la dependencia de origen, el tipo "EXP" se asigna sin intervención del usuario. |
 | Dependencias permitidas | Solo se pueden registrar expedientes de las dependencias DEM, TMC o CM. |
 | Nombre generado automáticamente | El nombre del expediente se calcula en tiempo real con formato EXP-XXXXXX-ORIGEN/AÑO. |
-| Movimientos iniciales automáticos | Al crear un expediente, se generan dos movimientos que documentan el ingreso desde jurisdicción hasta Mesa de Entradas. |
+| Movimientos iniciales automáticos | Al crear un expediente, se generan los movimientos iniciales según el origen: DEM → 2 movimientos (jurisdicción→TMC, TMC→ME); TMC → 1 movimiento (TMC→ME); CM → 2 movimientos (CM→TMC, TMC→ME). |
+| Fojas — bloqueo después de creación | El número de fojas no puede modificarse una vez guardado el expediente, excepto por un Responsable de Mesa de Entradas. Las variaciones posteriores se registran a través de movimientos. |
 | Registro automático en RAA | Todo expediente queda registrado en el sistema RAA al momento de su creación. |
 | Aviso de duplicado | Si ya existe un expediente con igual origen, número y período, el sistema avisa pero no bloquea el guardado. |
 | Fecha del documento | La fecha puede ser distinta a la fecha de registro en el sistema (incluye fechas pasadas). |
@@ -171,6 +173,6 @@ El tab "Documentos Relacionados" existe en el sistema pero está deshabilitado. 
 
 El movimiento automático hacia "Mesa de Entradas" depende de que exista una dependencia con ese nombre exacto en la base de datos. Si la dependencia no existe o su nombre difiere, el movimiento no se crea sin ningún aviso al operador.
 
-### 8.7 Sin reglas de acceso por rol a nivel de modelo
+### 8.7 Reglas de acceso por rol
 
-Las restricciones de acceso a los modelos del sistema no están definidas explícitamente en el módulo ME. El control de acceso efectivo depende de la configuración general del sistema.
+El módulo ME define tres grupos: **Usuario**, **Responsable** y **Solo Lectura**. Las reglas de acceso a nivel de modelo (ir.model.access) están definidas para `me.document_exp` y `me.document_movement`. El bloqueo de fojas después de la creación solo puede ser levantado por un Responsable. Las restricciones de acceso a modelos de otros módulos (TMC, RAA) dependen de la configuración de esos módulos.

@@ -838,35 +838,36 @@ B. Caso CM: auto-asignar jurisdiction_dependence = CM, ocultar campos, mantener 
 ---- Criterios de aceptación ----
 
 Modelo (me/models/document_exp.py):
-- [ ] Nuevo campo allowed_jurisdiction_ids: Many2many computed, sin argumentos en
+- [x] Nuevo campo allowed_jurisdiction_ids: Many2many computed, sin argumentos en
       @api.depends(), consulta tmc.dependence_order hijos de tmc_dependence_adm
-- [ ] _onchange_dependence (extender el existente):
+- [x] _onchange_dependence (extender el existente):
       - si TMC: jurisdiction_dependence = registro TMC
       - si CM: jurisdiction_dependence = registro CM, limpiar source_dependence_id
       - cualquier otro caso: limpiar jurisdiction_dependence
-- [ ] create(): backup — si dependence_id es TMC o CM y jurisdiction_dependence
+- [x] create(): backup — si dependence_id es TMC o CM y jurisdiction_dependence
       no viene en vals, auto-asignarlo antes de super().create()
-- [ ] _check_source_dependence_required: agregar condición
-      `and record.dependence_id.abbreviation != 'CM'`
+- [x] _check_source_dependence_required: condición `not in ('CM', 'TMC')`
+      TMC también exento (TMC tiene sub-deps en el nomenclador)
 
 Vista (me/views/document_exp_views.xml):
-- [ ] Agregar <field name="allowed_jurisdiction_ids" invisible="1"/>
-- [ ] jurisdiction_dependence: domain="[('id', 'in', allowed_jurisdiction_ids)]"
-      readonly="dependence_id.abbreviation == 'TMC'"
-- [ ] Grupo Fase 2 (jurisdiction + source): ajustar invisible a
-      "not is_origin_complete or dependence_id.abbreviation == 'CM'"
+- [x] Agregar <field name="allowed_jurisdiction_ids" invisible="1"/>
+- [x] Agregar <field name="dependence_abbreviation" invisible="1"/> (proxy para expresiones client-side)
+- [x] jurisdiction_dependence: domain="[('id', 'in', allowed_jurisdiction_ids)]"
+      readonly="dependence_abbreviation == 'TMC'"
+- [x] jurisdiction_dependence e source_dependence_id: invisible="dependence_abbreviation == 'CM'"
+      (ocultos individualmente — intake_date permanece visible en el mismo grupo)
 
 Tests (me/tests/test_document_exp.py):
-- [ ] allowed_jurisdiction_ids incluye HAC, GOB, DEM, CM, TMC y otras
+- [x] allowed_jurisdiction_ids incluye HAC, GOB, DEM, CM, TMC y otras
       (no solo las 3 de dependence_id)
-- [ ] Crear expediente con dependence_id=TMC: jurisdiction_dependence == TMC,
+- [x] Crear expediente con dependence_id=TMC: jurisdiction_dependence == TMC,
       1 solo movimiento automático (TMC→ME)
-- [ ] Crear expediente con dependence_id=CM: jurisdiction_dependence == CM,
+- [x] Crear expediente con dependence_id=CM: jurisdiction_dependence == CM,
       movimiento automático CM→TMC generado, source_dependence_id vacío sin error
-- [ ] Crear expediente con dependence_id=DEM sin jurisdiction_dependence:
+- [x] Crear expediente con dependence_id=DEM sin jurisdiction_dependence:
       falla (required=True sigue activo para DEM)
-- [ ] onchange dependence_id→TMC: jurisdiction_dependence auto-completado
-- [ ] onchange dependence_id TMC→DEM: jurisdiction_dependence limpiado
+- [x] onchange dependence_id→TMC: jurisdiction_dependence auto-completado
+- [x] onchange dependence_id TMC→DEM: jurisdiction_dependence limpiado
 
 ---- Nota operativa ----
 
@@ -1183,7 +1184,7 @@ Nota sobre tests existentes:
 ### #016 – Corregir movimientos automáticos cuando dependencia es TMC
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 Al crear un expediente en me.document_exp, create() genera dos movimientos
@@ -1233,17 +1234,15 @@ el patrón de búsqueda no cambia.
 ---- Criterios de aceptación ----
 
 Modelo (me/models/document_exp.py):
-- [ ] create() no genera movimiento TMC→TMC cuando dependence_id = TMC
-- [ ] create() genera un único movimiento TMC→ME cuando dependence_id = TMC
-- [ ] create() mantiene comportamiento actual (2 movimientos) para DEM y CM
+- [x] create() no genera movimiento TMC→TMC cuando dependence_id = TMC
+- [x] create() genera un único movimiento TMC→ME cuando dependence_id = TMC
+- [x] create() mantiene comportamiento actual (2 movimientos) para DEM y CM
 
 Tests (me/tests/test_document_exp.py o test_document_movement.py):
-- [ ] Expediente con dependence_id=TMC: exactamente 1 movimiento automático,
-      con origin=TMC y destination=ME
-- [ ] Expediente con dependence_id=TMC: no existe movimiento con
-      origin=TMC y destination=TMC
-- [ ] Expediente con dependence_id=DEM: sigue generando 2 movimientos
-      (jurisdiction→TMC, TMC→ME) — regresión
+- [x] Expediente con dependence_id=TMC: exactamente 1 movimiento automático,
+      con origin=TMC y destination=ME (cubierto por TestJurisdictionConditional012)
+- [x] Expediente con dependence_id=TMC: no existe movimiento TMC→TMC
+- [x] Expediente con dependence_id=DEM: sigue generando 2 movimientos — regresión
 
 ---- Impacto técnico ----
 
