@@ -231,9 +231,15 @@ desde la pestaña "Movimientos" en el formulario.
 - No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.
   (No hay campo `state` en el modelo.)
-- No está definido si el usuario puede editar o eliminar movimientos existentes.
-  El modelo no tiene restricciones que lo impidan.
 - `docs/todo.md` lista el workflow de estados como `[IDEA]` — pendiente de definición.
+
+**Nota de comportamiento esperado:**
+- La pre-carga de `origin_dependence_id` consulta el estado persistido en base,
+  no el estado transitorio de la grilla. Si un manager elimina un movimiento sin
+  guardar y luego agrega uno nuevo, el origen pre-cargado puede no reflejar la
+  eliminación pendiente. Comportamiento correcto: guardar antes de agregar.
+  Irrelevante para `me.group_user` (sin `perm_unlink` sobre `me.document_movement`,
+  ver #018).
 
 
 --------------------------------------------------

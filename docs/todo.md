@@ -1521,4 +1521,16 @@ Documentación:
 - [x] ai-context.md: default_get() actualizado
 - [x] domain-rules/me/workflows.md: Workflow 5 actualizado
 
+---- Notas de comportamiento ----
+
+Pre-carga y movimientos eliminados sin guardar:
+  La pre-carga de origin_dependence_id consulta el último movimiento persistido
+  en base. Si un manager elimina un movimiento desde la grilla pero no guarda,
+  y luego agrega un nuevo movimiento, la pre-carga tomará el destino del movimiento
+  eliminado (aún en base). Para que la pre-carga refleje la eliminación, el manager
+  debe guardar primero.
+  Este comportamiento es aceptable: me.group_user no tiene perm_unlink en
+  me.document_movement (ver #018), por lo que el escenario no puede ocurrirle
+  al operador. Para el manager, guardar antes es el flujo correcto.
+
 --------------------------------------------------
