@@ -407,3 +407,143 @@ class TestResponsibleUser011(TransactionCase):
             'destination_dependence_id': self.dep_other.id,
         })
         self.assertEqual(mov.create_uid, self.env.user)
+
+
+@tagged('post_install', '-at_install')
+class TestAutoOriginPreload020(TransactionCase):
+    """Tests para #020 — pre-carga de origin_dependence_id en default_get().
+
+    Verifica:
+    - default_get() pre-carga origin con el destination del último movimiento (por id desc)
+    - automáticos cuentan como "último movimiento"
+    - sin movimientos previos, origin queda vacío
+    - sin default_expediente_id en contexto, origin queda vacío
+    - los demás campos (fojas, is_automatic) no son alterados por la pre-carga de origin
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Origin Test',
+            'abbreviation': 'JORG',
+        })
+        self.dep_a = self.env['tmc.dependence'].create({
+            'name': 'Dependencia A Origin Test',
+            'abbreviation': 'DORG_A',
+        })
+        self.dep_b = self.env['tmc.dependence'].create({
+            'name': 'Dependencia B Origin Test',
+            'abbreviation': 'DORG_B',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(fields.Date.today().year)
+
+        self.expediente = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 55550,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def _defaults_for_new_movement(self, expediente=None):
+        """Helper: llama a default_get() con el contexto de la vista."""
+        exp = expediente or self.expediente
+        return self.env['me.document_movement'].with_context(
+            default_expediente_id=exp.id
+        ).default_get(['origin_dependence_id', 'fojas', 'expediente_id', 'is_automatic'])
+
+    def test_preloads_origin_from_last_movement_by_id(self):
+        """default_get() pre-carga origin con el destination del movimiento de mayor id."""
+        # Crear dos movimientos manuales con destinos distintos
+        mov1 = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_a.id,
+        })
+        mov2 = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_a.id,
+            'destination_dependence_id': self.dep_b.id,
+        })
+        self.assertGreater(mov2.id, mov1.id)
+
+        defaults = self._defaults_for_new_movement()
+        self.assertEqual(defaults.get('origin_dependence_id'), self.dep_b.id)
+
+    def test_automatic_movements_count_as_last(self):
+        """Los movimientos automáticos del expediente cuentan para determinar el último."""
+        # Los movimientos automáticos se crean en create(); el último tiene destination=ME
+        automatic_movements = self.expediente.document_movement_ids.filtered('is_automatic')
+        if not automatic_movements:
+            self.skipTest("No hay movimientos automáticos — TMC o ME ausentes en la DB")
+
+        last_auto = automatic_movements.sorted('id', reverse=True)[0]
+        defaults = self._defaults_for_new_movement()
+        self.assertEqual(
+            defaults.get('origin_dependence_id'),
+            last_auto.destination_dependence_id.id,
+        )
+
+    def test_no_origin_preloaded_when_no_prior_movements(self):
+        """Sin movimientos previos, origin_dependence_id no se pre-carga (queda vacío)."""
+        # Crear expediente válido y eliminar todos sus movimientos para
+        # simular el estado degenerado (TMC/ME ausentes en la base).
+        dep_jur2 = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion sin movs Test',
+            'abbreviation': 'JNOAUTO',
+        })
+        exp_bare = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 55551,
+            'period': self.current_year,
+            'jurisdiction_dependence': dep_jur2.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+        exp_bare.document_movement_ids.unlink()
+        self.assertFalse(exp_bare.document_movement_ids)
+
+        defaults = self.env['me.document_movement'].with_context(
+            default_expediente_id=exp_bare.id
+        ).default_get(['origin_dependence_id'])
+        self.assertFalse(defaults.get('origin_dependence_id'))
+
+    def test_no_origin_preloaded_without_context(self):
+        """Sin default_expediente_id en contexto, origin no se pre-carga."""
+        defaults = self.env['me.document_movement'].default_get(['origin_dependence_id'])
+        self.assertFalse(defaults.get('origin_dependence_id'))
+
+    def test_preload_does_not_alter_fojas_or_is_automatic(self):
+        """La pre-carga de origin no interfiere con los valores de fojas e is_automatic."""
+        defaults = self._defaults_for_new_movement()
+        # fojas se pre-carga desde el expediente (comportamiento de #015)
+        self.assertIn('fojas', defaults)
+        # is_automatic no debe ser True en defaults de un movimiento manual nuevo
+        self.assertFalse(defaults.get('is_automatic'))

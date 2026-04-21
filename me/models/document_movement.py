@@ -43,13 +43,23 @@ class Movement(models.Model):
     @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
-        if 'fojas' in fields_list:
-            # La vista pasa {'default_expediente_id': id}; super() lo resuelve
-            # y lo entrega como defaults['expediente_id'].
-            expediente_id = defaults.get('expediente_id')
-            if expediente_id:
+        # La vista pasa {'default_expediente_id': id}; super() lo resuelve
+        # y lo entrega como defaults['expediente_id'].
+        expediente_id = defaults.get('expediente_id')
+        if expediente_id:
+            if 'fojas' in fields_list:
                 expediente = self.env['me.document_exp'].browse(expediente_id)
                 defaults['fojas'] = expediente.fojas
+            if 'origin_dependence_id' in fields_list:
+                last_movement = self.search(
+                    [('expediente_id', '=', expediente_id)],
+                    order='id desc',
+                    limit=1,
+                )
+                if last_movement and last_movement.destination_dependence_id:
+                    defaults['origin_dependence_id'] = (
+                        last_movement.destination_dependence_id.id
+                    )
         return defaults
 
     @api.constrains('date')

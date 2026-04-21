@@ -1474,3 +1474,48 @@ Condición de [DONE]:
   Todo el acceso a modelos está controlado por ir.model.access.
 
 --------------------------------------------------
+### #020 – Pre-carga automática de origin_dependence_id en movimientos manuales
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Al agregar un movimiento manual desde la pestaña "Movimientos", origin_dependence_id
+quedaba vacío. En el flujo normal de pase, el origen del nuevo movimiento coincide
+con el destino del movimiento anterior. Se pre-carga automáticamente para agilizar
+la carga.
+
+date no forma parte del alcance — ya tiene default=fields.Datetime.now.
+
+---- Decisiones cerradas ----
+
+1. Mecanismo: default_get(), patrón establecido por fojas (default_expediente_id)
+2. "Último movimiento" = el de mayor id (determinístico, orden de inserción)
+3. Movimientos automáticos cuentan — el último automático siempre tiene
+   destination=ME, que es el origen correcto para el primer movimiento manual
+4. Sin movimientos previos: origin queda vacío (estado degenerado, sin default)
+5. El campo sigue siendo editable
+
+---- Criterios de aceptación ----
+
+Modelo (me/models/document_movement.py):
+- [x] default_get() extendido: si hay expediente_id en contexto, pre-carga
+      origin_dependence_id con destination del movimiento de mayor id
+- [x] Bloque origin_dependence_id paralelo al bloque fojas dentro del mismo
+      if expediente_id (refactor limpio)
+- [x] Sin movimientos previos → origin no se pre-carga (False)
+
+Tests (me/tests/test_document_movement.py — clase TestAutoOriginPreload020):
+- [x] default_get() pre-carga origin con destination del último movimiento (por id)
+- [x] movimientos automáticos cuentan como "último movimiento"
+- [x] sin movimientos previos, origin queda vacío
+- [x] sin default_expediente_id en contexto, origin queda vacío
+- [x] la pre-carga de origin no altera fojas ni is_automatic
+
+Resultado: 0 failed, 0 errors of 5 tests (91 total en la suite)
+
+Documentación:
+- [x] ai-context.md: default_get() actualizado
+- [x] domain-rules/me/workflows.md: Workflow 5 actualizado
+
+--------------------------------------------------

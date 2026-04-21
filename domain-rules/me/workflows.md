@@ -202,7 +202,9 @@ desde la pestaña "Movimientos" en el formulario.
 2. Navega a la pestaña "Movimientos" (visible solo cuando el registro está guardado).
 3. Agrega un nuevo movimiento en la lista editable:
    - `date` (requerido, default: ahora)
-   - `origin_dependence_id` (requerido)
+   - `origin_dependence_id` (requerido, pre-cargado automáticamente con el
+     `destination_dependence_id` del último movimiento del expediente por `id`;
+     si no hay movimientos previos, queda vacío; editable)
    - `destination_dependence_id` (requerido)
    - `user_id` (default: usuario activo — representa al responsable en destino,
      no necesariamente quien cargó el movimiento; auditoría de carga en `create_uid`)
@@ -220,6 +222,8 @@ desde la pestaña "Movimientos" en el formulario.
 - `_check_date_not_before_intake`: rechaza date.date() < expediente.intake_date — `me/models/document_movement.py`
 - `user_id` representa al responsable en destino (no quien cargó); auditoría en `create_uid` (Odoo nativo)
 - `user_id` readonly cuando `is_automatic = True`: `me/views/document_exp_views.xml`
+- Pre-carga de `origin_dependence_id` vía `default_get()`: `me/models/document_movement.py` (`default_get`)
+  — toma el `destination_dependence_id` del movimiento con mayor `id` del expediente
 
 **Uncertain / pending definition:**
 - No existen reglas de transición definidas en el código.
