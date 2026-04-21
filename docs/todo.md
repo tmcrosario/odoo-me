@@ -128,19 +128,60 @@ Impacto técnico:
 ### #003 – Integración con RAA
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
 Contexto:
-El sistema podría generar actos administrativos.
+Al crear un expediente en ME, el sistema registra automáticamente un acto
+administrativo en el módulo RAA (Registro de Actos Administrativos),
+vinculándolo al tmc.document recién creado.
 
-Decisiones abiertas:
-- ¿La creación es automática?
-- ¿Cuándo se dispara?
-- ¿Qué datos se envían?
+---- Comportamiento implementado ----
 
-Impacto:
-- integración entre módulos
-- modelos relacionales
+Creación (me/models/document_exp.py — create()):
+  Se crea un registro raa.registry_aa con document_id = tmc.document creado.
+  Usa sudo(): el operador no necesita permisos en raa.registry_aa.
+  Ocurre después de crear tmc.document, antes de los movimientos automáticos.
+  Constraint UNIQUE(document_id) en raa impide doble creación por el mismo doc.
+
+Eliminación (me/models/document_exp.py — unlink()):
+  Se elimina raa.registry_aa antes de tmc.document para evitar violación de FK.
+  raa.registry_aa.unlink() puede eliminar tmc.document si está "vacío"
+  (sin date, document_object ni temas). Por eso unlink() en me captura document
+  antes de llamar a raa.unlink() y verifica si aún existe después.
+
+---- Arquitectura de la relación ----
+
+  raa/__manifest__.py: "depends": ["tmc", "me"]  — raa depende de me
+  me/__manifest__.py:  "depends": ["tmc"]         — me NO declara raa
+
+  Acoplamiento implícito: me llama a raa.registry_aa sin declararlo como
+  dependencia. Si raa no está instalado, me.document_exp.create() falla
+  en runtime. En el stack actual ambos módulos siempre se instalan juntos.
+  El código documenta esto con un comentario explícito.
+
+  entry_date en raa.registry_aa usa default=today. No recibe intake_date
+  del expediente. Comportamiento aceptado.
+
+---- Decisiones cerradas ----
+
+1. La creación es automática, en create() de me.document_exp.
+2. Se dispara al crear el expediente.
+3. Solo se pasa document_id al registro RAA.
+4. sudo() es intencional: los operadores no necesitan permisos en RAA.
+5. El acoplamiento implícito (me sin depends de raa) es conocido y aceptado.
+
+---- Gaps conocidos ----
+
+- No hay tests que verifiquen la creación de raa.registry_aa en create().
+- No hay tests para unlink() (orden de eliminación y comportamiento cascada).
+
+---- Impacto técnico ----
+
+- me/models/document_exp.py: create() y unlink()
+- raa/models/registry_aa.py: UNIQUE constraint, unlink() personalizado
+- me/ai-context.md: sección RAA Integration
+- domain-rules/me/workflows.md: Workflow 3
+- docs/system_narrative.md: sección 3.4
 
 --------------------------------------------------
 ### #004 – Restricción de origen de expediente
