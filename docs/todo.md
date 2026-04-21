@@ -1534,3 +1534,95 @@ Pre-carga y movimientos eliminados sin guardar:
   al operador. Para el manager, guardar antes es el flujo correcto.
 
 --------------------------------------------------
+
+--------------------------------------------------
+### #021 – Detección de reingreso institucional de expedientes
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+Los usuarios necesitan identificar expedientes que salieron físicamente del
+Tribunal de Cuentas hacia una institución externa y luego reingresaron.
+
+La trazabilidad existe en me.document_movement, pero actualmente no está
+modelada la distinción entre dependencias internas del Tribunal y externas.
+Los movimientos entre dependencias internas no cuentan como salida ni como
+reingreso — solo los cruces institucionales son relevantes.
+
+Toda dependencia del TMC cuenta como interna.
+Todo lo que no sea dependencia del TMC cuenta como externo.
+
+Salida institucional  = movimiento con destination_dependence_id externo.
+Reingreso institucional = movimiento con destination_dependence_id interno,
+  ocurrido después de al menos una salida institucional previa en el expediente.
+
+---- Decisiones cerradas ----
+
+A. Clasificación interna/externa: extender tmc.dependence desde me via _inherit
+
+   Campo is_internal (Boolean, default=False) en me/models/dependence_ext.py.
+   No se modifica ningún archivo de tmc. El campo pertenece al módulo me.
+   Datos iniciales en me/data/dependence_data.xml: is_internal=True para
+   TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC.
+   Todo lo demás (DEM, CM, jurisdicciones municipales) queda False por defecto.
+
+B. Campo en me.document_exp: has_reentry (Boolean, stored, computed)
+
+   Algoritmo: recorrer document_movement_ids ordenados por id.
+   has_reentry = True si existe al menos un movimiento con
+   destination.is_internal = False (salida) seguido de al menos uno con
+   destination.is_internal = True (reingreso).
+   depends: document_movement_ids.destination_dependence_id.is_internal
+   Los movimientos automáticos tienen destino interno → no generan reingresos.
+
+C. No se modelan reentry_count ni last_reentry_date por ahora.
+   El caso de uso actual es identificar y filtrar. Pueden agregarse en task futura.
+
+D. UI: filtro predefinido en search view. Sin columna ni contador en list view.
+
+---- Criterios de aceptación ----
+
+Modelo (me/models/dependence_ext.py — nuevo):
+- [ ] _inherit = 'tmc.dependence'
+- [ ] Campo is_internal: Boolean, default=False
+
+Datos (me/data/dependence_data.xml — nuevo o extender existente):
+- [ ] is_internal = True para: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC
+
+Modelo (me/models/document_exp.py):
+- [ ] Campo has_reentry: Boolean, stored, computed
+- [ ] @api.depends('document_movement_ids.destination_dependence_id.is_internal')
+- [ ] Algoritmo: salida antes de reingreso (no solo coexistencia de ambos)
+- [ ] Movimientos automáticos (destino siempre interno) no generan falsos positivos
+
+Vista (me/views/document_exp_views.xml):
+- [ ] Filtro predefinido en search view: "Con reingreso institucional"
+      domain=[('has_reentry', '=', True)]
+
+i18n (me/i18n/es_AR.po):
+- [ ] Traducción de has_reentry y de is_internal
+
+Tests (me/tests/ — clase TestHasReentry021):
+- [ ] Expediente sin salidas → has_reentry = False
+- [ ] Expediente con salida pero sin reingreso → has_reentry = False
+- [ ] Expediente con salida y reingreso posterior → has_reentry = True
+- [ ] Solo movimientos automáticos (destinos internos) → has_reentry = False
+- [ ] Secuencia interno → externo → externo → interno → has_reentry = True
+- [ ] is_internal recalcula has_reentry si se modifica en una dependencia
+
+---- Impacto técnico ----
+
+- me/models/dependence_ext.py (nuevo)
+- me/models/document_exp.py
+- me/data/dependence_data.xml (nuevo o extender)
+- me/__manifest__.py — registrar dependence_ext.py en models y data
+- me/views/document_exp_views.xml
+- me/i18n/es_AR.po
+- me/tests/test_document_exp.py
+
+Documentación:
+- me/ai-context.md: is_internal en extensión de tmc.dependence; has_reentry en me.document_exp
+- domain-rules/me/workflows.md: nota en Workflow 5 sobre clasificación interna/externa
+
+--------------------------------------------------
