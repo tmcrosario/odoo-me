@@ -294,11 +294,14 @@ class TestFojasMovimiento(TransactionCase):
         self.assertEqual(mov.fojas, 0)
 
     def test_default_get_preloads_fojas_from_context(self):
-        """default_get() pre-carga fojas desde el expediente cuando está en el contexto."""
+        """default_get() pre-carga fojas desde el expediente cuando está en el contexto.
+
+        fields_list replica el comportamiento real de la UI (sin 'expediente_id').
+        """
         exp = self._make_expediente(fojas=7, number=77777)
         defaults = self.env['me.document_movement'].with_context(
             default_expediente_id=exp.id
-        ).default_get(['fojas', 'expediente_id'])
+        ).default_get(['fojas'])
         self.assertEqual(defaults.get('fojas'), 7)
 
 
@@ -470,11 +473,16 @@ class TestAutoOriginPreload020(TransactionCase):
         })
 
     def _defaults_for_new_movement(self, expediente=None):
-        """Helper: llama a default_get() con el contexto de la vista."""
+        """Helper: llama a default_get() replicando el fields_list real de la UI.
+
+        La lista inline no incluye 'expediente_id' en fields_list — solo los campos
+        visibles. El expediente llega por contexto (default_expediente_id).
+        """
         exp = expediente or self.expediente
         return self.env['me.document_movement'].with_context(
             default_expediente_id=exp.id
-        ).default_get(['origin_dependence_id', 'fojas', 'expediente_id', 'is_automatic'])
+        ).default_get(['is_automatic', 'date', 'origin_dependence_id',
+                       'destination_dependence_id', 'fojas', 'user_id'])
 
     def test_preloads_origin_from_last_movement_by_id(self):
         """default_get() pre-carga origin con el destination del movimiento de mayor id."""

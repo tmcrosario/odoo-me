@@ -1501,8 +1501,10 @@ date no forma parte del alcance — ya tiene default=fields.Datetime.now.
 Modelo (me/models/document_movement.py):
 - [x] default_get() extendido: si hay expediente_id en contexto, pre-carga
       origin_dependence_id con destination del movimiento de mayor id
-- [x] Bloque origin_dependence_id paralelo al bloque fojas dentro del mismo
-      if expediente_id (refactor limpio)
+- [x] expediente_id leído con fallback desde contexto:
+      defaults.get('expediente_id') or self._context.get('default_expediente_id')
+      — robusto frente a fields_list que no incluya expediente_id (comportamiento
+      real de la lista inline en Odoo 19)
 - [x] Sin movimientos previos → origin no se pre-carga (False)
 
 Tests (me/tests/test_document_movement.py — clase TestAutoOriginPreload020):
@@ -1511,8 +1513,9 @@ Tests (me/tests/test_document_movement.py — clase TestAutoOriginPreload020):
 - [x] sin movimientos previos, origin queda vacío
 - [x] sin default_expediente_id en contexto, origin queda vacío
 - [x] la pre-carga de origin no altera fojas ni is_automatic
+- [x] fields_list en tests replica el comportamiento real de la UI (sin expediente_id)
 
-Resultado: 0 failed, 0 errors of 5 tests (91 total en la suite)
+Resultado: 0 failed, 0 errors of 91 tests
 
 Documentación:
 - [x] ai-context.md: default_get() actualizado

@@ -43,9 +43,11 @@ class Movement(models.Model):
     @api.model
     def default_get(self, fields_list):
         defaults = super().default_get(fields_list)
-        # La vista pasa {'default_expediente_id': id}; super() lo resuelve
-        # y lo entrega como defaults['expediente_id'].
-        expediente_id = defaults.get('expediente_id')
+        # La vista pasa {'default_expediente_id': id}. super() lo resuelve en
+        # defaults['expediente_id'] solo si 'expediente_id' está en fields_list.
+        # La lista inline de la UI no incluye expediente_id en fields_list, por lo
+        # que se lee directamente del contexto como fallback.
+        expediente_id = defaults.get('expediente_id') or self._context.get('default_expediente_id')
         if expediente_id:
             if 'fojas' in fields_list:
                 expediente = self.env['me.document_exp'].browse(expediente_id)
