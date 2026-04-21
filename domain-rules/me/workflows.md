@@ -204,7 +204,8 @@ desde la pestaña "Movimientos" en el formulario.
    - `date` (requerido, default: ahora)
    - `origin_dependence_id` (requerido)
    - `destination_dependence_id` (requerido)
-   - `user_id` (default: usuario activo)
+   - `user_id` (default: usuario activo — representa al responsable en destino,
+     no necesariamente quien cargó el movimiento; auditoría de carga en `create_uid`)
 4. Guarda el movimiento.
 
 ### Evidence
@@ -217,6 +218,8 @@ desde la pestaña "Movimientos" en el formulario.
   impide duplicados exactos — `me/models/document_movement.py` `_sql_constraints`
 - `_check_date_not_future`: rechaza date > now() — `me/models/document_movement.py`
 - `_check_date_not_before_intake`: rechaza date.date() < expediente.intake_date — `me/models/document_movement.py`
+- `user_id` representa al responsable en destino (no quien cargó); auditoría en `create_uid` (Odoo nativo)
+- `user_id` readonly cuando `is_automatic = True`: `me/views/document_exp_views.xml`
 
 **Uncertain / pending definition:**
 - No existen reglas de transición definidas en el código.

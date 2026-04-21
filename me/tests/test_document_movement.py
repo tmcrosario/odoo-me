@@ -300,3 +300,110 @@ class TestFojasMovimiento(TransactionCase):
             default_expediente_id=exp.id
         ).default_get(['fojas', 'expediente_id'])
         self.assertEqual(defaults.get('fojas'), 7)
+
+
+@tagged('post_install', '-at_install')
+class TestResponsibleUser011(TransactionCase):
+    """Tests para #011 — user_id como responsable operativo en destino.
+
+    Verifica:
+    - user_id defaultea al usuario de sesión
+    - user_id puede ser distinto al usuario de sesión
+    - movimientos automáticos tienen user_id = usuario que creó el expediente
+    - create_uid queda asignado al usuario de sesión al crear el movimiento
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Resp Test',
+            'abbreviation': 'JRSP',
+        })
+        self.dep_other = self.env['tmc.dependence'].create({
+            'name': 'Otra Dep Resp Test',
+            'abbreviation': 'ORSP',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(fields.Date.today().year)
+
+        self.expediente = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 99990,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def test_user_id_default_is_session_user(self):
+        """Nuevo movimiento manual: user_id defaultea al usuario de sesión."""
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+        })
+        self.assertEqual(mov.user_id, self.env.user)
+
+    def test_user_id_can_be_different_from_session(self):
+        """user_id puede ser un usuario distinto al que cargó el movimiento."""
+        other_user = self.env.ref('base.user_demo', raise_if_not_found=False)
+        if not other_user:
+            other_user = self.env['res.users'].search(
+                [('id', '!=', self.env.user.id)], limit=1
+            )
+        if not other_user:
+            self.skipTest("No hay otro usuario disponible para este test")
+
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+            'user_id': other_user.id,
+        })
+        self.assertEqual(mov.user_id, other_user)
+
+    def test_automatic_movements_have_user_id(self):
+        """Movimientos automáticos tienen user_id asignado (usuario de sesión en create)."""
+        for mov in self.expediente.document_movement_ids:
+            self.assertTrue(
+                mov.is_automatic,
+                f"Movimiento {mov.id} debería ser automático",
+            )
+            self.assertTrue(
+                mov.user_id,
+                f"Movimiento automático {mov.id} debería tener user_id asignado",
+            )
+
+    def test_create_uid_set_on_movement_create(self):
+        """create_uid queda asignado al usuario de sesión al crear el movimiento."""
+        mov = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_other.id,
+        })
+        self.assertEqual(mov.create_uid, self.env.user)

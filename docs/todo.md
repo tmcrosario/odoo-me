@@ -641,119 +641,64 @@ Impacto técnico:
 ### #011 – Responsable operativo en movimientos de expediente
 --------------------------------------------------
 
-[IDEA]
-
-Nota de implementación:
-El modelo base me.document_movement y la pestaña "Movimientos" en la
-vista form están implementados (commit 7d6208f, [ADD] task #011 exp
-movements). Esta task define la evolución siguiente: enriquecer los
-movimientos con información del responsable operativo (receptor físico
-del expediente), que es distinto del usuario de sesión (user_id).
+[DONE]
 
 Contexto:
 me.document_movement registra la trazabilidad del expediente entre
-dependencias. El modelo actual tiene:
-  - expediente_id       → me.document_exp
-  - date                → Datetime (default: now)
-  - origin_dependence_id  → tmc.dependence
-  - destination_dependence_id → tmc.dependence
-  - user_id             → res.users (default: usuario de sesión)
+dependencias. La semántica de user_id era ambigua: defaulteaba al
+usuario de sesión, mezclando "quién cargó" con "quién queda a cargo".
 
-user_id registra quién cargó el movimiento en Odoo, no necesariamente
-quién entregó o recibió físicamente el expediente.
+Esta task aclara esa ambigüedad redefiniendo user_id como el responsable
+operativo en destino, y delegando la auditoría de carga a create_uid
+(campo nativo de Odoo, siempre disponible sin lógica custom).
 
-El usuario quiere poder reflejar algo como:
-  - Origen: Mesa de Entradas
-  - Destino: Vocalía
-  - Usuario responsable / receptor: Juan Pérez
+---- Decisiones cerradas ----
 
----- Hallazgos del análisis técnico ----
+1. Semántica de user_id
+   user_id = el usuario Odoo que queda a cargo del expediente en la
+   dependencia destino del movimiento.
+   No se agrega ningún campo nuevo (receiver_employee_id descartado).
 
-Tres estructuras coexisten sin vínculo entre sí:
+2. Auditoría de carga
+   create_uid (Odoo nativo) registra quién creó el registro.
+   No se muestra en la vista estándar — accesible por developer mode.
 
-1. res.users (Odoo)
-   — cuenta de sesión, ya presente en el movimiento como user_id
-   — no tiene relación declarada con tmc.hr.employee
+3. Default
+   default=lambda self: self.env.user se mantiene. En el caso más
+   frecuente el operador que carga el movimiento ES quien queda a cargo.
+   El operador puede cambiarlo si el receptor es otra persona.
 
-2. tmc.hr.employee (custom HR)
-   — modelo propio del TMC: nombre, legajo, email, puesto, oficina
-   — office_id → tmc.hr.office (pertenece a una oficina)
-   — NO tiene user_id ni vínculo con res.users
+4. Readonly en automáticos
+   user_id es readonly cuando is_automatic = True, consistente con fojas.
 
-3. tmc.hr.office (custom HR)
-   — unidad organizacional con jerarquía (parent_id)
-   — employee_ids (One2many → tmc.hr.employee)
-   — manager_id (→ tmc.hr.employee)
-   — NO tiene vínculo con tmc.dependence
-
-Consecuencia:
-  tmc.hr.office y tmc.dependence representan dimensiones distintas
-  del mismo organismo. Una es la estructura organizacional de RRHH
-  (quién trabaja dónde, bajo qué jefatura). La otra es el nomenclador
-  institucional administrativo (qué áreas existen para fines documentales).
-  No hay FK entre ambas en el código actual.
-
-  Un movimiento hoy: "el expediente pasó de dependencia A a dependencia B,
-  y fue cargado por el usuario de sesión X."
-  Un movimiento futuro podría incluir: "lo recibió el empleado Y de la
-  oficina Z."
-
----- Decisiones abiertas ----
-
-1. Semántica del movimiento
-   - ¿Qué representa exactamente un movimiento?
-   - ¿Es un evento de transferencia formal (dependencia → dependencia),
-     un evento operativo (persona → persona), o ambos?
-   - ¿Debe quedar registrado quién entregó (origen) y quién recibió
-     (destino), o solo uno de ellos?
-
-2. Suficiencia de user_id actual
-   - ¿user_id (res.users, el que cargó el movimiento) es suficiente
-     como trazabilidad operativa?
-   - ¿O se requiere distinguir entre "quién cargó en el sistema" y
-     "quién recibió físicamente el expediente"?
-
-3. Qué entidad representa al responsable
-   - ¿res.users (cuenta Odoo)?
-   - ¿tmc.hr.employee (empleado del TMC, sin cuenta Odoo)?
-   - ¿tmc.hr.office (oficina que recibe, sin persona específica)?
-   - ¿Una combinación (oficina + empleado receptor, derivado de la oficina)?
-
-4. Relación entre tmc.hr.office y tmc.dependence
-   - ¿Existe correspondencia funcional entre una oficina (HR) y una
-     dependencia (nomenclador)? ¿Es 1:1, 1:N, o independiente?
-   - ¿Debería modelarse ese vínculo para permitir derivar la oficina
-     desde la dependencia destino, o son mundos separados que no deben
-     cruzarse en esta capa?
-
-5. Asignación del responsable
-   - ¿El operador selecciona manualmente al receptor en el movimiento?
-   - ¿O se deriva automáticamente del usuario de sesión o de la oficina
-     asociada a la dependencia destino?
-   - ¿Qué pasa con los movimientos automáticos (los 2 que genera create())?
+5. No se vincula tmc.hr.office con tmc.dependence (fuera de scope).
 
 6. Obligatoriedad
-   - ¿El campo de receptor/responsable es obligatorio o opcional?
-   - ¿Los movimientos automáticos del create() tendrían receptor?
+   El campo no tiene required=True. El default cubre el caso normal.
 
-7. Impacto en trazabilidad y auditoría
-   - ¿La trazabilidad operativa debe aparecer en la vista del expediente?
-   - ¿Como lista de movimientos con receptor visible?
-   - ¿Genera algún tipo de notificación o acuse?
+---- Criterios de aceptación ----
 
-Decisiones técnicas que dependen de las anteriores:
-   - si agregar receiver_employee_id (tmc.hr.employee) o receiver_office_id
-     (tmc.hr.office) o ambos al modelo me.document_movement
-   - si vincular tmc.hr.office con tmc.dependence (nuevo campo en alguno)
-   - si user_id pasa a ser "quien cargó" vs "quien es responsable"
-   - si el domain del receptor depende de la dependencia destino
+Modelo (me/models/document_movement.py):
+- [x] user_id: string="Responsible", help actualizado a nueva semántica
 
-Impacto técnico:
-- models: me.document_movement y posiblemente tmc.hr.office o tmc.dependence
-- views: formulario de movimiento y/o vista del expediente
-- workflows: create() automático, movimientos manuales
-- tests: trazabilidad operativa, asignación de receptor
-- documentación: actualizar ai-context.md y workflows.md
+Vistas (me/views/document_exp_views.xml):
+- [x] user_id: readonly="is_automatic" en lista y form del notebook
+
+i18n (me/i18n/es_AR.po):
+- [x] field_description: "Responsible" → "Responsable"
+- [x] help: traducción de la nueva ayuda
+
+Tests (me/tests/test_document_movement.py — clase TestResponsibleUser011):
+- [x] user_id defaultea al usuario de sesión en movimiento manual
+- [x] user_id puede ser distinto al usuario de sesión
+- [x] movimientos automáticos tienen user_id asignado
+- [x] create_uid queda asignado al usuario de sesión al crear el movimiento
+
+Resultado: 0 failed, 0 errors of 4 tests
+
+Documentación:
+- [x] ai-context.md: user_id semántica actualizada
+- [x] domain-rules/me/workflows.md: Workflow 5 actualizado
 
 --------------------------------------------------
 ### #012 – Comportamiento condicional de jurisdicción y repartición

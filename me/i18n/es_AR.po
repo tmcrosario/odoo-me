@@ -283,8 +283,13 @@ msgstr "Verdadero cuando el movimiento fue generado automáticamente al crear el
 
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_movement__user_id
-msgid "User"
-msgstr "Usuario"
+msgid "Responsible"
+msgstr "Responsable"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_movement__user_id
+msgid "Odoo user responsible for the expediente at the destination of this movement"
+msgstr "Usuario Odoo que queda a cargo del expediente en la dependencia destino de este movimiento"
 
 # ---------------------------------------------------------------------------
 # Validation errors — me.document_exp

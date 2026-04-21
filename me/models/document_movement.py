@@ -34,7 +34,10 @@ class Movement(models.Model):
     )
     # notes = fields.Text(string="Notes")
     user_id = fields.Many2one(
-        "res.users", string="User", default=lambda self: self.env.user
+        "res.users",
+        string="Responsible",
+        default=lambda self: self.env.user,
+        help="Odoo user responsible for the expediente at the destination of this movement",
     )
 
     @api.model
