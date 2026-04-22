@@ -1671,4 +1671,30 @@ Documentación:
 - [x] me/ai-context.md: is_internal en extensión de tmc.dependence; has_reentry en me.document_exp
 - [x] domain-rules/me/workflows.md: nota en Workflow 5 sobre clasificación interna/externa
 
+---- Nota de upgrade (bases de datos existentes) ----
+
+En una instalación nueva (-i me), is_internal se aplica correctamente a
+las dependencias internas desde dependence_data.xml al momento de la instalación.
+
+En una actualización (-u me) sobre una base ya existente, el comportamiento
+es diferente y requiere atención:
+
+1. is_internal no se aplica automáticamente.
+   El archivo dependence_data.xml usa <odoo noupdate="1">.
+   Ese atributo protege los registros existentes de sobreescrituras en upgrade:
+   Odoo los omite silenciosamente al ejecutar -u me.
+   Los valores de is_internal quedan en NULL (efectivamente False) para todas
+   las dependencias que ya existían en la base antes de la instalación del módulo.
+
+2. has_reentry no se recomputa automáticamente para expedientes históricos.
+   Al agregar la columna a la tabla existente, Odoo la inicializa con el
+   valor por defecto del campo (False). El trigger de recompute no se dispara
+   retrospectivamente para los registros preexistentes.
+   Aun después de corregir is_internal, los expedientes históricos siguen
+   mostrando has_reentry = False hasta que se ejecute un recompute explícito.
+
+Impacto operativo: el filtro "Con Reingreso Institucional" no devuelve resultados
+en bases actualizadas hasta que ambas correcciones estén aplicadas.
+En instalaciones nuevas el comportamiento es correcto sin intervención adicional.
+
 --------------------------------------------------

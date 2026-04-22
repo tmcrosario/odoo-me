@@ -259,6 +259,15 @@ Esta clasificación alimenta `has_reentry` en `me.document_exp`:
 El campo `has_reentry` es stored computed y se recalcula automáticamente al
 agregar movimientos o al cambiar `is_internal` en una dependencia.
 
+**Nota de upgrade:**
+En bases existentes actualizadas con `-u me`, `is_internal` puede no haberse aplicado
+a las dependencias internas (el archivo de datos usa `noupdate="1"`, que bloquea la
+actualización de registros ya presentes). En ese caso, `has_reentry` permanece en
+False para todos los expedientes históricos. El filtro "Con Reingreso Institucional"
+requiere que ambas condiciones estén saneadas: valores de `is_internal` correctos y
+un recompute explícito de `has_reentry`. En una instalación nueva el comportamiento
+es correcto sin intervención adicional.
+
 
 --------------------------------------------------
 

@@ -92,7 +92,7 @@ Own fields (defined in `me.document_exp`):
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; hardcoded to DEM/TMC/CM |
 | `allowed_jurisdiction_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; queries tmc.dependence_order children of tmc_dependence_adm (~21 first-level institutional bodies); declared `invisible="1"` in view; provides domain for `jurisdiction_dependence` |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
-| `has_reentry` | Boolean | No | stored computed: True when the expediente has at least one movement to an external dependence followed by a movement to an internal dependence (institutional reentry detection); depends on `document_movement_ids.destination_dependence_id.is_internal` |
+| `has_reentry` | Boolean | No | stored computed: True when the expediente has at least one movement to an external dependence followed by a movement to an internal dependence (institutional reentry detection); depends on `document_movement_ids.destination_dependence_id.is_internal`; initialized to False for pre-existing rows when the column is first added — see upgrade note below |
 | `main_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `main_topic_ids`; domain: root topics only, filtered to `allowed_exp_topic_ids`; cleared via `_onchange_main_topic_id` when changed |
 | `secondary_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `secondary_topic_ids`; domain: children of `main_topic_id`; cleared via `_onchange_main_topic_id` when `main_topic_id` changes |
 | `allowed_exp_topic_ids` | Many2many(tmc.document_topic) | No | computed; resolves Licitación and Nota by XML ID from tmc_data; independent of `dependence_id`; declared `invisible="1"` in view; provides domain for `main_topic_id` |
@@ -363,6 +363,25 @@ tmc.dependence  ← extended by me via _inherit: adds is_internal (Boolean)
                   Internal dependences: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC
                   All others (DEM, CM, jurisdictions) are external (is_internal=False)
 ```
+
+
+**Upgrade note — is_internal and has_reentry on existing databases**
+
+`me/data/dependence_data.xml` uses `<odoo noupdate="1">`. On a fresh install
+(`-i me`) the `is_internal` values are written correctly. On an upgrade
+(`-u me`) over an existing database the records are already present in
+`ir_model_data` and Odoo skips them — `is_internal` stays NULL (False) for all
+pre-existing dependences.
+
+Separately, `has_reentry` is `store=True`. When the column is added to an existing
+table Odoo sets the column default (False) for all rows. Because `is_internal` was
+never corrected, no `@api.depends` trigger fires and the stored values are never
+recomputed for historical expedientes.
+
+Both corrections are required before the "With Institutional Reentry" filter
+returns results on upgraded installations: (1) apply `is_internal=True` to the
+internal dependences, and (2) run an explicit recompute of `has_reentry` for all
+existing expedientes. Neither correction is needed on a clean install.
 
 
 --------------------------------------------------
