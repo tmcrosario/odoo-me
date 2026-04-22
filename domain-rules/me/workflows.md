@@ -241,6 +241,24 @@ desde la pestaña "Movimientos" en el formulario.
   Irrelevante para `me.group_user` (sin `perm_unlink` sobre `me.document_movement`,
   ver #018).
 
+**Clasificación interna/externa de dependencias (#021):**
+
+Cada `tmc.dependence` tiene un campo `is_internal` (Boolean, default=False)
+agregado por el módulo `me` vía `_inherit`. Las dependencias del Tribunal
+están marcadas como `is_internal=True` en `me/data/dependence_data.xml`:
+TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC.
+Todo lo demás (DEM, CM, jurisdicciones municipales) queda como externo.
+
+Esta clasificación alimenta `has_reentry` en `me.document_exp`:
+- Salida institucional: movimiento con `destination_dependence_id.is_internal = False`
+- Reingreso institucional: movimiento con `destination_dependence_id.is_internal = True`
+  ocurrido después de al menos una salida previa en el mismo expediente.
+- Los movimientos automáticos apuntan a TMC y ME (ambos internos), por lo que
+  nunca generan salida ni reingreso falsos.
+
+El campo `has_reentry` es stored computed y se recalcula automáticamente al
+agregar movimientos o al cambiar `is_internal` en una dependencia.
+
 
 --------------------------------------------------
 

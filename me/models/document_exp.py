@@ -127,6 +127,33 @@ class DocumentExp(models.Model):
         "me.document_movement", "expediente_id", string="Movements"
     )
 
+    has_reentry = fields.Boolean(
+        string="Has Reentry",
+        compute="_compute_has_reentry",
+        store=True,
+        help=(
+            "True when the expediente has left the Tribunal at least once "
+            "(movement to an external dependence) and then returned "
+            "(subsequent movement to an internal dependence)."
+        ),
+    )
+
+    @api.depends('document_movement_ids.destination_dependence_id.is_internal')
+    def _compute_has_reentry(self):
+        for record in self:
+            saw_exit = False
+            reentry = False
+            for movement in record.document_movement_ids.sorted('id'):
+                dest = movement.destination_dependence_id
+                if not dest:
+                    continue
+                if not dest.is_internal:
+                    saw_exit = True
+                elif saw_exit:
+                    reentry = True
+                    break
+            record.has_reentry = reentry
+
     @api.depends()
     def _compute_allowed_exp_topic_ids(self):
         topics = self.env['tmc.document_topic']

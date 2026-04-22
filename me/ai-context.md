@@ -92,6 +92,7 @@ Own fields (defined in `me.document_exp`):
 | `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; hardcoded to DEM/TMC/CM |
 | `allowed_jurisdiction_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; queries tmc.dependence_order children of tmc_dependence_adm (~21 first-level institutional bodies); declared `invisible="1"` in view; provides domain for `jurisdiction_dependence` |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
+| `has_reentry` | Boolean | No | stored computed: True when the expediente has at least one movement to an external dependence followed by a movement to an internal dependence (institutional reentry detection); depends on `document_movement_ids.destination_dependence_id.is_internal` |
 | `main_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `main_topic_ids`; domain: root topics only, filtered to `allowed_exp_topic_ids`; cleared via `_onchange_main_topic_id` when changed |
 | `secondary_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `secondary_topic_ids`; domain: children of `main_topic_id`; cleared via `_onchange_main_topic_id` when `main_topic_id` changes |
 | `allowed_exp_topic_ids` | Many2many(tmc.document_topic) | No | computed; resolves Licitación and Nota by XML ID from tmc_data; independent of `dependence_id`; declared `invisible="1"` in view; provides domain for `main_topic_id` |
@@ -358,7 +359,9 @@ me.document_movement       raa.registry_aa
     │
     │ Many2one (origin / destination)
     ▼
-tmc.dependence
+tmc.dependence  ← extended by me via _inherit: adds is_internal (Boolean)
+                  Internal dependences: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC
+                  All others (DEM, CM, jurisdictions) are external (is_internal=False)
 ```
 
 

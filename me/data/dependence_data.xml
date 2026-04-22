@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Mark Tribunal-internal dependences as is_internal=True.
+    These records are defined in tmc_data (odoo-tmc-data module),
+    which must be installed for this data to load correctly.
+    noupdate="1": manual overrides are preserved on module upgrade.
+-->
+<odoo noupdate="1">
+    <record id="tmc_data.tmc_dependence_tmc" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_me" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_voc" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_fc" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_dal" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_dat" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_dcd" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_daf" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_dic" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_afc" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+</odoo>

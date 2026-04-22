@@ -122,6 +122,8 @@
             <search>
                 <field name="name"/>
                 <field name="number"/>
+                <filter string="With Institutional Reentry" name="has_reentry"
+                        domain="[('has_reentry', '=', True)]"/>
             </search>
         </field>
     </record>

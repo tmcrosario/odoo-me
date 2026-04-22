@@ -1580,7 +1580,7 @@ Pre-carga y movimientos eliminados sin guardar:
 ### #021 – Detección de reingreso institucional de expedientes
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 Los usuarios necesitan identificar expedientes que salieron físicamente del
@@ -1625,45 +1625,50 @@ D. UI: filtro predefinido en search view. Sin columna ni contador en list view.
 ---- Criterios de aceptación ----
 
 Modelo (me/models/dependence_ext.py — nuevo):
-- [ ] _inherit = 'tmc.dependence'
-- [ ] Campo is_internal: Boolean, default=False
+- [x] _inherit = 'tmc.dependence'
+- [x] Campo is_internal: Boolean, default=False
 
-Datos (me/data/dependence_data.xml — nuevo o extender existente):
-- [ ] is_internal = True para: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC
+Datos (me/data/dependence_data.xml — nuevo):
+- [x] is_internal = True para: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC
 
 Modelo (me/models/document_exp.py):
-- [ ] Campo has_reentry: Boolean, stored, computed
-- [ ] @api.depends('document_movement_ids.destination_dependence_id.is_internal')
-- [ ] Algoritmo: salida antes de reingreso (no solo coexistencia de ambos)
-- [ ] Movimientos automáticos (destino siempre interno) no generan falsos positivos
+- [x] Campo has_reentry: Boolean, stored, computed
+- [x] @api.depends('document_movement_ids.destination_dependence_id.is_internal')
+- [x] Algoritmo: salida antes de reingreso (no solo coexistencia de ambos)
+- [x] Movimientos automáticos (destino siempre interno) no generan falsos positivos
 
 Vista (me/views/document_exp_views.xml):
-- [ ] Filtro predefinido en search view: "Con reingreso institucional"
+- [x] Filtro predefinido en search view: "With Institutional Reentry"
       domain=[('has_reentry', '=', True)]
 
 i18n (me/i18n/es_AR.po):
-- [ ] Traducción de has_reentry y de is_internal
+- [x] Traducción de has_reentry y de is_internal
 
-Tests (me/tests/ — clase TestHasReentry021):
-- [ ] Expediente sin salidas → has_reentry = False
-- [ ] Expediente con salida pero sin reingreso → has_reentry = False
-- [ ] Expediente con salida y reingreso posterior → has_reentry = True
-- [ ] Solo movimientos automáticos (destinos internos) → has_reentry = False
-- [ ] Secuencia interno → externo → externo → interno → has_reentry = True
-- [ ] is_internal recalcula has_reentry si se modifica en una dependencia
+Tests (me/tests/test_document_exp.py — clase TestHasReentry021):
+- [x] Expediente sin movimientos → has_reentry = False
+- [x] Solo movimientos automáticos (destinos internos) → has_reentry = False
+- [x] Expediente con salida pero sin reingreso → has_reentry = False
+- [x] Expediente con salida y reingreso posterior → has_reentry = True
+- [x] Movimiento interno previo a salida no cuenta como reingreso
+- [x] Secuencia: salida → salida → salida → reingreso → has_reentry = True
+- [x] Cambiar is_internal de una dependencia recalcula has_reentry
+
+Nota: tests escritos; contenedor no estaba activo al momento de la
+implementación. Ejecutar con: odoo -u me --test-tags TestHasReentry021.
 
 ---- Impacto técnico ----
 
 - me/models/dependence_ext.py (nuevo)
+- me/models/__init__.py
 - me/models/document_exp.py
-- me/data/dependence_data.xml (nuevo o extender)
-- me/__manifest__.py — registrar dependence_ext.py en models y data
+- me/data/dependence_data.xml (nuevo)
+- me/__manifest__.py
 - me/views/document_exp_views.xml
 - me/i18n/es_AR.po
 - me/tests/test_document_exp.py
 
 Documentación:
-- me/ai-context.md: is_internal en extensión de tmc.dependence; has_reentry en me.document_exp
-- domain-rules/me/workflows.md: nota en Workflow 5 sobre clasificación interna/externa
+- [x] me/ai-context.md: is_internal en extensión de tmc.dependence; has_reentry en me.document_exp
+- [x] domain-rules/me/workflows.md: nota en Workflow 5 sobre clasificación interna/externa
 
 --------------------------------------------------

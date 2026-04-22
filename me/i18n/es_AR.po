@@ -237,6 +237,43 @@ msgstr "Movimientos"
 msgid "Related Documents"
 msgstr "Documentos Relacionados"
 
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__has_reentry
+msgid "Has Reentry"
+msgstr "Con Reingreso"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__has_reentry
+msgid ""
+"True when the expediente has left the Tribunal at least once "
+"(movement to an external dependence) and then returned "
+"(subsequent movement to an internal dependence)."
+msgstr ""
+"Verdadero cuando el expediente salió del Tribunal al menos una vez "
+"(movimiento a una dependencia externa) y luego reingresó "
+"(movimiento posterior a una dependencia interna)."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_tmc_dependence__is_internal
+msgid "Internal"
+msgstr "Interna"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_tmc_dependence__is_internal
+msgid ""
+"True when this dependence belongs to the Tribunal "
+"(internal routing unit). Used to detect institutional reentry "
+"in expediente movement sequences."
+msgstr ""
+"Verdadero cuando esta dependencia pertenece al Tribunal "
+"(unidad de circulación interna). Se usa para detectar reingresos "
+"institucionales en la secuencia de movimientos de expedientes."
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "With Institutional Reentry"
+msgstr "Con Reingreso Institucional"
+
 # ---------------------------------------------------------------------------
 # me.document_movement — field labels
 # ---------------------------------------------------------------------------

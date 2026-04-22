@@ -1262,3 +1262,148 @@ class TestJurisdictionConditional012(TransactionCase):
         record.dependence_id = self.dep_dem
         record._onchange_dependence()
         self.assertFalse(record.jurisdiction_dependence)
+
+
+@tagged('post_install', '-at_install')
+class TestHasReentry021(TransactionCase):
+    """Tests para #021 — Detección de reingreso institucional.
+
+    Verifica:
+    - Expediente sin salidas → has_reentry = False
+    - Expediente con salida pero sin reingreso → has_reentry = False
+    - Expediente con salida y reingreso posterior → has_reentry = True
+    - Solo movimientos automáticos (todos a destinos internos) → has_reentry = False
+    - Secuencia interno → externo → externo → interno → has_reentry = True
+    - Cambiar is_internal de una dependencia recalcula has_reentry
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        # Dependencia interna de test (is_internal=True explícito)
+        self.dep_int = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Interna 021 Test',
+            'abbreviation': 'INT021',
+            'is_internal': True,
+        })
+
+        # Dependencia externa de test (is_internal=False, el default)
+        self.dep_ext = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Externa 021 Test',
+            'abbreviation': 'EXT021',
+            'is_internal': False,
+        })
+
+        # Jurisdicción aislada: no tiene hijos en el nomenclador,
+        # evita disparar _check_source_dependence_required.
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion 021 Test',
+            'abbreviation': 'J021',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(self.today.year)
+
+    def _make_expediente(self, number):
+        return self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def _add_movement(self, exp, origin, destination):
+        return self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': origin.id,
+            'destination_dependence_id': destination.id,
+        })
+
+    def test_no_movements_has_no_reentry(self):
+        """Expediente sin movimientos: has_reentry = False."""
+        exp = self._make_expediente(33001)
+        exp.document_movement_ids.unlink()
+        self.assertFalse(exp.has_reentry)
+
+    def test_only_internal_movements_no_reentry(self):
+        """Solo movimientos automáticos (destinos internos): has_reentry = False.
+
+        Los movimientos automáticos apuntan a TMC y ME, ambos internos.
+        No hay salida institucional → no puede haber reingreso.
+        """
+        exp = self._make_expediente(33002)
+        # Forzar todos los destinos como internos para que el test sea determinístico
+        # independientemente de si tmc_data está cargado.
+        for mov in exp.document_movement_ids:
+            mov.destination_dependence_id.is_internal = True
+        self.assertFalse(exp.has_reentry)
+
+    def test_exit_without_reentry_is_false(self):
+        """Salida a dependencia externa sin reingreso posterior: has_reentry = False."""
+        exp = self._make_expediente(33003)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_ext)  # salida
+        self.assertFalse(exp.has_reentry)
+
+    def test_exit_followed_by_reentry_is_true(self):
+        """Salida a externa seguida de movimiento a interna: has_reentry = True."""
+        exp = self._make_expediente(33004)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_ext)  # salida
+        self._add_movement(exp, self.dep_ext, self.dep_int)  # reingreso
+        self.assertTrue(exp.has_reentry)
+
+    def test_internal_before_exit_does_not_count(self):
+        """Movimientos internos previos a una salida no cuentan como reingreso."""
+        exp = self._make_expediente(33005)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_ext, self.dep_int)  # interno (sin salida previa)
+        self._add_movement(exp, self.dep_int, self.dep_ext)  # salida
+        # Todavía sin reingreso posterior
+        self.assertFalse(exp.has_reentry)
+
+    def test_multiple_exits_then_reentry_is_true(self):
+        """Salida → salida → salida → reingreso: has_reentry = True."""
+        exp = self._make_expediente(33006)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_ext)  # salida 1
+        self._add_movement(exp, self.dep_ext, self.dep_ext)  # salida 2 (externo→externo)
+        self._add_movement(exp, self.dep_ext, self.dep_int)  # reingreso
+        self.assertTrue(exp.has_reentry)
+
+    def test_is_internal_change_triggers_recompute(self):
+        """Cambiar is_internal de una dependencia recalcula has_reentry."""
+        exp = self._make_expediente(33007)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_ext)  # salida
+        self._add_movement(exp, self.dep_ext, self.dep_int)  # reingreso
+        self.assertTrue(exp.has_reentry)
+
+        # Marcar dep_ext como interna: ya no hay salida → has_reentry debe ser False
+        self.dep_ext.is_internal = True
+        exp.invalidate_recordset(['has_reentry'])
+        exp._compute_has_reentry()
+        self.assertFalse(exp.has_reentry)
