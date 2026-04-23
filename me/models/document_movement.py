@@ -39,6 +39,18 @@ class Movement(models.Model):
         default=lambda self: self.env.user,
         help="Odoo user responsible for the expediente at the destination of this movement",
     )
+    destination_abbreviation = fields.Char(
+        compute="_compute_destination_abbreviation",
+        string="Destination Abbreviation",
+    )
+    legajo_number = fields.Char(string="File Number")
+
+    @api.depends('destination_dependence_id')
+    def _compute_destination_abbreviation(self):
+        for record in self:
+            record.destination_abbreviation = (
+                record.destination_dependence_id.abbreviation or ''
+            )
 
     @api.model
     def default_get(self, fields_list):
@@ -85,4 +97,16 @@ class Movement(models.Model):
                     _("Movement date cannot be earlier than "
                       "the expediente intake date (%(intake)s).",
                       intake=record.expediente_id.intake_date)
+                )
+
+    @api.constrains('destination_dependence_id', 'legajo_number')
+    def _check_legajo_number_required(self):
+        for record in self:
+            if (
+                record.destination_dependence_id
+                and record.destination_dependence_id.abbreviation == 'LEG'
+                and not record.legajo_number
+            ):
+                raise exceptions.ValidationError(
+                    _("File number is required when the destination is 'Adjunto a Legajo'.")
                 )

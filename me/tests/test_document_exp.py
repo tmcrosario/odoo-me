@@ -277,9 +277,9 @@ class TestDocumentExp(TransactionCase):
         })
         self.assertEqual(record.computed_name, "Unnamed Document")
 
-    def test_tmc_has_twelve_internal_dependences_in_nomenclator(self):
+    def test_tmc_has_thirteen_internal_dependences_in_nomenclator(self):
         """
-        Verifica que TMC tiene exactamente 12 dependencias internas en
+        Verifica que TMC tiene exactamente 13 dependencias internas en
         tmc.dependence_order con parent_id = TMC (rango 1.13.80–1.13.99).
         Requiere que los datos de odoo-tmc-data estén cargados.
         """
@@ -294,8 +294,8 @@ class TestDocumentExp(TransactionCase):
             ('code', '<=', '1.13.99'),
         ])
         self.assertEqual(
-            len(internal_orders), 12,
-            f"Se esperan 12 dependencias internas de TMC, encontradas: {len(internal_orders)}"
+            len(internal_orders), 13,
+            f"Se esperan 13 dependencias internas de TMC, encontradas: {len(internal_orders)}"
         )
 
     def test_source_dependence_optional_on_create(self):
@@ -355,7 +355,7 @@ class TestDocumentExp(TransactionCase):
             ('code', '<=', '1.13.99'),
         ])
         found_abbreviations = set(internal_orders.mapped('dependence_id.abbreviation'))
-        expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC', 'ARCH'}
+        expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC', 'ARCH', 'LEG'}
         self.assertEqual(found_abbreviations, expected_abbreviations)
 
 
@@ -1739,3 +1739,159 @@ class TestArchivoDependence025(TransactionCase):
         self._add_movement(exp, self.dep_dem, self.dep_ext)   # salida a externo
         self._add_movement(exp, self.dep_ext, self.dep_arch)  # reingreso vía ARCH
         self.assertTrue(exp.has_reentry)
+
+
+@tagged('post_install', '-at_install')
+class TestLegajoDependence026(TransactionCase):
+    """Tests para #026 — Movimiento a Legajo: destino y número de legajo.
+
+    Verifica:
+    - La dependencia LEG existe con nombre 'Adjunto a Legajo'.
+    - LEG tiene is_internal=True.
+    - LEG aparece en tmc.dependence_order con código 1.13.92 y parent=TMC.
+    - Crear un movimiento con destino LEG sin legajo_number lanza ValidationError.
+    - Crear un movimiento con destino LEG con legajo_number funciona correctamente.
+    - Crear un movimiento con destino distinto de LEG no requiere legajo_number.
+    - Movimiento a LEG sin salida previa no genera has_reentry=True.
+    - Salida a externo seguida de movimiento a LEG genera has_reentry=True.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_leg = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'LEG')], limit=1
+        )
+
+        self.dep_ext = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Externa 026 Test',
+            'abbreviation': 'EXT026',
+            'is_internal': False,
+        })
+
+        self.dep_int = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Interna 026 Test',
+            'abbreviation': 'INT026',
+            'is_internal': True,
+        })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion 026 Test',
+            'abbreviation': 'J026',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(self.today.year)
+
+    def _make_expediente(self, number):
+        return self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def _add_movement(self, exp, origin, destination, legajo_number=None):
+        vals = {
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': origin.id,
+            'destination_dependence_id': destination.id,
+        }
+        if legajo_number is not None:
+            vals['legajo_number'] = legajo_number
+        return self.env['me.document_movement'].create(vals)
+
+    def test_leg_dependence_exists(self):
+        """La dependencia LEG existe con nombre 'Adjunto a Legajo'."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir en el nomenclador")
+        self.assertEqual(self.dep_leg.name, 'Adjunto a Legajo')
+
+    def test_leg_is_internal(self):
+        """LEG tiene is_internal=True."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        self.assertTrue(self.dep_leg.is_internal)
+
+    def test_leg_is_child_of_tmc_in_nomenclator(self):
+        """LEG aparece en tmc.dependence_order con código 1.13.92 y parent=TMC."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        order = self.env['tmc.dependence_order'].search([
+            ('dependence_id', '=', self.dep_leg.id),
+        ], limit=1)
+        self.assertTrue(order, "LEG debe tener entrada en tmc.dependence_order")
+        self.assertEqual(order.code, '1.13.92')
+        self.assertEqual(order.parent_id, dep_tmc)
+
+    def test_movement_to_leg_without_legajo_number_raises(self):
+        """Movimiento a LEG sin legajo_number lanza ValidationError."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        exp = self._make_expediente(36001)
+        exp.document_movement_ids.unlink()
+        with self.assertRaises(ValidationError):
+            self._add_movement(exp, self.dep_dem, self.dep_leg)
+
+    def test_movement_to_leg_with_legajo_number_succeeds(self):
+        """Movimiento a LEG con legajo_number guardado correctamente."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        exp = self._make_expediente(36002)
+        exp.document_movement_ids.unlink()
+        mov = self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='LEG-2025-001')
+        self.assertEqual(mov.legajo_number, 'LEG-2025-001')
+        self.assertEqual(mov.destination_dependence_id, self.dep_leg)
+
+    def test_movement_to_other_destination_does_not_require_legajo_number(self):
+        """Movimiento a destino distinto de LEG no requiere legajo_number."""
+        exp = self._make_expediente(36003)
+        exp.document_movement_ids.unlink()
+        mov = self._add_movement(exp, self.dep_dem, self.dep_int)
+        self.assertFalse(mov.legajo_number)
+
+    def test_movement_to_leg_does_not_generate_reentry(self):
+        """Movimiento directo a LEG sin salida previa: has_reentry = False."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        exp = self._make_expediente(36004)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='123')
+        self.assertFalse(exp.has_reentry)
+
+    def test_exit_then_leg_is_reentry(self):
+        """Salida a externo seguida de movimiento a LEG: has_reentry = True."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        exp = self._make_expediente(36005)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_ext)
+        self._add_movement(exp, self.dep_ext, self.dep_leg, legajo_number='456')
+        self.assertTrue(exp.has_reentry)
+
+    def test_destination_abbreviation_computed_on_movement(self):
+        """destination_abbreviation devuelve la abreviación del destino del movimiento."""
+        self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")
+        exp = self._make_expediente(36006)
+        exp.document_movement_ids.unlink()
+        mov = self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='789')
+        self.assertEqual(mov.destination_abbreviation, 'LEG')
