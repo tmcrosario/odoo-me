@@ -1698,3 +1698,67 @@ en bases actualizadas hasta que ambas correcciones estén aplicadas.
 En instalaciones nuevas el comportamiento es correcto sin intervención adicional.
 
 --------------------------------------------------
+
+--------------------------------------------------
+### #025 – Nomenclador: Archivo del TMC como destino de movimiento
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+El Archivo es una dependencia interna del Tribunal a la que pueden enviarse
+expedientes mediante un movimiento estándar. No es un estado; es un destino.
+
+---- Decisiones cerradas ----
+
+1. Nombre: Archivo
+2. Abbreviation: ARCH
+3. Código jerárquico: 1.13.91 (parent: tmc_dependence_tmc)
+4. is_internal = True
+5. No requiere lógica adicional en modelos ni vistas.
+
+---- Impacto técnico ----
+
+- odoo-tmc-data/dependence.xml: nuevo registro (Archivo, abbr=ARCH)
+- odoo-tmc-data/dependence_order.xml: código 1.13.91, parent=tmc_dependence_tmc
+- me/data/dependence_data.xml: is_internal=True para el nuevo registro
+
+--------------------------------------------------
+### #026 – Movimiento a Legajo: destino y número de legajo
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+Cuando un expediente se adjunta a un legajo, se registra un movimiento con
+destino "Adjunto a Legajo" y se indica el número del legajo. Ese número se
+usa como referencia en otro sistema, sin integración técnica por ahora.
+
+---- Decisiones cerradas ----
+
+1. Nombre: Adjunto a Legajo. Abbreviation: LEG.
+   Código jerárquico: 1.13.92 (parent: tmc_dependence_tmc).
+2. is_internal = True. No genera salida institucional ni has_reentry.
+3. Campo legajo_number (Char, opcional) en me.document_movement.
+   Acepta texto libre; en la práctica se espera un número.
+4. legajo_number es visible solo cuando destination_dependence_id == LEG.
+   En cualquier otro destino, el campo no aparece en la vista.
+5. El movimiento a legajo no es reversible como flujo normal.
+   La corrección de un legajo mal asignado se hace editando legajo_number
+   en el movimiento existente (me.group_manager tiene perm_write).
+   Si el movimiento debe anularse, se elimina según permisos habituales.
+   No se implementa restricción técnica adicional.
+
+---- Impacto técnico ----
+
+- odoo-tmc-data/dependence.xml: nuevo registro (Adjunto a Legajo, abbr=LEG)
+- odoo-tmc-data/dependence_order.xml: código 1.13.92, parent=tmc_dependence_tmc
+- me/data/dependence_data.xml: is_internal=True para el nuevo registro
+- me/models/document_movement.py: campo legajo_number (Char, opcional)
+- me/views/document_exp_views.xml: legajo_number en lista y form de movimientos,
+  invisible cuando destination_dependence_id != LEG
+- me/i18n/es_AR.po: traducción de legajo_number
+- tests: movimiento con destino LEG registra legajo_number; movimiento con
+  otro destino no muestra el campo; is_internal=True no genera has_reentry
+
+--------------------------------------------------
