@@ -24,21 +24,26 @@ Estados:
 ### #001 – Estados de expediente
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
-Contexto:
-El modelo document_exp no tiene workflow definido.
+Decisión:
+ME no implementa estados formales de expediente.
 
-Decisiones abiertas:
-- ¿Puede cerrarse un expediente?
-- ¿Se puede modificar luego de cerrado?
-- ¿Qué estados existen?
+La función de ME es registro de ingreso y trazabilidad de circulación
+física de expedientes. No es un sistema de gestión de ciclo de vida.
 
-Impacto:
-- models
-- views
-- reglas de negocio
-- permisos
+La ubicación y circulación del expediente se resuelven con movimientos
+(me.document_movement). Las reglas de edición y permisos cubren los
+controles necesarios sin necesidad de un campo state.
+
+El lifecycle de procesos licitatorios u otros trámites pertenece a
+JUNCO u otros módulos downstream. ME no modela ese proceso — solo
+registra que el documento llegó y por dónde circuló.
+
+Si en el futuro surge una necesidad operativa concreta (ej. archivar
+expedientes, bloquear edición en registros históricos, filtrar activos),
+se abre una task específica con ese caso de uso definido.
+
 
 --------------------------------------------------
 ### #002 – Integridad de movimientos
