@@ -274,6 +274,45 @@ msgstr ""
 msgid "With Institutional Reentry"
 msgstr "Con Reingreso Institucional"
 
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Currently at Tribunal"
+msgstr "Actualmente en el Tribunal"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Licitaciones"
+msgstr "Licitaciones"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Originated at TMC"
+msgstr "Originados en el TMC"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__is_currently_internal
+msgid "Currently at Tribunal"
+msgstr "Actualmente en el Tribunal"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__is_currently_internal
+msgid ""
+"True when the last registered movement of the expediente has a "
+"destination that belongs to the Tribunal (is_internal=True)."
+msgstr ""
+"Verdadero cuando el último movimiento registrado del expediente tiene "
+"un destino que pertenece al Tribunal (is_internal=True)."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__is_licitacion
+msgid "Licitación"
+msgstr "Licitación"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__is_licitacion
+msgid "True when the expediente's main topic is Licitación."
+msgstr "Verdadero cuando el tema principal del expediente es Licitación."
+
 # ---------------------------------------------------------------------------
 # me.document_movement — field labels
 # ---------------------------------------------------------------------------

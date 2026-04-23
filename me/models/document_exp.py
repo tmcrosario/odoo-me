@@ -138,6 +138,39 @@ class DocumentExp(models.Model):
         ),
     )
 
+    is_currently_internal = fields.Boolean(
+        string="Currently at Tribunal",
+        compute="_compute_is_currently_internal",
+        store=True,
+        help=(
+            "True when the last registered movement of the expediente has a "
+            "destination that belongs to the Tribunal (is_internal=True)."
+        ),
+    )
+
+    is_licitacion = fields.Boolean(
+        string="Licitación",
+        compute="_compute_is_licitacion",
+        store=True,
+        help="True when the expediente's main topic is Licitación.",
+    )
+
+    @api.depends('document_movement_ids.destination_dependence_id.is_internal')
+    def _compute_is_currently_internal(self):
+        for record in self:
+            last = record.document_movement_ids.sorted('id')[-1:]
+            record.is_currently_internal = bool(
+                last and last.destination_dependence_id.is_internal
+            )
+
+    @api.depends('main_topic_ids')
+    def _compute_is_licitacion(self):
+        licitacion = self.env.ref(
+            'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
+        )
+        for record in self:
+            record.is_licitacion = bool(licitacion and licitacion in record.main_topic_ids)
+
     @api.depends('document_movement_ids.destination_dependence_id.is_internal')
     def _compute_has_reentry(self):
         for record in self:

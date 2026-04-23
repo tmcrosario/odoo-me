@@ -1407,3 +1407,213 @@ class TestHasReentry021(TransactionCase):
         exp.invalidate_recordset(['has_reentry'])
         exp._compute_has_reentry()
         self.assertFalse(exp.has_reentry)
+
+
+@tagged('post_install', '-at_install')
+class TestSearchFilters022023024(TransactionCase):
+    """Tests para #022, #023, #024 — Filtros de búsqueda.
+
+    #022 — is_currently_internal:
+      Verdadero cuando el último movimiento (por id) tiene destino interno.
+
+    #023 — is_licitacion:
+      Verdadero cuando main_topic_ids contiene el tema Licitación.
+
+    #024 — Filtro por origen TMC:
+      Domain directo sobre dependence_id.abbreviation == 'TMC'.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        if not self.dep_tmc:
+            self.dep_tmc = self.env['tmc.dependence'].create({
+                'name': 'TMC Test',
+                'abbreviation': 'TMC',
+            })
+
+        # Dependencias internas y externas aisladas para tests de is_currently_internal.
+        # Se crean siempre nuevas para evitar colisión con datos reales o de otros tests.
+        self.dep_int = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Interna 022 Test',
+            'abbreviation': 'INT022',
+            'is_internal': True,
+        })
+        self.dep_ext = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Externa 022 Test',
+            'abbreviation': 'EXT022',
+            'is_internal': False,
+        })
+
+        # Jurisdicción aislada: sin hijos en nomenclador, evita constraint source_dependence.
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion 022 Test',
+            'abbreviation': 'J022',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(self.today.year)
+
+    def _make_expediente(self, number, dependence=None):
+        dep = dependence or self.dep_dem
+        return self.env['me.document_exp'].create({
+            'dependence_id': dep.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def _add_movement(self, exp, origin, destination):
+        return self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': origin.id,
+            'destination_dependence_id': destination.id,
+        })
+
+    # ------------------------------------------------------------------
+    # #022 — is_currently_internal
+    # ------------------------------------------------------------------
+
+    def test_no_movements_is_not_currently_internal(self):
+        """Sin movimientos: is_currently_internal = False."""
+        exp = self._make_expediente(34001)
+        exp.document_movement_ids.unlink()
+        self.assertFalse(exp.is_currently_internal)
+
+    def test_last_movement_to_internal_is_true(self):
+        """Último movimiento con destino interno: is_currently_internal = True."""
+        exp = self._make_expediente(34002)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_ext)   # externo
+        self._add_movement(exp, self.dep_ext, self.dep_int)   # interno — es el último
+        self.assertTrue(exp.is_currently_internal)
+
+    def test_last_movement_to_external_is_false(self):
+        """Último movimiento con destino externo: is_currently_internal = False."""
+        exp = self._make_expediente(34003)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_ext, self.dep_int)   # interno
+        self._add_movement(exp, self.dep_int, self.dep_ext)   # externo — es el último
+        self.assertFalse(exp.is_currently_internal)
+
+    def test_only_automatic_movements_last_destination_internal(self):
+        """Movimientos automáticos apuntan a ME (interno): is_currently_internal = True
+        cuando is_internal de la dependencia destino del último movimiento es True."""
+        exp = self._make_expediente(34004)
+        # Forzar último movimiento automático con destino interno
+        last_auto = exp.document_movement_ids.sorted('id')[-1:]
+        if last_auto:
+            last_auto.destination_dependence_id.is_internal = True
+        self.assertTrue(exp.is_currently_internal)
+
+    def test_is_currently_internal_updates_on_new_movement(self):
+        """Al agregar un nuevo movimiento se actualiza is_currently_internal."""
+        exp = self._make_expediente(34005)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_int, self.dep_int)   # interno
+        self.assertTrue(exp.is_currently_internal)
+
+        self._add_movement(exp, self.dep_int, self.dep_ext)   # externo — nuevo último
+        self.assertFalse(exp.is_currently_internal)
+
+    # ------------------------------------------------------------------
+    # #023 — is_licitacion
+    # ------------------------------------------------------------------
+
+    def test_no_topic_is_not_licitacion(self):
+        """Sin tema asignado: is_licitacion = False."""
+        exp = self._make_expediente(34010)
+        self.assertFalse(exp.is_licitacion)
+
+    def test_licitacion_topic_sets_is_licitacion(self):
+        """Tema principal = Licitación: is_licitacion = True."""
+        licitacion = self.env.ref(
+            'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
+        )
+        if not licitacion:
+            self.skipTest('tmc_data.tmc_document_topic_licitacion not found')
+        exp = self._make_expediente(34011)
+        exp.main_topic_ids = [(6, 0, [licitacion.id])]
+        self.assertTrue(exp.is_licitacion)
+
+    def test_other_topic_is_not_licitacion(self):
+        """Tema distinto de Licitación: is_licitacion = False."""
+        nota = self.env.ref(
+            'tmc_data.tmc_document_topic_nota', raise_if_not_found=False
+        )
+        if not nota:
+            self.skipTest('tmc_data.tmc_document_topic_nota not found')
+        exp = self._make_expediente(34012)
+        exp.main_topic_ids = [(6, 0, [nota.id])]
+        self.assertFalse(exp.is_licitacion)
+
+    # ------------------------------------------------------------------
+    # #024 — Filtro por origen TMC
+    # ------------------------------------------------------------------
+
+    def test_origin_tmc_appears_in_tmc_filter(self):
+        """Expediente originado en TMC aparece al filtrar por dependence_id.abbreviation='TMC'."""
+        # TMC auto-asigna jurisdiction_dependence = TMC (backup en create)
+        exp_tmc = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_tmc.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 34020,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_tmc.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+        result = self.env['me.document_exp'].search([
+            ('dependence_id.abbreviation', '=', 'TMC'),
+            ('id', '=', exp_tmc.id),
+        ])
+        self.assertEqual(result, exp_tmc)
+
+    def test_origin_dem_excluded_from_tmc_filter(self):
+        """Expediente originado en DEM no aparece en el filtro por origen TMC."""
+        exp_dem = self._make_expediente(34021, dependence=self.dep_dem)
+        result = self.env['me.document_exp'].search([
+            ('dependence_id.abbreviation', '=', 'TMC'),
+            ('id', '=', exp_dem.id),
+        ])
+        self.assertFalse(result)
+
+    def test_tmc_filter_does_not_confuse_current_location_with_origin(self):
+        """Un expediente de DEM que terminó en una dependencia TMC-interna
+        NO aparece en el filtro de origen TMC."""
+        exp_dem = self._make_expediente(34022, dependence=self.dep_dem)
+        exp_dem.document_movement_ids.unlink()
+        self._add_movement(exp_dem, self.dep_ext, self.dep_int)  # destino interno
+        # is_currently_internal = True, pero origin = DEM → no debe aparecer en filtro TMC
+        self.assertTrue(exp_dem.is_currently_internal)
+        result = self.env['me.document_exp'].search([
+            ('dependence_id.abbreviation', '=', 'TMC'),
+            ('id', '=', exp_dem.id),
+        ])
+        self.assertFalse(result)

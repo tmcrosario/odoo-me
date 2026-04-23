@@ -1700,6 +1700,109 @@ En instalaciones nuevas el comportamiento es correcto sin intervención adiciona
 --------------------------------------------------
 
 --------------------------------------------------
+### #022 – Filtro: expedientes actualmente en el Tribunal
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Los operadores necesitan identificar expedientes que actualmente se encuentran
+en el Tribunal. "Actualmente" = el destino del último movimiento registrado
+(por id) es una dependencia con is_internal=True.
+Un domain directo sobre document_movement_ids devolvería expedientes con
+CUALQUIER movimiento interno, incluyendo los automáticos de creación.
+Se requiere evaluar únicamente el último movimiento.
+
+---- Decisiones cerradas ----
+
+1. Campo stored computed Boolean is_currently_internal en me.document_exp.
+   depends: document_movement_ids.destination_dependence_id.is_internal
+   Algoritmo: tomar el movimiento con mayor id; is_internal de su destino.
+   Sin movimientos: False.
+2. Filtro en search view: domain=[('is_currently_internal', '=', True)]
+
+---- Criterios de aceptación ----
+
+- [x] Campo is_currently_internal en me/models/document_exp.py
+- [x] Filtro "Currently at Tribunal" en search view
+- [x] Traducción en es_AR.po
+- [x] Tests: clase TestSearchFilters022023024
+
+---- Impacto técnico ----
+
+- me/models/document_exp.py: campo is_currently_internal + _compute_is_currently_internal
+- me/views/document_exp_views.xml: filtro en search view
+- me/i18n/es_AR.po: traducciones
+- me/tests/test_document_exp.py: clase TestSearchFilters022023024
+
+--------------------------------------------------
+### #023 – Filtro: expedientes de tema licitación
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Los operadores necesitan filtrar expedientes cuyo tema principal sea Licitación.
+La clasificación ya existe: main_topic_ids referencia
+tmc_data.tmc_document_topic_licitacion.
+El filtro cubre cualquier licitación sin distinción de subtema.
+
+---- Decisiones cerradas ----
+
+1. Campo stored computed Boolean is_licitacion en me.document_exp.
+   depends: main_topic_ids
+   True cuando tmc_data.tmc_document_topic_licitacion ∈ main_topic_ids.
+   Resuelto por env.ref con raise_if_not_found=False.
+2. Filtro en search view: domain=[('is_licitacion', '=', True)]
+
+---- Criterios de aceptación ----
+
+- [x] Campo is_licitacion en me/models/document_exp.py
+- [x] Filtro "Licitaciones" en search view
+- [x] Traducción en es_AR.po
+- [x] Tests: clase TestSearchFilters022023024
+
+---- Impacto técnico ----
+
+- me/models/document_exp.py: campo is_licitacion + _compute_is_licitacion
+- me/views/document_exp_views.xml: filtro en search view
+- me/i18n/es_AR.po: traducciones
+- me/tests/test_document_exp.py: clase TestSearchFilters022023024
+
+--------------------------------------------------
+### #024 – Filtro: expedientes originados en el TMC
+--------------------------------------------------
+
+[DONE]
+
+Contexto:
+Los operadores necesitan filtrar expedientes cuyo origen sea el propio Tribunal.
+Clasificación por ORIGEN — no por ubicación actual (eso es #022).
+Un expediente originado en TMC puede estar actualmente fuera del Tribunal.
+
+---- Decisiones cerradas ----
+
+1. No requiere campo nuevo. El filtro usa domain directo sobre el campo
+   heredado vía _inherits: dependence_id.abbreviation == 'TMC'.
+   El campo proxy dependence_abbreviation no es stored — se usa el
+   campo relacional directo para compatibilidad con el ORM de búsqueda.
+2. Filtro en search view: domain=[('dependence_id.abbreviation', '=', 'TMC')]
+
+---- Criterios de aceptación ----
+
+- [x] Filtro "Originated at TMC" en search view
+- [x] Traducción en es_AR.po
+- [x] Tests: clase TestSearchFilters022023024
+
+---- Impacto técnico ----
+
+- me/views/document_exp_views.xml: filtro en search view
+- me/i18n/es_AR.po: traducción
+- me/tests/test_document_exp.py: clase TestSearchFilters022023024
+
+--------------------------------------------------
+
+--------------------------------------------------
 ### #025 – Nomenclador: Archivo del TMC como destino de movimiento
 --------------------------------------------------
 

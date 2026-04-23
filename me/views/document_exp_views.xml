@@ -124,6 +124,12 @@
                 <field name="number"/>
                 <filter string="With Institutional Reentry" name="has_reentry"
                         domain="[('has_reentry', '=', True)]"/>
+                <filter string="Currently at Tribunal" name="currently_at_tribunal"
+                        domain="[('is_currently_internal', '=', True)]"/>
+                <filter string="Licitaciones" name="licitacion"
+                        domain="[('is_licitacion', '=', True)]"/>
+                <filter string="Originated at TMC" name="origin_tmc"
+                        domain="[('dependence_id.abbreviation', '=', 'TMC')]"/>
             </search>
         </field>
     </record>
