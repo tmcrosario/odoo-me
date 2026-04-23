@@ -36,4 +36,7 @@
     <record id="tmc_data.tmc_dependence_afc" model="tmc.dependence">
         <field name="is_internal" eval="True"/>
     </record>
+    <record id="tmc_data.tmc_dependence_arch" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
 </odoo>

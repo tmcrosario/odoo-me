@@ -1811,7 +1811,7 @@ Un expediente originado en TMC puede estar actualmente fuera del Tribunal.
 ### #025 – Nomenclador: Archivo del TMC como destino de movimiento
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 El Archivo es una dependencia interna del Tribunal a la que pueden enviarse
@@ -1830,6 +1830,15 @@ expedientes mediante un movimiento estándar. No es un estado; es un destino.
 - odoo-tmc-data/dependence.xml: nuevo registro (Archivo, abbr=ARCH)
 - odoo-tmc-data/dependence_order.xml: código 1.13.91, parent=tmc_dependence_tmc
 - me/data/dependence_data.xml: is_internal=True para el nuevo registro
+- me/tests/test_document_exp.py: TestArchivoDependence025 (6 tests);
+  tests de conteo de dependencias internas actualizados a 12
+
+---- Nota de upgrade ----
+
+En bases de datos existentes, me/data/dependence_data.xml usa noupdate="1",
+por lo que is_internal no se aplica automáticamente al hacer -u me.
+Ejecutar UPDATE tmc_dependence SET is_internal=true WHERE abbreviation='ARCH'
+en la DB, o reinstalar el módulo me para aplicar el valor correcto.
 
 --------------------------------------------------
 ### #026 – Movimiento a Legajo: destino y número de legajo

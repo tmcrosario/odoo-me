@@ -277,10 +277,10 @@ class TestDocumentExp(TransactionCase):
         })
         self.assertEqual(record.computed_name, "Unnamed Document")
 
-    def test_tmc_has_eleven_internal_dependences_in_nomenclator(self):
+    def test_tmc_has_twelve_internal_dependences_in_nomenclator(self):
         """
-        Verifica que TMC tiene exactamente 11 dependencias internas en
-        tmc.dependence_order con parent_id = TMC (rango 1.13.80–1.13.90).
+        Verifica que TMC tiene exactamente 12 dependencias internas en
+        tmc.dependence_order con parent_id = TMC (rango 1.13.80–1.13.99).
         Requiere que los datos de odoo-tmc-data estén cargados.
         """
         dep_tmc = self.env['tmc.dependence'].search(
@@ -294,8 +294,8 @@ class TestDocumentExp(TransactionCase):
             ('code', '<=', '1.13.99'),
         ])
         self.assertEqual(
-            len(internal_orders), 11,
-            f"Se esperan 11 dependencias internas de TMC, encontradas: {len(internal_orders)}"
+            len(internal_orders), 12,
+            f"Se esperan 12 dependencias internas de TMC, encontradas: {len(internal_orders)}"
         )
 
     def test_source_dependence_optional_on_create(self):
@@ -355,7 +355,7 @@ class TestDocumentExp(TransactionCase):
             ('code', '<=', '1.13.99'),
         ])
         found_abbreviations = set(internal_orders.mapped('dependence_id.abbreviation'))
-        expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC'}
+        expected_abbreviations = {'ME', 'VOC', 'SEC', 'FC', 'CF', 'DIC', 'DAL', 'DAT', 'DCD', 'DAF', 'AFC', 'ARCH'}
         self.assertEqual(found_abbreviations, expected_abbreviations)
 
 
@@ -1617,3 +1617,125 @@ class TestSearchFilters022023024(TransactionCase):
             ('id', '=', exp_dem.id),
         ])
         self.assertFalse(result)
+
+
+@tagged('post_install', '-at_install')
+class TestArchivoDependence025(TransactionCase):
+    """Tests para #025 — Archivo del TMC como destino de movimiento.
+
+    Verifica:
+    - La dependencia ARCH existe en el nomenclador con nombre "Archivo".
+    - ARCH tiene is_internal=True.
+    - ARCH aparece en tmc.dependence_order con código 1.13.91 y parent=TMC.
+    - ARCH es seleccionable como destino de un movimiento estándar.
+    - Movimiento a ARCH sin salida previa no genera has_reentry=True.
+    - Salida a externo seguida de movimiento a ARCH sí genera has_reentry=True.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_arch = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ARCH')], limit=1
+        )
+
+        self.dep_ext = self.env['tmc.dependence'].create({
+            'name': 'Dependencia Externa 025 Test',
+            'abbreviation': 'EXT025',
+            'is_internal': False,
+        })
+
+        # Jurisdicción aislada: sin hijos en nomenclador, evita constraint source_dependence.
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion 025 Test',
+            'abbreviation': 'J025',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(self.today.year)
+
+    def _make_expediente(self, number):
+        return self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+        })
+
+    def _add_movement(self, exp, origin, destination):
+        return self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': self.now,
+            'origin_dependence_id': origin.id,
+            'destination_dependence_id': destination.id,
+        })
+
+    def test_archivo_dependence_exists(self):
+        """La dependencia ARCH existe con nombre 'Archivo'."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir en el nomenclador")
+        self.assertEqual(self.dep_arch.name, 'Archivo')
+
+    def test_archivo_is_internal(self):
+        """ARCH tiene is_internal=True."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir")
+        self.assertTrue(self.dep_arch.is_internal)
+
+    def test_archivo_is_child_of_tmc_in_nomenclator(self):
+        """ARCH aparece en tmc.dependence_order con código 1.13.91 y parent=TMC."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir")
+        dep_tmc = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'TMC')], limit=1
+        )
+        order = self.env['tmc.dependence_order'].search([
+            ('dependence_id', '=', self.dep_arch.id),
+        ], limit=1)
+        self.assertTrue(order, "ARCH debe tener entrada en tmc.dependence_order")
+        self.assertEqual(order.code, '1.13.91')
+        self.assertEqual(order.parent_id, dep_tmc)
+
+    def test_archivo_selectable_as_movement_destination(self):
+        """Se puede crear un movimiento con ARCH como destino."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir")
+        exp = self._make_expediente(35001)
+        exp.document_movement_ids.unlink()
+        mov = self._add_movement(exp, self.dep_dem, self.dep_arch)
+        self.assertEqual(mov.destination_dependence_id, self.dep_arch)
+
+    def test_movement_to_archivo_does_not_generate_reentry(self):
+        """Movimiento directo a ARCH sin salida previa: has_reentry = False."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir")
+        exp = self._make_expediente(35002)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_arch)
+        self.assertFalse(exp.has_reentry)
+
+    def test_exit_then_archivo_is_reentry(self):
+        """Salida a externo seguida de movimiento a ARCH: has_reentry = True."""
+        self.assertTrue(self.dep_arch, "La dependencia ARCH debe existir")
+        exp = self._make_expediente(35003)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_ext)   # salida a externo
+        self._add_movement(exp, self.dep_ext, self.dep_arch)  # reingreso vía ARCH
+        self.assertTrue(exp.has_reentry)
