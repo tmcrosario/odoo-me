@@ -1895,3 +1895,150 @@ class TestLegajoDependence026(TransactionCase):
         exp.document_movement_ids.unlink()
         mov = self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='789')
         self.assertEqual(mov.destination_abbreviation, 'LEG')
+
+
+@tagged('post_install', '-at_install')
+class TestMovementDefaultGet(TransactionCase):
+    """Tests para default_get de me.document_movement.
+
+    Verifica la pre-carga de fojas y origin_dependence_id al crear
+    un nuevo movimiento. La fuente correcta para fojas es el último
+    movimiento persistido (snapshot chain), no expediente.fojas.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test',
+                'abbreviation': 'EXP',
+            })
+
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test',
+                'abbreviation': 'DEM',
+            })
+
+        self.dep_a = self.env['tmc.dependence'].create({
+            'name': 'Dep A DefaultGet Test',
+            'abbreviation': 'DA_DG',
+        })
+        self.dep_b = self.env['tmc.dependence'].create({
+            'name': 'Dep B DefaultGet Test',
+            'abbreviation': 'DB_DG',
+        })
+
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion DefaultGet Test',
+            'abbreviation': 'J_DG',
+        })
+
+        self.today = fields.Date.today()
+        self.now = fields.Datetime.now()
+        self.current_year = str(self.today.year)
+
+        self.expediente = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 37001,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 5,
+        })
+
+    def _call_default_get(self, expediente_id):
+        """Llama a default_get simulando el contexto del popup del One2many."""
+        Movement = self.env['me.document_movement'].with_context(
+            default_expediente_id=expediente_id
+        )
+        return Movement.default_get([
+            'expediente_id', 'date', 'origin_dependence_id',
+            'destination_dependence_id', 'fojas', 'user_id',
+            'is_automatic', 'legajo_number',
+        ])
+
+    def test_fojas_preloaded_from_last_movement_not_expediente(self):
+        """fojas se pre-carga desde el último movimiento, no desde expediente.fojas.
+
+        Regresión: default_get leía expediente.fojas (valor original de alta)
+        en lugar del fojas del último movimiento persistido.
+        """
+        # expediente.fojas = 5 (valor de creación)
+        self.assertEqual(self.expediente.fojas, 5)
+
+        # Creamos un movimiento manual con fojas=30 (snapshot corregido)
+        self.expediente.document_movement_ids.unlink()
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_a.id,
+            'fojas': 30,
+        })
+
+        defaults = self._call_default_get(self.expediente.id)
+
+        # Debe pre-cargar 30 (último movimiento), no 5 (expediente.fojas)
+        self.assertEqual(
+            defaults.get('fojas'), 30,
+            "fojas debe pre-cargarse desde el último movimiento, no desde expediente.fojas"
+        )
+
+    def test_fojas_zero_when_no_movements(self):
+        """Sin movimientos previos, fojas se pre-carga como 0."""
+        self.expediente.document_movement_ids.unlink()
+        defaults = self._call_default_get(self.expediente.id)
+        self.assertEqual(defaults.get('fojas'), 0)
+
+    def test_origin_preloaded_from_last_movement_destination(self):
+        """origin_dependence_id se pre-carga con el destino del último movimiento."""
+        self.expediente.document_movement_ids.unlink()
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_b.id,
+            'fojas': 10,
+        })
+
+        defaults = self._call_default_get(self.expediente.id)
+
+        self.assertEqual(
+            defaults.get('origin_dependence_id'), self.dep_b.id,
+            "origin_dependence_id debe pre-cargarse con el destino del último movimiento"
+        )
+
+    def test_fojas_and_origin_use_same_last_movement(self):
+        """fojas y origin_dependence_id provienen del mismo último movimiento."""
+        self.expediente.document_movement_ids.unlink()
+        # Primer movimiento
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_a.id,
+            'fojas': 10,
+        })
+        # Segundo movimiento (el último): fojas=25, destino=dep_b
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': self.now,
+            'origin_dependence_id': self.dep_a.id,
+            'destination_dependence_id': self.dep_b.id,
+            'fojas': 25,
+        })
+
+        defaults = self._call_default_get(self.expediente.id)
+
+        self.assertEqual(defaults.get('fojas'), 25)
+        self.assertEqual(defaults.get('origin_dependence_id'), self.dep_b.id)

@@ -57,20 +57,23 @@ class Movement(models.Model):
         defaults = super().default_get(fields_list)
         # La vista pasa {'default_expediente_id': id}. super() lo resuelve en
         # defaults['expediente_id'] solo si 'expediente_id' está en fields_list.
-        # La lista inline de la UI no incluye expediente_id en fields_list, por lo
-        # que se lee directamente del contexto como fallback.
+        # El form popup de un One2many no incluye expediente_id en fields_list,
+        # por lo que se lee directamente del contexto como fallback.
         expediente_id = defaults.get('expediente_id') or self._context.get('default_expediente_id')
         if expediente_id:
-            if 'fojas' in fields_list:
-                expediente = self.env['me.document_exp'].browse(expediente_id)
-                defaults['fojas'] = expediente.fojas
-            if 'origin_dependence_id' in fields_list:
+            need_fojas = 'fojas' in fields_list
+            need_origin = 'origin_dependence_id' in fields_list
+            if need_fojas or need_origin:
                 last_movement = self.search(
                     [('expediente_id', '=', expediente_id)],
                     order='id desc',
                     limit=1,
                 )
-                if last_movement and last_movement.destination_dependence_id:
+                if need_fojas:
+                    # Pre-load fojas from the last movement snapshot, not from
+                    # expediente.fojas (which reflects only the creation value).
+                    defaults['fojas'] = last_movement.fojas if last_movement else 0
+                if need_origin and last_movement and last_movement.destination_dependence_id:
                     defaults['origin_dependence_id'] = (
                         last_movement.destination_dependence_id.id
                     )
