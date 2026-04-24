@@ -85,15 +85,11 @@
                     <notebook invisible="not id">
                         <page string="Movements">
                             <field name="document_movement_ids" mode="list,form" context="{'default_expediente_id': id}">
-                                <list editable="bottom">
+                                <list>
                                     <field name="is_automatic" column_invisible="1"/>
-                                    <field name="destination_abbreviation" column_invisible="1"/>
                                     <field name="date"/>
-                                    <field name="origin_dependence_id"/>
-                                    <field name="destination_dependence_id"/>
-                                    <field name="legajo_number"
-                                           invisible="destination_abbreviation != 'LEG'"
-                                           required="destination_abbreviation == 'LEG'"/>
+                                    <field name="origin_dependence_id" options="{'no_open': True}"/>
+                                    <field name="destination_dependence_id" options="{'no_open': True}"/>
                                     <field name="fojas" readonly="is_automatic"/>
                                     <field name="user_id" readonly="is_automatic"/>
                                 </list>
@@ -102,8 +98,8 @@
                                         <field name="is_automatic" invisible="1"/>
                                         <field name="destination_abbreviation" invisible="1"/>
                                         <field name="date"/>
-                                        <field name="origin_dependence_id"/>
-                                        <field name="destination_dependence_id"/>
+                                        <field name="origin_dependence_id" options="{'no_open': True}"/>
+                                        <field name="destination_dependence_id" options="{'no_open': True}"/>
                                         <field name="legajo_number"
                                                invisible="destination_abbreviation != 'LEG'"
                                                required="destination_abbreviation == 'LEG'"/>
