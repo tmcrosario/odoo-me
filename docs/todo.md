@@ -1889,3 +1889,234 @@ Ejecutar UPDATE tmc_dependence SET is_internal=true WHERE abbreviation='LEG'
 en la DB, o reinstalar el módulo me para aplicar el valor correcto.
 
 --------------------------------------------------
+
+--------------------------------------------------
+### #027 – Permiso de operador para registrar nuevos pases en expedientes existentes
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+El operador de Mesa de Entradas (me.group_user) puede crear expedientes nuevos,
+pero al intentar agregar un pase/movimiento desde el formulario de un expediente
+existente, aparece el error:
+  "Existing expedientes can only be modified by an Intake Register manager."
+
+Este error se produce porque el cliente web de Odoo 19 guarda los movimientos
+de una grilla One2many enviando un write() sobre el expediente padre con un
+comando O2M de creación:
+  me.document_exp.write({'document_movement_ids': [(0, 0, {...})]})
+
+El guard de write() en me.document_exp bloquea esta operación para operadores,
+aunque la política de #018 establece explícitamente que me.group_user puede
+CREAR movimientos.
+
+Este es un bloqueador operativo real: el operador no puede registrar pases
+en el circuito normal de trabajo una vez que el expediente ya existe.
+
+---- Diagnóstico técnico ----
+
+Hay dos capas de bloqueo:
+
+1. me.document_exp.write() guard: bloquea any write() sobre expedientes
+   existentes para no-managers, incluyendo los comandos O2M que crean
+   movimientos (path de la UI vía grilla de movimientos).
+
+2. me.document_movement.write() guard: bloquea toda edición de movimientos
+   existentes para no-managers. Este guard es independiente del anterior
+   y cubre el caso de edición directa del movimiento.
+
+El bloqueo observado en la UI corresponde al guard (1), no al guard (2).
+
+---- Decisiones funcionales abiertas ----
+
+A. ¿Cualquier operador puede agregar pases a cualquier expediente, o solo
+   el "poseedor actual"?
+   - Opción amplia: cualquier me.group_user puede agregar movimientos.
+     Más simple técnicamente. Refleja la realidad si varios operadores
+     pueden procesar el mismo expediente en la mesa de entradas.
+   - Opción restringida: solo el responsable actual del expediente puede
+     agregar el siguiente pase (ver decisión B).
+   - La opción elegida determina si se requiere lógica de autorización
+     basada en "poseedor" o simplemente una relajación del guard (1).
+
+B. ¿Cómo se define el "poseedor actual" del expediente?
+   En me.document_movement existe el campo user_id ("Responsible"), definido
+   como "el usuario de Odoo responsable del expediente en el destino de este
+   movimiento". Ese campo representa al responsable en destino, no a quien
+   cargó el pase (que es create_uid, campo nativo de Odoo).
+   Opciones:
+   - user_id del último movimiento = responsable asignado en el destino actual
+   - create_uid del último movimiento = quien registró el último pase
+   - Ambas no necesariamente coinciden. La definición operativa de "poseedor"
+     debe cerrarse antes de implementar la opción restringida de (A).
+
+C. Si se elige la opción restringida (solo poseedor): ¿qué pasa cuando
+   el último movimiento tiene user_id vacío o corresponde a un usuario
+   que ya no tiene acceso al sistema?
+
+D. ¿El guard (1) debe distinguir entre:
+   - write sobre campos del expediente (siempre bloqueado para operador)
+   - write con solo comandos O2M de CREACIÓN en document_movement_ids (permitido)
+   - write con comandos O2M de EDICIÓN/ELIMINACIÓN en document_movement_ids (bloqueado)
+
+Nota: el guard (2) sobre me.document_movement.write() es correcto y debe mantenerse:
+bloquea la edición de movimientos existentes para operadores, independientemente de
+cómo se resuelva el guard (1).
+
+---- Impacto estimado ----
+
+- me/models/document_exp.py: write() guard — distinguir comandos O2M de creación
+  vs. edición de campos del expediente
+- me/models/document_movement.py: write() guard — sin cambios si la decisión es
+  mantener inmutabilidad del historial para operadores (ver #028)
+- me/tests/: tests que cubran el path real de la UI (O2M write con (0,0,{...}))
+- Ningún cambio de ACL previsible: el issue es en el guard ORM, no en los permisos
+  de tabla
+
+---- Dependencias ----
+
+- #018 cerrado: establece la política base que este task refina
+- #028 relacionado: si se define "poseedor actual" aquí, #028 puede reutilizarlo
+
+--------------------------------------------------
+
+
+--------------------------------------------------
+### #028 – Corrección del último pase por el responsable en destino
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+Hoy ningún operador puede editar movimientos existentes — solo managers.
+Esta restricción protege el historial completo de pases, pero puede generar
+fricción cuando el operador cometió un error en el pase que acaba de cargar
+(ej. fojas incorrectas, usuario mal asignado) y necesita corregirlo.
+
+La idea es evaluar si el responsable actual del expediente debería poder
+corregir solo el último movimiento registrado, manteniendo el historial
+previo estrictamente inmutable.
+
+---- Decisiones funcionales abiertas ----
+
+A. ¿Qué campos pueden corregirse en el último pase?
+   Opciones:
+   - Todos (date, fojas, user_id, legajo_number, origin y destination)
+   - Solo un subconjunto "seguro" (ej. fojas, user_id, legajo_number — no
+     los campos que definen la dirección del pase origin/destination)
+   - Solo campos no-trazables (ej. fojas y user_id, pero no date ni destino)
+   Nota: origin_dependence_id y destination_dependence_id definen el sentido
+   del pase y su edición puede alterar la trazabilidad del circuito.
+
+B. ¿Quién puede hacer la corrección?
+   - El "responsable actual" (user_id del último movimiento)
+   - El "cargador del último pase" (create_uid del último movimiento)
+   - Cualquier operador con acceso al expediente (equivale a relajar todo)
+   - Nota: si #027 define el concepto de "poseedor actual", este task puede
+     reutilizarlo directamente.
+
+C. ¿Existe un límite de tiempo para la corrección?
+   - Sin límite: mientras el pase sea el último, puede corregirse
+   - Ventana temporal (ej. 24 horas desde la creación): más restrictivo
+   - La ventana agrega complejidad técnica (date comparison, UI feedback)
+
+D. ¿La corrección del último pase crea una nueva versión o sobrescribe?
+   No existe mecanismo de auditoría de cambios en el módulo ME hoy.
+   Si se permite la edición, la corrección es definitiva y no trazada.
+   Evaluar si esto es aceptable operativamente.
+
+E. ¿Qué sucede si se agrega un nuevo pase sobre uno corregible?
+   Al agregar un nuevo pase, el pase anterior ya no es el "último" y
+   queda bloqueado nuevamente. Este es el comportamiento esperado.
+
+---- Relación con otras tasks ----
+
+- #027 (crear pases): si #027 se resuelve permitiendo al poseedor actual
+  agregar pases, la misma definición de "poseedor" aplica aquí.
+  Conviene implementar #027 primero y usar la misma lógica en #028.
+- #018 (política base): cualquier excepción que se abra debe ser explícita
+  y acotada al último movimiento. El historial previo es inmutable.
+
+---- Nota de diseño ----
+
+El campo is_automatic en me.document_movement ya distingue movimientos
+automáticos (de creación) de manuales. La restricción de corrección podría
+combinarse con esta distinción: el último movimiento manual podría ser
+corregible, mientras que los automáticos nunca lo son.
+
+---- Impacto estimado ----
+
+- me/models/document_movement.py: write() guard — distinguir "último pase
+  manual + poseedor actual" vs. resto del historial
+- me.document_exp: posible campo derivado "current_holder_id" o evaluación
+  en tiempo de ejecución (sin campo almacenado)
+- me/views/: posible feedback visual (campo editable/readonly dinámico)
+- me/tests/: tests de regresión para todos los casos de la matriz
+
+--------------------------------------------------
+
+
+--------------------------------------------------
+### #029 – Indicador de expedientes a cargo del usuario actual
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+Cuando se registra un pase con destino a una dependencia y se asigna un
+user_id como responsable, el sistema no notifica ni indica de ninguna forma
+a ese usuario que tiene un expediente a su cargo.
+
+El usuario debe buscar activamente los expedientes que le corresponden.
+Esta necesidad apunta a añadir alguna señal que facilite ese seguimiento.
+
+---- Alcance funcional a evaluar ----
+
+A. ¿Qué significa "a mi cargo" en términos del modelo?
+   Opciones:
+   - user_id del último movimiento del expediente == usuario actual
+     (= el usuario fue designado como responsable en el último pase)
+   - Última dependencia de destino == una dependencia asociada al usuario
+     (más complejo: implica saber qué dependencias "pertenecen" a un usuario)
+   - Una combinación de ambos criterios
+   Nota: el campo user_id en me.document_movement fue definido en Workflow 5
+   (workflows.md) como "responsable en destino", no como "quien cargó el pase".
+
+B. ¿Cuál es la forma mínima de exposición útil?
+   Orden de complejidad creciente:
+   1. Filtro predefinido en la search view: "Mis expedientes / A mi cargo"
+      (un domain simple, sin nuevo campo: sin infraestructura adicional)
+   2. Campo stored computed en me.document_exp: is_in_my_possession (Boolean)
+      (permite filtrar, contar, usar en reglas de registro futuras)
+   3. Vista dedicada o acción de ventana filtrada: "Bandeja de pases"
+   4. Actividad de Odoo o canal de discusión (chatter): notificación interna
+   5. Notificación por email o push (fuera de alcance de esta iteración)
+
+C. ¿La señal debe actualizarse automáticamente cuando el expediente pasa
+   a otra persona?
+   Si se usa un campo stored computed, sí. Si es solo un filtro, también.
+   Si es una actividad ya creada, requeriría marcarla como hecha y crear una
+   nueva — mecanismo más complejo.
+
+D. ¿Solo expedientes internos o también los enviados a externos?
+   Probablemente solo is_currently_internal=True (ver #022): si el expediente
+   está en una dependencia externa, el responsable interno ya no lo tiene "a cargo".
+
+---- Nota de separación conceptual ----
+
+Esta necesidad es distinta de:
+- #022 (expedientes actualmente en el Tribunal): filtra por destino institucional
+  de cualquier usuario, no solo el actual
+- #027 y #028 (quién puede cargar pases): son permisos de escritura, no visibilidad
+
+"A mi cargo" = expedientes donde YO soy el responsable designado en el último pase,
+independientemente de si la dependencia de destino es interna o no.
+
+---- Impacto estimado (sujeto a decisión B) ----
+
+- Variante 1 (filtro): solo me/views/document_exp_views.xml — mínimo impacto
+- Variante 2+ (campo computed): me/models/document_exp.py + tests + traducción
+- Variante 4+ (notificaciones): requiere análisis de módulo de actividades/mail
+
+--------------------------------------------------
