@@ -456,6 +456,8 @@ Grupos:
 
   me.group_user (operador): R_C_ en document_exp y document_movement.
     Registra ingresos y pases. No puede editar ni eliminar registros existentes.
+    Para agregar un nuevo pase desde la UI: solo el "poseedor actual" puede hacerlo.
+    Poseedor actual = user_id del movimiento con mayor id del expediente (#027).
     implied_ids: tmc.group_user (necesario para crear tmc.document via _inherits).
 
   me.group_manager (gestor): RWCU en document_exp y document_movement.

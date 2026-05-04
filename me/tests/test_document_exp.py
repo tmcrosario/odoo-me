@@ -2198,3 +2198,126 @@ class TestMovementDefaultGet(TransactionCase):
 
         self.assertEqual(defaults.get('fojas'), 25)
         self.assertEqual(defaults.get('origin_dependence_id'), self.dep_b.id)
+
+
+@tagged('post_install', '-at_install')
+class TestMovementPoseedor027(TransactionCase):
+    """Tests para #027 — solo el poseedor puede registrar nuevos pases desde UI.
+
+    El poseedor actual = user_id del movimiento con mayor id del expediente.
+    El guard de write() en me.document_exp distingue comandos O2M CREATE de
+    otros writes, y para CREATE verifica que el usuario sea el poseedor.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test 027', 'abbreviation': 'EXP',
+            })
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test 027', 'abbreviation': 'DEM',
+            })
+        self.dep_me = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ME')], limit=1
+        )
+        if not self.dep_me:
+            self.dep_me = self.dep_dem
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test 027', 'abbreviation': 'JT027',
+        })
+        self.today = fields.Date.today()
+        self.current_year = str(self.today.year)
+
+        self.manager_user = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Manager 027', 'login': 'manager_027@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_manager').id])],
+        })
+        self.operator_a = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Operador A 027', 'login': 'operator_a_027@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        self.operator_b = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Operador B 027', 'login': 'operator_b_027@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+
+        # Expediente creado por operator_a → operator_a es el poseedor inicial
+        self.expediente = self.env['me.document_exp'].with_user(self.operator_a).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 88801,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 1,
+        })
+
+    def _movement_cmd(self):
+        return (0, 0, {
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_me.id,
+            'destination_dependence_id': self.dep_dem.id,
+            'fojas': 1,
+        })
+
+    def test_poseedor_can_add_movement_via_o2m_write(self):
+        """Escenario 1: operador poseedor puede agregar un nuevo pase vía O2M write."""
+        count_before = len(self.expediente.document_movement_ids)
+        self.expediente.with_user(self.operator_a).write({
+            'document_movement_ids': [self._movement_cmd()],
+        })
+        self.assertEqual(len(self.expediente.document_movement_ids), count_before + 1)
+
+    def test_non_poseedor_cannot_add_movement_via_o2m_write(self):
+        """Escenario 2: operador que NO es el poseedor recibe AccessError."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_b).write({
+                'document_movement_ids': [self._movement_cmd()],
+            })
+
+    def test_operator_cannot_update_movement_via_o2m(self):
+        """Escenario 4: operador no puede enviar comando UPDATE sobre movimientos existentes."""
+        existing_mov = self.expediente.document_movement_ids[:1]
+        self.assertTrue(existing_mov)
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write({
+                'document_movement_ids': [(1, existing_mov.id, {'fojas': 99})],
+            })
+
+    def test_no_movements_any_operator_can_add(self):
+        """Escenario 5: sin movimientos, cualquier operador puede agregar el primero."""
+        # sudo() needed: self.expediente env is operator_a (no perm_unlink)
+        self.expediente.sudo().document_movement_ids.unlink()
+        self.assertFalse(self.expediente.document_movement_ids)
+        self.expediente.with_user(self.operator_b).write({
+            'document_movement_ids': [self._movement_cmd()],
+        })
+        self.assertTrue(self.expediente.document_movement_ids)
+
+    def test_manager_can_always_add_movement(self):
+        """Escenario 6: manager puede agregar movimientos sin ser el poseedor."""
+        count_before = len(self.expediente.document_movement_ids)
+        self.expediente.with_user(self.manager_user).write({
+            'document_movement_ids': [self._movement_cmd()],
+        })
+        self.assertEqual(len(self.expediente.document_movement_ids), count_before + 1)
+
+    def test_operator_editing_expediente_field_still_blocked(self):
+        """Regresión: operador sigue bloqueado al editar campos del expediente."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write({'document_object': 'test'})

@@ -500,9 +500,30 @@ class DocumentExp(models.Model):
             not self.env.context.get('me_create_in_progress')
             and not self.env.user.has_group('me.group_manager')
         ):
-            raise exceptions.AccessError(_(
-                "Existing expedientes can only be modified by an Intake Register manager."
-            ))
+            movement_cmds = vals.get('document_movement_ids', [])
+            is_only_create_cmds = (
+                set(vals.keys()) == {'document_movement_ids'}
+                and movement_cmds
+                and all(
+                    isinstance(cmd, (list, tuple)) and len(cmd) >= 1 and cmd[0] == 0
+                    for cmd in movement_cmds
+                )
+            )
+            if is_only_create_cmds:
+                for record in self:
+                    last_mov = self.env['me.document_movement'].search(
+                        [('expediente_id', '=', record.id)],
+                        order='id desc',
+                        limit=1,
+                    )
+                    if last_mov and last_mov.user_id.id != self.env.user.id:
+                        raise exceptions.AccessError(_(
+                            "Only the current holder of the expediente can register a new movement."
+                        ))
+            else:
+                raise exceptions.AccessError(_(
+                    "Existing expedientes can only be modified by an Intake Register manager."
+                ))
         if 'dependence_id' in vals:
             self._validate_dependence(vals['dependence_id'])
         # Separar la fecha del resto de campos

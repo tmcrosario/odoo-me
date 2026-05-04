@@ -225,9 +225,13 @@ desde la pestaña "Movimientos" en el formulario.
 - Pre-carga de `origin_dependence_id` vía `default_get()`: `me/models/document_movement.py` (`default_get`)
   — toma el `destination_dependence_id` del movimiento con mayor `id` del expediente
 
+**Observed in code (post #027):**
+- Regla de poseedor: solo el `user_id` del movimiento con mayor `id` puede registrar
+  un nuevo pase desde la UI del formulario del expediente. Managers sin restricción.
+  El guard de `write()` detecta comandos O2M CREATE y verifica el poseedor.
+  → `me/models/document_exp.py` `write()`
+
 **Uncertain / pending definition:**
-- No existen reglas de transición definidas en el código.
-  Cualquier combinación origen/destino es válida (solo se exige que ambos existan).
 - No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.
   (No hay campo `state` en el modelo.)

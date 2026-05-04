@@ -1894,7 +1894,7 @@ en la DB, o reinstalar el módulo me para aplicar el valor correcto.
 ### #027 – Permiso de operador para registrar nuevos pases en expedientes existentes
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
 Contexto:
 El operador de Mesa de Entradas (me.group_user) puede crear expedientes nuevos,
@@ -1902,82 +1902,214 @@ pero al intentar agregar un pase/movimiento desde el formulario de un expediente
 existente, aparece el error:
   "Existing expedientes can only be modified by an Intake Register manager."
 
-Este error se produce porque el cliente web de Odoo 19 guarda los movimientos
-de una grilla One2many enviando un write() sobre el expediente padre con un
-comando O2M de creación:
+Este error contradice la política de #018, que establece explícitamente que
+me.group_user puede CREAR movimientos. Es un bloqueador operativo real.
+
+Diagnóstico técnico:
+El cliente web de Odoo 19 guarda los movimientos de una grilla One2many
+enviando un write() sobre el expediente padre:
   me.document_exp.write({'document_movement_ids': [(0, 0, {...})]})
+El guard de write() en me.document_exp bloquea esta operación para operadores
+sin distinguir entre "crear un nuevo movimiento" y "editar el expediente".
 
-El guard de write() en me.document_exp bloquea esta operación para operadores,
-aunque la política de #018 establece explícitamente que me.group_user puede
-CREAR movimientos.
+---- Alcance funcional ----
 
-Este es un bloqueador operativo real: el operador no puede registrar pases
-en el circuito normal de trabajo una vez que el expediente ya existe.
+Lo que cubre #027:
+- Permitir que el poseedor actual registre nuevos pases desde la UI del expediente.
+- Distinguir en el guard de write() entre comandos O2M de creación (permitidos
+  para el poseedor) y modificación de campos del expediente o movimientos
+  existentes (siguen bloqueados para operadores).
 
----- Diagnóstico técnico ----
+Lo que NO cubre #027:
+- Edición o corrección de movimientos existentes (ver #028).
+- Indicador de "expedientes a mi cargo" (ver #029).
+- Creación directa vía API (me.document_movement.create() sin pasar por el
+  expediente padre): sigue libre para cualquier me.group_user per #018.
+  No se agrega restricción de poseedor en ese path en esta iteración.
 
-Hay dos capas de bloqueo:
+---- Decisiones cerradas ----
 
-1. me.document_exp.write() guard: bloquea any write() sobre expedientes
-   existentes para no-managers, incluyendo los comandos O2M que crean
-   movimientos (path de la UI vía grilla de movimientos).
+1. QUIÉN PUEDE AGREGAR NUEVOS PASES
+   Solo el "poseedor actual" del expediente puede registrar un nuevo pase
+   desde la UI del formulario del expediente. No cualquier operador.
+   Managers mantienen acceso sin restricción de poseedor.
 
-2. me.document_movement.write() guard: bloquea toda edición de movimientos
-   existentes para no-managers. Este guard es independiente del anterior
-   y cubre el caso de edición directa del movimiento.
+2. DEFINICIÓN DE "POSEEDOR ACTUAL"
+   Poseedor actual = user_id del movimiento con mayor id del expediente.
+   Criterio: el mismo "último movimiento por id" que ya usa default_get()
+   en me.document_movement para pre-cargar origin_dependence_id (#020).
+   Justificación: user_id en me.document_movement representa explícitamente
+   al "responsable del expediente en el destino" (ver help del campo). Es
+   el concepto semántico más cercano a "poseedor".
+   No se usa create_uid (quién cargó el pase), que es un dato de auditoría,
+   no de responsabilidad operativa.
 
-El bloqueo observado en la UI corresponde al guard (1), no al guard (2).
+3. MOVIMIENTOS AUTOMÁTICOS EN EL CÁLCULO DE POSEEDOR
+   Los movimientos automáticos (is_automatic=True) SE INCLUYEN en el cálculo.
+   El último movimiento al crear un expediente es siempre TMC→ME, is_automatic=True,
+   user_id = el operador que lo creó. Ese operador es el poseedor inicial
+   y puede agregar el primer pase manual. Excluir automáticos crearía un
+   estado bloqueado inicial sin salida para operadores.
 
----- Decisiones funcionales abiertas ----
+4. ÚLTIMO MOVIMIENTO SIN user_id
+   Si el último movimiento tiene user_id vacío (False): ningún operador
+   puede agregar un nuevo pase desde la UI. Solo un manager puede hacerlo.
+   En instalaciones correctas esto no ocurre (user_id tiene default=env.user),
+   pero si ocurre, el manager es el único punto de salida. Comportamiento
+   aceptable.
 
-A. ¿Cualquier operador puede agregar pases a cualquier expediente, o solo
-   el "poseedor actual"?
-   - Opción amplia: cualquier me.group_user puede agregar movimientos.
-     Más simple técnicamente. Refleja la realidad si varios operadores
-     pueden procesar el mismo expediente en la mesa de entradas.
-   - Opción restringida: solo el responsable actual del expediente puede
-     agregar el siguiente pase (ver decisión B).
-   - La opción elegida determina si se requiere lógica de autorización
-     basada en "poseedor" o simplemente una relajación del guard (1).
+5. EXPEDIENTE SIN MOVIMIENTOS
+   Caso degenerate: si no existen movimientos, cualquier me.group_user puede
+   agregar el primero. En instalaciones reales, create() siempre genera al
+   menos un movimiento automático TMC→ME. Pero si por consistencia de datos
+   ese movimiento no existe, se permite el acceso a cualquier operador.
 
-B. ¿Cómo se define el "poseedor actual" del expediente?
-   En me.document_movement existe el campo user_id ("Responsible"), definido
-   como "el usuario de Odoo responsable del expediente en el destino de este
-   movimiento". Ese campo representa al responsable en destino, no a quien
-   cargó el pase (que es create_uid, campo nativo de Odoo).
-   Opciones:
-   - user_id del último movimiento = responsable asignado en el destino actual
-   - create_uid del último movimiento = quien registró el último pase
-   - Ambas no necesariamente coinciden. La definición operativa de "poseedor"
-     debe cerrarse antes de implementar la opción restringida de (A).
+6. COMANDOS O2M QUE EL GUARD DEBE DISTINGUIR
+   Al recibir un write() con document_movement_ids en vals, el guard verifica:
 
-C. Si se elige la opción restringida (solo poseedor): ¿qué pasa cuando
-   el último movimiento tiene user_id vacío o corresponde a un usuario
-   que ya no tiene acceso al sistema?
+   Permitido para poseedor actual:
+   - Solo comandos (0, 0, {vals}) = Command.CREATE (nuevas líneas)
+   - Y ningún otro campo del expediente en vals
 
-D. ¿El guard (1) debe distinguir entre:
-   - write sobre campos del expediente (siempre bloqueado para operador)
-   - write con solo comandos O2M de CREACIÓN en document_movement_ids (permitido)
-   - write con comandos O2M de EDICIÓN/ELIMINACIÓN en document_movement_ids (bloqueado)
+   Bloqueado para operadores (cualquiera, incluyendo poseedor):
+   - Comandos (1, id, {vals}) = Command.UPDATE sobre movimientos existentes
+   - Comandos (2, id) = Command.DELETE sobre movimientos existentes
+   - Cualquier otro campo del expediente en vals (edición del expediente)
+   - Combinación de creación de movimiento + edición de campo del expediente
 
-Nota: el guard (2) sobre me.document_movement.write() es correcto y debe mantenerse:
-bloquea la edición de movimientos existentes para operadores, independientemente de
-cómo se resuelva el guard (1).
+   Nota: si vals contiene tanto document_movement_ids con solo CREATE commands
+   como otros campos del expediente, se bloquea todo el write() para operadores.
+   El cliente web de Odoo envía estos casos como operaciones separadas.
 
----- Impacto estimado ----
+7. EDICIÓN/ELIMINACIÓN DE MOVIMIENTOS EXISTENTES
+   Siguen bloqueados para operadores, sin cambios al guard de
+   me.document_movement.write(). El guard (2) es correcto y no se modifica.
 
-- me/models/document_exp.py: write() guard — distinguir comandos O2M de creación
-  vs. edición de campos del expediente
-- me/models/document_movement.py: write() guard — sin cambios si la decisión es
-  mantener inmutabilidad del historial para operadores (ver #028)
-- me/tests/: tests que cubran el path real de la UI (O2M write con (0,0,{...}))
-- Ningún cambio de ACL previsible: el issue es en el guard ORM, no en los permisos
-  de tabla
+8. MANAGERS SIN RESTRICCIÓN
+   me.group_manager puede siempre hacer write() sobre expedientes y movimientos.
+   No se evalúa si el manager es el poseedor actual. Sin cambios al comportamiento.
+
+---- Escenarios posibles ----
+
+Escenario 1: Operador es el poseedor actual
+  - Guarda nuevo pase desde la grilla del formulario
+  - vals = {'document_movement_ids': [(0, 0, {...pase_vals...})]}
+  - user_id del último movimiento == env.user
+  - Resultado: se crea el movimiento. ✓
+
+Escenario 2: Operador NO es el poseedor actual
+  - Intenta guardar nuevo pase desde la grilla
+  - user_id del último movimiento != env.user
+  - Resultado: AccessError con mensaje claro. ✗ (esperado)
+
+Escenario 3: Operador intenta editar campos del expediente
+  - vals = {'document_object': 'nuevo texto'} o cualquier campo propio
+  - Resultado: AccessError (sin cambio — guard actual ya lo bloquea). ✗
+
+Escenario 4: Operador intenta editar movimiento existente via O2M
+  - vals = {'document_movement_ids': [(1, id, {'fojas': 10})]}
+  - Resultado: AccessError. ✗ (guard detecta UPDATE command)
+
+Escenario 5: Expediente sin movimientos
+  - Primer pase desde la UI
+  - No hay último movimiento → ningún poseedor calculable
+  - Resultado: cualquier me.group_user puede crear. ✓
+
+Escenario 6: Manager agrega o edita lo que sea
+  - Resultado: pasa siempre (sin cambio). ✓
+
+Escenario 7: Operador crea movimiento directamente por API
+  - me.document_movement.create({expediente_id: X, ...}) sin pasar por expediente
+  - No pasa por guard de document_exp.write()
+  - Resultado: se crea (perm_create=1). ✓ (out of scope de #027)
+
+Escenario 8: Poseedor agrega movimiento desde popup del formulario
+  - El formulario popup guarda el movimiento via write() O2M sobre el expediente
+  - Mismo path que la grilla inline → misma lógica aplica. ✓
+
+---- Riesgos ----
+
+R1. Poseedor mal asignado o user_id incorrecto en el último pase:
+    Ningún operador puede avanzar. Solo el manager desbloquea la situación
+    editando el user_id del movimiento existente o agregando un nuevo pase.
+    Riesgo operativo real si el operador olvidó asignar el user_id correcto.
+    Mitigación: asegurar que el default de user_id en el formulario sea correcto
+    (ya está implementado: default=env.user, pero es editable).
+
+R2. Múltiples operadores en la misma dependencia destino:
+    Solo el designado como user_id del último pase puede agregar el siguiente.
+    Si el trabajo es compartido entre varios operadores en una misma dependencia,
+    solo el "responsable asignado" puede continuar. Los demás deben pedir al
+    manager que intervenga o que el poseedor cargue el pase.
+    Riesgo aceptable en el contexto de Mesa de Entradas, donde el responsable
+    del pase es una persona concreta, no una dependencia.
+
+R3. Asimetría UI vs. API:
+    La restricción de poseedor aplica en el path UI (write() O2M).
+    Cualquier me.group_user puede crear movimientos directamente por API
+    (me.document_movement.create()) sin restricción de poseedor.
+    Decisión deliberada para esta iteración — el sistema es de staff interno.
+    Si se requiere control estricto por API, agregar guard en create() de
+    me.document_movement es el paso siguiente (fuera de #027).
+
+R4. Cambio de poseedor sin nuevo pase:
+    No hay mecanismo para "ceder" la posesión sin registrar un pase.
+    Si el operador A quiere transferir a B sin movimiento real, solo
+    un manager puede editar el user_id del último movimiento.
+    Comportamiento correcto: la posesión cambia siempre via un pase.
+
+---- Impacto técnico ----
+
+me/models/document_exp.py — write() guard:
+  Agregar lógica de evaluación antes del bloqueo para operadores:
+  - Detectar si vals contiene SOLO document_movement_ids
+  - Verificar que todos los comandos en document_movement_ids sean Command.CREATE
+    (command[0] == 0 en formato lista, o Command.CREATE en enum de Odoo 19)
+  - Calcular poseedor actual: search last movement by id, get user_id
+  - Permitir si: solo CREATE commands + usuario es el poseedor (o no hay movimientos)
+  - Bloquear si: cualquier otra combinación
+
+me/models/document_movement.py — write() guard:
+  Sin cambios. El guard existente cubre la edición de movimientos existentes.
+
+me/security/ir.model.access.csv:
+  Sin cambios. perm_create=1 ya existe para me.group_user en ambos modelos.
+
+me/views/:
+  Sin cambios en esta iteración. La vista actual ya permite agregar movimientos
+  desde la grilla (el botón "Add a line" existe). El cambio es solo en el guard.
+  Opcional en el futuro: mostrar quién es el poseedor actual (campo informativo).
+
+me/i18n/es_AR.po:
+  Nuevo mensaje de error para AccessError al intentar crear pase sin ser poseedor.
+  Mensaje sugerido:
+    "Solo el responsable actual del expediente puede registrar un nuevo pase."
+
+me/tests/test_document_exp.py:
+  Nueva clase TestMovementPermissions027 o extensión de TestFojasLock.
+  Tests requeridos:
+  - Poseedor crea movimiento via O2M write (escenario 1) → debe crear ✓
+  - No-poseedor intenta crear movimiento via O2M write (escenario 2) → AccessError
+  - Poseedor intenta editar movimiento existente via O2M UPDATE (escenario 4) → AccessError
+  - Expediente sin movimientos, cualquier operador (escenario 5) → debe crear ✓
+  - Manager puede siempre (escenario 6) → sin AccessError ✓
+  - Regresión: edición de campos del expediente por operador sigue bloqueada ✓
+
+domain-rules/me/workflows.md — Workflow 5:
+  Mover "no existen reglas de transición definidas" de Uncertain a Observed.
+  Agregar nota: "el poseedor actual puede registrar el siguiente pase;
+  se define como el user_id del movimiento con mayor id del expediente."
+
+me/ai-context.md — sección de grupos y permisos:
+  Actualizar: me.group_user puede CREAR movimientos si es el poseedor actual.
+  Reemplazar "puede CREAR movimientos" (genérico) por la regla poseedor.
 
 ---- Dependencias ----
 
-- #018 cerrado: establece la política base que este task refina
-- #028 relacionado: si se define "poseedor actual" aquí, #028 puede reutilizarlo
+- #018 cerrado: política base que este task refina
+- #020 cerrado: establece el patrón "último movimiento por id" que reutilizamos
+- #028 relacionado: comparte la definición de "poseedor actual" — puede reutilizar
+  el mismo helper o la misma lógica que #027
 
 --------------------------------------------------
 
