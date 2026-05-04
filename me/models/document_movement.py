@@ -113,3 +113,13 @@ class Movement(models.Model):
                 raise exceptions.ValidationError(
                     _("File number is required when the destination is 'Adjunto a Legajo'.")
                 )
+
+    def write(self, vals):
+        if (
+            not self.env.context.get('me_create_in_progress')
+            and not self.env.user.has_group('me.group_manager')
+        ):
+            raise exceptions.AccessError(
+                _("Existing movements can only be modified by an Intake Register manager.")
+            )
+        return super().write(vals)

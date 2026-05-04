@@ -1,7 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_me_document_exp_manager,me.document_exp.manager,model_me_document_exp,group_manager,1,1,1,1
-access_me_document_exp_user,me.document_exp.user,model_me_document_exp,group_user,1,0,1,0
+access_me_document_exp_user,me.document_exp.user,model_me_document_exp,group_user,1,1,1,0
 access_me_document_exp_read_only,me.document_exp.read_only,model_me_document_exp,group_read_only,1,0,0,0
 access_me_document_movement_manager,me.document_movement.manager,model_me_document_movement,group_manager,1,1,1,1
-access_me_document_movement_user,me.document_movement.user,model_me_document_movement,group_user,1,0,1,0
+access_me_document_movement_user,me.document_movement.user,model_me_document_movement,group_user,1,1,1,0
 access_me_document_movement_read_only,me.document_movement.read_only,model_me_document_movement,group_read_only,1,0,0,0

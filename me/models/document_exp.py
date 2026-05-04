@@ -204,7 +204,15 @@ class DocumentExp(models.Model):
 
     def _set_main_topic_id(self):
         for record in self:
-            record.main_topic_ids = [(6, 0, [record.main_topic_id.id])] if record.main_topic_id else [(5, 0, 0)]
+            # Write directly to the tmc.document parent via sudo. Assigning
+            # record.main_topic_ids = [...] would route through the ORM's
+            # _inverse_related, which calls tmc.document.write() with the
+            # current user — failing for operators (perm_write=0 on tmc.document).
+            # The ME write() guard is the security boundary: operators only reach
+            # this inverse after the guard has passed.
+            record.document_id.sudo().write({
+                'main_topic_ids': [(6, 0, [record.main_topic_id.id])] if record.main_topic_id else [(5, 0, 0)]
+            })
 
     @api.depends('secondary_topic_ids')
     def _compute_secondary_topic_id(self):
@@ -213,7 +221,9 @@ class DocumentExp(models.Model):
 
     def _set_secondary_topic_id(self):
         for record in self:
-            record.secondary_topic_ids = [(6, 0, [record.secondary_topic_id.id])] if record.secondary_topic_id else [(5, 0, 0)]
+            record.document_id.sudo().write({
+                'secondary_topic_ids': [(6, 0, [record.secondary_topic_id.id])] if record.secondary_topic_id else [(5, 0, 0)]
+            })
 
     @api.onchange('main_topic_id')
     def _onchange_main_topic_id(self):
@@ -403,18 +413,31 @@ class DocumentExp(models.Model):
                     dep = self.env['tmc.dependence'].browse(dep_id)
                     if dep.abbreviation in ('TMC', 'CM'):
                         vals['jurisdiction_dependence'] = dep.id
+
+        # Call the parent create() with me_create_in_progress in the context so
+        # any write() within the ORM chain (e.g. _inherits field sync, stored
+        # computed-field flush) passes the non-manager guard in write().
+        # The flag is scoped only to this super() call; we strip it from the
+        # returned records so callers do NOT inherit it (which would silently
+        # bypass the guard on all subsequent operations on the returned objects).
         # _inherits maneja la creación de tmc.document automáticamente.
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
-        records = super().create(vals_list)
+        records = super(
+            DocumentExp, self.with_context(me_create_in_progress=True)
+        ).create(vals_list)
+
+        # env_create retains me_create_in_progress=True so write() calls
+        # triggered by movement creation (e.g. has_reentry recompute) also pass.
+        env_create = records.env
         for record, date_val in zip(records, dates):
             record._update_document_date(date_val)
-        tmc_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
-        mesa_entrada_dependence = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
+        tmc_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
+        mesa_entrada_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         for record in records:
             # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py).
             # sudo() necesario: la creación RAA es un efecto interno del sistema;
             # el usuario no necesita permisos en raa.registry_aa para crear expedientes.
-            self.env["raa.registry_aa"].sudo().create({
+            env_create["raa.registry_aa"].sudo().create({
                 "document_id": record.document_id.id,
             })
             # Movimientos automáticos de ingreso.
@@ -427,7 +450,7 @@ class DocumentExp(models.Model):
             )
             if not origin_is_tmc and record.jurisdiction_dependence and tmc_dependence:
                 # Movimiento 1 (solo para DEM/CM): jurisdicción → TMC
-                self.env['me.document_movement'].create({
+                env_create['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
                     'origin_dependence_id': record.jurisdiction_dependence.id,
@@ -438,7 +461,7 @@ class DocumentExp(models.Model):
                 })
             # Movimiento final: TMC → Mesa de Entradas (siempre, si existen ambas dependencias)
             if tmc_dependence and mesa_entrada_dependence:
-                self.env['me.document_movement'].create({
+                env_create['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
                     'origin_dependence_id': tmc_dependence.id,
@@ -447,7 +470,10 @@ class DocumentExp(models.Model):
                     'fojas': record.fojas,
                     'is_automatic': True,
                 })
-        return records
+
+        # Return records in the CALLER's environment (without me_create_in_progress)
+        # so subsequent operations on the returned objects are correctly guarded.
+        return records.with_env(self.env)
 
     def _update_document_date(self, date_val):
         """Actualizar la fecha del documento padre evitando la validación problemática"""
@@ -470,11 +496,12 @@ class DocumentExp(models.Model):
         self.document_id.invalidate_recordset(['date'])
 
     def write(self, vals):
-        if 'fojas' in vals and not self.env.user.has_group('me.group_manager'):
-            raise exceptions.ValidationError(_(
-                "The page count of the expediente cannot be modified after creation. "
-                "Variations must be recorded through movements. "
-                "Only an Intake Register manager can correct this value."
+        if (
+            not self.env.context.get('me_create_in_progress')
+            and not self.env.user.has_group('me.group_manager')
+        ):
+            raise exceptions.AccessError(_(
+                "Existing expedientes can only be modified by an Intake Register manager."
             ))
         if 'dependence_id' in vals:
             self._validate_dependence(vals['dependence_id'])
@@ -489,17 +516,21 @@ class DocumentExp(models.Model):
         doc_fields = [
             "dependence_id", "document_type_id", "number", "period", "document_object"
         ]
-        document_vals = {field: vals[field] for field in doc_fields if field in vals}
-        
-        # Actualizar el documento padre sin la fecha
+        # Pop delegated fields from vals so super().write() does not try a second
+        # write to tmc.document without sudo (which would fail for operators).
+        document_vals = {field: vals.pop(field) for field in doc_fields if field in vals}
+
+        # sudo() scoped only to this call: the ME guard above is the security boundary.
+        # tmc.document.user has perm_write=0, so operators can't reach this directly;
+        # only managers and the create() chain (me_create_in_progress) pass the guard.
         if document_vals:
-            self.document_id.write(document_vals)
-        
+            self.document_id.sudo().write(document_vals)
+
         # Actualizar la fecha usando el método personalizado
         if date_val is not None:
             self._update_document_date(date_val)
-        
-        # Llamar al super().write() sin el campo date
+
+        # Llamar al super().write() solo con campos propios de me_document_exp
         return super().write(vals)
 
     def unlink(self):

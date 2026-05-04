@@ -1062,13 +1062,8 @@ class TestFojasLock(TransactionCase):
         self.assertEqual(self.expediente.document_object, 'Referencia de prueba')
 
     def test_operator_cannot_write_fojas(self):
-        """me.group_user no puede modificar fojas — recibe ValidationError.
-
-        Nota: el check has_group('me.group_manager') en write() se ejecuta antes
-        de super().write(), por lo que cualquier usuario sin me.group_manager
-        recibe ValidationError (no AccessError) al intentar modificar fojas.
-        """
-        with self.assertRaises(ValidationError):
+        """me.group_user no puede modificar expedientes existentes — recibe AccessError."""
+        with self.assertRaises(AccessError):
             self.expediente.with_user(self.operator_user).write({'fojas': 10})
 
     def test_operator_can_create_expediente(self):
@@ -1084,6 +1079,167 @@ class TestFojasLock(TransactionCase):
             'fojas': 5,
         })
         self.assertEqual(new_exp.fojas, 5)
+
+    def test_operator_can_create_new_expediente(self):
+        """me.group_user puede crear expedientes nuevos sin AccessError.
+
+        Verifica que el flag me_create_in_progress permite que write() interno
+        del flujo de create() (ORM _inherits sync, computed-field flush) no
+        quede bloqueado por el guard de no-managers.
+        """
+        new_exp = self.env['me.document_exp'].with_user(self.operator_user).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 77772,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 5,
+        })
+        self.assertEqual(new_exp.fojas, 5)
+
+    def test_operator_cannot_edit_existing_expediente(self):
+        """me.group_user no puede editar expedientes existentes — recibe AccessError."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'document_object': 'Intento de edición'})
+
+    def test_operator_can_create_new_movement(self):
+        """me.group_user puede crear movimientos nuevos."""
+        dep_me = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
+        dep_arch = self.env['tmc.dependence'].search([('abbreviation', '=', 'ARCH')], limit=1)
+        if not dep_arch:
+            dep_arch = dep_me
+        movement = self.env['me.document_movement'].with_user(self.operator_user).create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': dep_me.id if dep_me else self.dep_dem.id,
+            'destination_dependence_id': dep_arch.id if dep_arch else self.dep_dem.id,
+            'fojas': 3,
+        })
+        self.assertTrue(movement.id)
+
+    def test_operator_cannot_edit_existing_movement(self):
+        """me.group_user no puede editar movimientos existentes — recibe AccessError."""
+        existing_movement = self.expediente.document_movement_ids[:1]
+        self.assertTrue(existing_movement, "El expediente debe tener al menos un movimiento automático")
+        with self.assertRaises(AccessError):
+            existing_movement.with_user(self.operator_user).write({'fojas': 99})
+
+    def test_create_in_progress_flag_allows_internal_write(self):
+        """El flag me_create_in_progress permite write() para no-managers.
+
+        Simula el write() interno que el ORM ejecuta durante el flujo de create()
+        (e.g., flush de stored computed fields, _inherits sync de campos propios
+        del modelo hijo). Sin el flag, el guard bloquearía con AccessError; con
+        él, debe pasar. Solo aplica a campos en la tabla me_document_exp (no
+        delegados a tmc.document, que tiene su propia ACL).
+        """
+        self.expediente.with_user(self.operator_user).with_context(
+            me_create_in_progress=True
+        ).write({'fojas': 99})
+        self.expediente.invalidate_recordset(['fojas'])
+        self.assertEqual(self.expediente.fojas, 99)
+
+        # Sin el flag, el mismo write() queda bloqueado.
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'fojas': 10})
+
+    def test_operator_write_delegated_fields_during_create_flow(self):
+        """me_create_in_progress permite write() sobre campos delegados (tmc.document) vía sudo().
+
+        Reproduce el path de UI/web_save: el ORM llama me.document_exp.write() con campos
+        almacenados en tmc_document (delegados via _inherits) durante el flujo de alta.
+        Sin sudo() en self.document_id.write(), falla con AccessError por perm_write=0
+        en tmc.document para me.group_user.
+        """
+        # Simula el write() que el ORM emite en web_save con campos delegados.
+        self.expediente.with_user(self.operator_user).with_context(
+            me_create_in_progress=True
+        ).write({'document_object': 'Referencia asignada durante alta'})
+        self.expediente.invalidate_recordset(['document_object'])
+        self.assertEqual(self.expediente.document_object, 'Referencia asignada durante alta')
+
+    def test_operator_cannot_write_delegated_fields_without_flag(self):
+        """Sin me_create_in_progress, el guard bloquea write() sobre campos delegados."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'document_object': 'Intento directo'})
+
+    def test_manager_can_write_delegated_fields_without_flag(self):
+        """me.group_manager puede escribir campos delegados sin flag."""
+        self.expediente.with_user(self.manager_user).write({'document_object': 'Edición de manager'})
+        self.expediente.invalidate_recordset(['document_object'])
+        self.assertEqual(self.expediente.document_object, 'Edición de manager')
+
+    def test_operator_create_with_main_topic_id(self):
+        """Operador puede crear expediente con main_topic_id — inverse no dispara AccessError.
+
+        Reproduce el bug: _set_main_topic_id asignaba record.main_topic_ids = [...]
+        que pasaba por _inverse_related del ORM y llamaba tmc.document.write() con
+        usuario operador (perm_write=0) → AccessError envuelto con 'Implicitly accessed
+        through'. El fix escribe directamente vía record.document_id.sudo().write().
+        """
+        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not topic:
+            topic = self.env['tmc.document_topic'].create({
+                'name': 'Topic Test Operator Create',
+            })
+        new_exp = self.env['me.document_exp'].with_user(self.operator_user).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 77774,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 2,
+            'main_topic_id': topic.id,
+        })
+        self.assertEqual(new_exp.main_topic_id.id, topic.id)
+
+    def test_operator_create_with_secondary_topic_id(self):
+        """Operador puede crear expediente con secondary_topic_id — inverse no dispara AccessError."""
+        parent_topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not parent_topic:
+            parent_topic = self.env['tmc.document_topic'].create({'name': 'Parent Topic Test'})
+        child_topic = self.env['tmc.document_topic'].search(
+            [('parent_id', '=', parent_topic.id)], limit=1
+        )
+        if not child_topic:
+            child_topic = self.env['tmc.document_topic'].create({
+                'name': 'Child Topic Test',
+                'parent_id': parent_topic.id,
+            })
+        new_exp = self.env['me.document_exp'].with_user(self.operator_user).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 77775,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 2,
+            'main_topic_id': parent_topic.id,
+            'secondary_topic_id': child_topic.id,
+        })
+        self.assertEqual(new_exp.secondary_topic_id.id, child_topic.id)
+
+    def test_operator_cannot_edit_main_topic_on_existing(self):
+        """Operador no puede cambiar main_topic_id en un expediente existente — guard bloquea."""
+        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not topic:
+            topic = self.env['tmc.document_topic'].create({'name': 'Topic Block Test'})
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'main_topic_id': topic.id})
+
+    def test_manager_can_edit_main_topic_on_existing(self):
+        """Manager puede cambiar main_topic_id en un expediente existente."""
+        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not topic:
+            topic = self.env['tmc.document_topic'].create({'name': 'Topic Manager Test'})
+        self.expediente.with_user(self.manager_user).write({'main_topic_id': topic.id})
+        self.expediente.invalidate_recordset(['main_topic_id', 'main_topic_ids'])
+        self.assertEqual(self.expediente.main_topic_id.id, topic.id)
 
     def test_manager_can_create_and_edit_without_tmc_manual_assignment(self):
         """me.group_manager puede crear y editar sin asignación manual de tmc.group_manager.
