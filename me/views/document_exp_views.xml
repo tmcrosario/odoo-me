@@ -92,6 +92,7 @@
                                     <field name="destination_dependence_id" options="{'no_open': True}"/>
                                     <field name="fojas" readonly="is_automatic"/>
                                     <field name="user_id" readonly="is_automatic"/>
+                                    <field name="legajo_number" optional="hide" readonly="1"/>
                                 </list>
                                 <form>
                                     <group>
