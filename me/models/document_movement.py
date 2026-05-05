@@ -114,12 +114,41 @@ class Movement(models.Model):
                     _("File number is required when the destination is 'Adjunto a Legajo'.")
                 )
 
+    _OPERATOR_EDITABLE_FIELDS = frozenset({'fojas', 'user_id', 'legajo_number'})
+
+    def _is_last_manual_movement(self):
+        """True if self is the last non-automatic movement of its expediente."""
+        self.ensure_one()
+        if self.is_automatic:
+            return False
+        last = self.search(
+            [('expediente_id', '=', self.expediente_id.id), ('is_automatic', '=', False)],
+            order='id desc',
+            limit=1,
+        )
+        return last.id == self.id
+
     def write(self, vals):
         if (
             not self.env.context.get('me_create_in_progress')
             and not self.env.user.has_group('me.group_manager')
         ):
-            raise exceptions.AccessError(
-                _("Existing movements can only be modified by an Intake Register manager.")
-            )
+            written_fields = set(vals.keys())
+            for record in self:
+                if not record._is_last_manual_movement():
+                    raise exceptions.AccessError(
+                        _("Existing movements can only be modified by an Intake Register manager.")
+                    )
+                if record.user_id.id != self.env.user.id:
+                    raise exceptions.AccessError(
+                        _("Only the current holder of the expediente can correct a movement.")
+                    )
+                if not written_fields <= self._OPERATOR_EDITABLE_FIELDS:
+                    raise exceptions.AccessError(
+                        _("Existing movements can only be modified by an Intake Register manager.")
+                    )
+                if 'legajo_number' in written_fields and record.destination_abbreviation != 'LEG':
+                    raise exceptions.AccessError(
+                        _("File number can only be set on movements with destination 'Adjunto a Legajo'.")
+                    )
         return super().write(vals)

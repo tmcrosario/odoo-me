@@ -2355,3 +2355,256 @@ class TestMovementPoseedor027(TransactionCase):
         """Regresión: operador sigue bloqueado al editar campos del expediente."""
         with self.assertRaises(AccessError):
             self.expediente.with_user(self.operator_a).write({'document_object': 'test'})
+
+
+@tagged('post_install', '-at_install')
+class TestMovementCorrection028(TransactionCase):
+    """Tests para #028 — el responsable actual puede corregir el último movimiento manual.
+
+    Reglas cerradas:
+    - Solo el último movimiento manual (is_automatic=False) es corregible.
+    - Solo el user_id de ese movimiento puede corregirlo.
+    - Campos permitidos: fojas, user_id, legajo_number (este último solo si destino=LEG).
+    - Campos bloqueados para operador: origin_dependence_id, destination_dependence_id, date.
+    - Movimientos automáticos: nunca corregibles por operador.
+    - Managers: sin restricción.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test 028', 'abbreviation': 'EXP',
+            })
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test 028', 'abbreviation': 'DEM',
+            })
+        self.dep_me = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ME')], limit=1
+        )
+        if not self.dep_me:
+            self.dep_me = self.dep_dem
+        self.dep_leg = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'LEG')], limit=1
+        )
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test 028', 'abbreviation': 'JT028',
+        })
+        self.today = fields.Date.today()
+        self.current_year = str(self.today.year)
+
+        self.manager_user = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Manager 028', 'login': 'manager_028@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_manager').id])],
+        })
+        self.operator_a = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Operador A 028', 'login': 'operator_a_028@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        self.operator_b = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Operador B 028', 'login': 'operator_b_028@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+
+        self.expediente = self.env['me.document_exp'].with_user(self.operator_a).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 88901,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 1,
+        })
+
+        # Add one manual movement owned by operator_a
+        self.manual_mov = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_me.id,
+            'destination_dependence_id': self.dep_dem.id,
+            'fojas': 2,
+            'user_id': self.operator_a.id,
+        })
+
+    # --- Campos permitidos ---
+
+    def test_holder_can_correct_fojas_on_last_manual(self):
+        """Responsable actual puede corregir fojas del último movimiento manual."""
+        self.manual_mov.with_user(self.operator_a).write({'fojas': 10})
+        self.assertEqual(self.manual_mov.fojas, 10)
+
+    def test_holder_can_correct_user_id_on_last_manual(self):
+        """Responsable actual puede corregir user_id del último movimiento manual."""
+        self.manual_mov.with_user(self.operator_a).write({'user_id': self.operator_b.id})
+        self.assertEqual(self.manual_mov.user_id, self.operator_b)
+
+    def test_holder_can_correct_legajo_number_when_destination_is_leg(self):
+        """Responsable puede corregir legajo_number si el destino es LEG."""
+        if not self.dep_leg:
+            self.skipTest("LEG dependence not installed in this database")
+        leg_mov = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_leg.id,
+            'fojas': 2,
+            'user_id': self.operator_a.id,
+            'legajo_number': '001/2025',
+        })
+        leg_mov.with_user(self.operator_a).write({'legajo_number': '002/2025'})
+        self.assertEqual(leg_mov.legajo_number, '002/2025')
+
+    # --- Campos bloqueados ---
+
+    def test_holder_cannot_correct_origin_dependence(self):
+        """Operador no puede modificar origin_dependence_id aunque sea el poseedor."""
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_a).write({
+                'origin_dependence_id': self.dep_dem.id,
+            })
+
+    def test_holder_cannot_correct_destination_dependence(self):
+        """Operador no puede modificar destination_dependence_id aunque sea el poseedor."""
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_a).write({
+                'destination_dependence_id': self.dep_me.id,
+            })
+
+    def test_holder_cannot_correct_date(self):
+        """Operador no puede modificar date aunque sea el poseedor."""
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_a).write({
+                'date': fields.Datetime.now(),
+            })
+
+    def test_holder_cannot_correct_legajo_number_when_destination_is_not_leg(self):
+        """Operador no puede modificar legajo_number cuando el destino no es LEG."""
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_a).write({'legajo_number': 'X'})
+
+    # --- No es el último movimiento ---
+
+    def test_holder_cannot_correct_non_last_movement(self):
+        """Una vez que hay un movimiento posterior, el anterior queda bloqueado."""
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_me.id,
+            'fojas': 3,
+            'user_id': self.operator_b.id,
+        })
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_a).write({'fojas': 99})
+
+    # --- No es el responsable ---
+
+    def test_non_holder_cannot_correct_last_manual(self):
+        """Operador que no es el responsable no puede corregir el último movimiento."""
+        with self.assertRaises(AccessError):
+            self.manual_mov.with_user(self.operator_b).write({'fojas': 99})
+
+    # --- Movimientos automáticos ---
+
+    def test_automatic_movement_not_correctable_by_operator(self):
+        """Movimientos automáticos nunca son corregibles por operador."""
+        auto_mov = self.expediente.document_movement_ids.filtered('is_automatic')[:1]
+        self.assertTrue(auto_mov, "Debe existir al menos un movimiento automático")
+        with self.assertRaises(AccessError):
+            auto_mov.with_user(self.operator_a).write({'fojas': 99})
+
+    # --- Managers ---
+
+    def test_manager_can_correct_any_movement(self):
+        """Manager puede editar cualquier movimiento sin restricción."""
+        auto_mov = self.expediente.document_movement_ids.filtered('is_automatic')[:1]
+        self.manual_mov.with_user(self.manager_user).write({'fojas': 77})
+        self.assertEqual(self.manual_mov.fojas, 77)
+        auto_mov.with_user(self.manager_user).write({'fojas': 55})
+        self.assertEqual(auto_mov.fojas, 55)
+
+    # --- O2M path (UI) — edición inline via me.document_exp.write() ---
+
+    def _o2m_update(self, movement, field_vals):
+        """Simula el comando O2M UPDATE que envía el cliente web al guardar inline."""
+        return {'document_movement_ids': [(1, movement.id, field_vals)]}
+
+    def test_o2m_holder_can_correct_fojas(self):
+        """UI path: responsable actual corrige fojas del último movimiento manual → OK."""
+        self.expediente.with_user(self.operator_a).write(
+            self._o2m_update(self.manual_mov, {'fojas': 20})
+        )
+        self.assertEqual(self.manual_mov.fojas, 20)
+
+    def test_o2m_holder_cannot_correct_origin_dependence(self):
+        """UI path: operador no puede actualizar origin_dependence_id (campo bloqueado)."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write(
+                self._o2m_update(self.manual_mov, {'origin_dependence_id': self.dep_dem.id})
+            )
+
+    def test_o2m_holder_cannot_correct_destination_dependence(self):
+        """UI path: operador no puede actualizar destination_dependence_id."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write(
+                self._o2m_update(self.manual_mov, {'destination_dependence_id': self.dep_me.id})
+            )
+
+    def test_o2m_holder_cannot_correct_date(self):
+        """UI path: operador no puede actualizar date."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write(
+                self._o2m_update(self.manual_mov, {'date': fields.Datetime.now()})
+            )
+
+    def test_o2m_non_holder_cannot_correct_last_manual(self):
+        """UI path: operador que no es el responsable recibe AccessError."""
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_b).write(
+                self._o2m_update(self.manual_mov, {'fojas': 99})
+            )
+
+    def test_o2m_holder_cannot_correct_non_last_movement(self):
+        """UI path: movimiento que ya no es el último queda bloqueado."""
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_me.id,
+            'fojas': 3,
+            'user_id': self.operator_b.id,
+        })
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write(
+                self._o2m_update(self.manual_mov, {'fojas': 99})
+            )
+
+    def test_o2m_automatic_movement_not_correctable(self):
+        """UI path: movimientos automáticos nunca corregibles por operador."""
+        auto_mov = self.expediente.document_movement_ids.filtered('is_automatic')[:1]
+        self.assertTrue(auto_mov)
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_a).write(
+                self._o2m_update(auto_mov, {'fojas': 99})
+            )
+
+    def test_o2m_manager_can_correct_any_movement(self):
+        """UI path: manager puede editar cualquier movimiento sin restricción."""
+        self.expediente.with_user(self.manager_user).write(
+            self._o2m_update(self.manual_mov, {'fojas': 88})
+        )
+        self.assertEqual(self.manual_mov.fojas, 88)

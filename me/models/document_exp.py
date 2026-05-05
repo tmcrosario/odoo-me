@@ -501,11 +501,21 @@ class DocumentExp(models.Model):
             and not self.env.user.has_group('me.group_manager')
         ):
             movement_cmds = vals.get('document_movement_ids', [])
+            _editable = self.env['me.document_movement']._OPERATOR_EDITABLE_FIELDS
             is_only_create_cmds = (
                 set(vals.keys()) == {'document_movement_ids'}
                 and movement_cmds
+                and all(cmd[0] == 0 for cmd in movement_cmds)
+            )
+            is_only_update_cmds = (
+                set(vals.keys()) == {'document_movement_ids'}
+                and movement_cmds
                 and all(
-                    isinstance(cmd, (list, tuple)) and len(cmd) >= 1 and cmd[0] == 0
+                    isinstance(cmd, (list, tuple))
+                    and len(cmd) >= 3
+                    and cmd[0] == 1
+                    and isinstance(cmd[2], dict)
+                    and set(cmd[2].keys()) <= _editable
                     for cmd in movement_cmds
                 )
             )
@@ -520,6 +530,8 @@ class DocumentExp(models.Model):
                         raise exceptions.AccessError(_(
                             "Only the current holder of the expediente can register a new movement."
                         ))
+            elif is_only_update_cmds:
+                pass  # me.document_movement.write() enforces poseedor and last-manual checks
             else:
                 raise exceptions.AccessError(_(
                     "Existing expedientes can only be modified by an Intake Register manager."

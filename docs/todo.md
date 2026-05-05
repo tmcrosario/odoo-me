@@ -2118,73 +2118,55 @@ me/ai-context.md — sección de grupos y permisos:
 ### #028 – Corrección del último pase por el responsable en destino
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
 Contexto:
-Hoy ningún operador puede editar movimientos existentes — solo managers.
-Esta restricción protege el historial completo de pases, pero puede generar
-fricción cuando el operador cometió un error en el pase que acaba de cargar
-(ej. fojas incorrectas, usuario mal asignado) y necesita corregirlo.
+El responsable actual del expediente puede corregir el último movimiento
+manual que registró. El historial previo sigue siendo estrictamente inmutable.
+Solo se permite corregir un subconjunto seguro de campos para no alterar la
+trazabilidad del circuito (origin/destination/date permanecen bloqueados).
 
-La idea es evaluar si el responsable actual del expediente debería poder
-corregir solo el último movimiento registrado, manteniendo el historial
-previo estrictamente inmutable.
+---- Decisiones cerradas ----
 
----- Decisiones funcionales abiertas ----
+1. Aplica solo al último movimiento manual (is_automatic=False).
+   Los automáticos nunca son corregibles por operador.
 
-A. ¿Qué campos pueden corregirse en el último pase?
-   Opciones:
-   - Todos (date, fojas, user_id, legajo_number, origin y destination)
-   - Solo un subconjunto "seguro" (ej. fojas, user_id, legajo_number — no
-     los campos que definen la dirección del pase origin/destination)
-   - Solo campos no-trazables (ej. fojas y user_id, pero no date ni destino)
-   Nota: origin_dependence_id y destination_dependence_id definen el sentido
-   del pase y su edición puede alterar la trazabilidad del circuito.
+2. Solo puede corregirlo el user_id del último movimiento manual
+   (mismo criterio de "poseedor" que #027). No se usa create_uid.
 
-B. ¿Quién puede hacer la corrección?
-   - El "responsable actual" (user_id del último movimiento)
-   - El "cargador del último pase" (create_uid del último movimiento)
-   - Cualquier operador con acceso al expediente (equivale a relajar todo)
-   - Nota: si #027 define el concepto de "poseedor actual", este task puede
-     reutilizarlo directamente.
+3. Managers: sin restricción de poseedor ni de campo.
 
-C. ¿Existe un límite de tiempo para la corrección?
-   - Sin límite: mientras el pase sea el último, puede corregirse
-   - Ventana temporal (ej. 24 horas desde la creación): más restrictivo
-   - La ventana agrega complejidad técnica (date comparison, UI feedback)
+4. Campos permitidos para operador:
+   - fojas
+   - user_id (responsable en destino)
+   - legajo_number (solo si destination_abbreviation == 'LEG')
 
-D. ¿La corrección del último pase crea una nueva versión o sobrescribe?
-   No existe mecanismo de auditoría de cambios en el módulo ME hoy.
-   Si se permite la edición, la corrección es definitiva y no trazada.
-   Evaluar si esto es aceptable operativamente.
+5. Campos bloqueados para operador:
+   - origin_dependence_id
+   - destination_dependence_id
+   - date
 
-E. ¿Qué sucede si se agrega un nuevo pase sobre uno corregible?
-   Al agregar un nuevo pase, el pase anterior ya no es el "último" y
-   queda bloqueado nuevamente. Este es el comportamiento esperado.
+6. Sin límite temporal. Corregible mientras siga siendo el último manual.
+   Al registrar un pase posterior, el anterior vuelve a quedar bloqueado.
 
----- Relación con otras tasks ----
+7. Auditoría estándar de Odoo (write_uid, write_date). Sin versionado adicional.
 
-- #027 (crear pases): si #027 se resuelve permitiendo al poseedor actual
-  agregar pases, la misma definición de "poseedor" aplica aquí.
-  Conviene implementar #027 primero y usar la misma lógica en #028.
-- #018 (política base): cualquier excepción que se abra debe ser explícita
-  y acotada al último movimiento. El historial previo es inmutable.
+---- Nota fuera del alcance ----
 
----- Nota de diseño ----
+El autocompletado del responsable según la oficina destino puede evaluarse
+como task futura separada. No forma parte de #028.
 
-El campo is_automatic en me.document_movement ya distingue movimientos
-automáticos (de creación) de manuales. La restricción de corrección podría
-combinarse con esta distinción: el último movimiento manual podría ser
-corregible, mientras que los automáticos nunca lo son.
+---- Impacto ----
 
----- Impacto estimado ----
+- me/models/document_movement.py: write() guard con helper _is_last_manual_movement()
+  y frozenset _OPERATOR_EDITABLE_FIELDS
+- me/i18n/es_AR.po: dos nuevos mensajes de error
+- me/tests/test_document_exp.py: clase TestMovementCorrection028 (11 tests)
 
-- me/models/document_movement.py: write() guard — distinguir "último pase
-  manual + poseedor actual" vs. resto del historial
-- me.document_exp: posible campo derivado "current_holder_id" o evaluación
-  en tiempo de ejecución (sin campo almacenado)
-- me/views/: posible feedback visual (campo editable/readonly dinámico)
-- me/tests/: tests de regresión para todos los casos de la matriz
+---- Dependencias ----
+
+- #018: política base
+- #027: define "poseedor actual"; lógica reutilizada
 
 --------------------------------------------------
 

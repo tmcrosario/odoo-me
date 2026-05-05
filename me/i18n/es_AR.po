@@ -477,3 +477,15 @@ msgstr "El número de legajo es obligatorio cuando el destino es 'Adjunto a Lega
 #, python-format
 msgid "Only the current holder of the expediente can register a new movement."
 msgstr "Solo el responsable actual del expediente puede registrar un nuevo pase."
+
+#. module: me
+#: code:addons/me/models/document_movement.py:0
+#, python-format
+msgid "Only the current holder of the expediente can correct a movement."
+msgstr "Solo el responsable actual del expediente puede corregir este movimiento."
+
+#. module: me
+#: code:addons/me/models/document_movement.py:0
+#, python-format
+msgid "File number can only be set on movements with destination 'Adjunto a Legajo'."
+msgstr "El número de legajo solo puede modificarse en movimientos con destino 'Adjunto a Legajo'."

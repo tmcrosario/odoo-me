@@ -458,6 +458,9 @@ Grupos:
     Registra ingresos y pases. No puede editar ni eliminar registros existentes.
     Para agregar un nuevo pase desde la UI: solo el "poseedor actual" puede hacerlo.
     Poseedor actual = user_id del movimiento con mayor id del expediente (#027).
+    Puede corregir el último movimiento manual si es el responsable de ese movimiento.
+    Campos corregibles: fojas, user_id, legajo_number (este último solo si destino=LEG).
+    Campos bloqueados: origin_dependence_id, destination_dependence_id, date (#028).
     implied_ids: tmc.group_user (necesario para crear tmc.document via _inherits).
 
   me.group_manager (gestor): RWCU en document_exp y document_movement.
