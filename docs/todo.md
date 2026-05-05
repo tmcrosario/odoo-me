@@ -2175,62 +2175,32 @@ como task futura separada. No forma parte de #028.
 ### #029 – Indicador de expedientes a cargo del usuario actual
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
-Contexto:
-Cuando se registra un pase con destino a una dependencia y se asigna un
-user_id como responsable, el sistema no notifica ni indica de ninguna forma
-a ese usuario que tiene un expediente a su cargo.
+Decisión:
+"A mi cargo" = user_id del movimiento con mayor id del expediente == usuario actual.
+No requiere is_currently_internal: si se registró un pase con ese usuario como
+responsable, el expediente está a su cargo independientemente de si la dependencia
+de destino es interna o no.
 
-El usuario debe buscar activamente los expedientes que le corresponden.
-Esta necesidad apunta a añadir alguna señal que facilite ese seguimiento.
+Implementación:
+- Campo current_holder_id (Many2one res.users, computed + stored) en me.document_exp.
+  @api.depends('document_movement_ids.user_id') — mismo patrón que is_currently_internal.
+  Algoritmo: sorted('id')[-1:].user_id — False si no hay movimientos.
+- Filtro "In My Possession" / "En mi poder" en search view.
+  Domain: [('current_holder_id', '=', uid)]
+- Traducción en es_AR.po: "En mi poder" + "Responsable Actual".
+- 6 tests en TestCurrentHolder029.
 
----- Alcance funcional a evaluar ----
+Archivos modificados:
+- me/models/document_exp.py: campo + compute
+- me/views/document_exp_views.xml: filtro en search view
+- me/i18n/es_AR.po: traducciones
+- me/tests/test_document_exp.py: clase TestCurrentHolder029
 
-A. ¿Qué significa "a mi cargo" en términos del modelo?
-   Opciones:
-   - user_id del último movimiento del expediente == usuario actual
-     (= el usuario fue designado como responsable en el último pase)
-   - Última dependencia de destino == una dependencia asociada al usuario
-     (más complejo: implica saber qué dependencias "pertenecen" a un usuario)
-   - Una combinación de ambos criterios
-   Nota: el campo user_id en me.document_movement fue definido en Workflow 5
-   (workflows.md) como "responsable en destino", no como "quien cargó el pase".
-
-B. ¿Cuál es la forma mínima de exposición útil?
-   Orden de complejidad creciente:
-   1. Filtro predefinido en la search view: "Mis expedientes / A mi cargo"
-      (un domain simple, sin nuevo campo: sin infraestructura adicional)
-   2. Campo stored computed en me.document_exp: is_in_my_possession (Boolean)
-      (permite filtrar, contar, usar en reglas de registro futuras)
-   3. Vista dedicada o acción de ventana filtrada: "Bandeja de pases"
-   4. Actividad de Odoo o canal de discusión (chatter): notificación interna
-   5. Notificación por email o push (fuera de alcance de esta iteración)
-
-C. ¿La señal debe actualizarse automáticamente cuando el expediente pasa
-   a otra persona?
-   Si se usa un campo stored computed, sí. Si es solo un filtro, también.
-   Si es una actividad ya creada, requeriría marcarla como hecha y crear una
-   nueva — mecanismo más complejo.
-
-D. ¿Solo expedientes internos o también los enviados a externos?
-   Probablemente solo is_currently_internal=True (ver #022): si el expediente
-   está en una dependencia externa, el responsable interno ya no lo tiene "a cargo".
-
----- Nota de separación conceptual ----
-
-Esta necesidad es distinta de:
-- #022 (expedientes actualmente en el Tribunal): filtra por destino institucional
-  de cualquier usuario, no solo el actual
-- #027 y #028 (quién puede cargar pases): son permisos de escritura, no visibilidad
-
-"A mi cargo" = expedientes donde YO soy el responsable designado en el último pase,
-independientemente de si la dependencia de destino es interna o no.
-
----- Impacto estimado (sujeto a decisión B) ----
-
-- Variante 1 (filtro): solo me/views/document_exp_views.xml — mínimo impacto
-- Variante 2+ (campo computed): me/models/document_exp.py + tests + traducción
-- Variante 4+ (notificaciones): requiere análisis de módulo de actividades/mail
+No implementado en #029 (posibles ideas futuras):
+- Vista dedicada "Bandeja de pases".
+- Notificaciones / actividades Odoo.
+- Filtro adicional combinado con is_currently_internal.
 
 --------------------------------------------------

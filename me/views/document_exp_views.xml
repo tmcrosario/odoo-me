@@ -127,6 +127,8 @@
             <search>
                 <field name="name"/>
                 <field name="number"/>
+                <filter string="In My Possession" name="in_my_possession"
+                        domain="[('current_holder_id', '=', uid)]"/>
                 <filter string="With Institutional Reentry" name="has_reentry"
                         domain="[('has_reentry', '=', True)]"/>
                 <filter string="Currently at Tribunal" name="currently_at_tribunal"

@@ -231,6 +231,18 @@ desde la pestaña "Movimientos" en el formulario.
   El guard de `write()` detecta comandos O2M CREATE y verifica el poseedor.
   → `me/models/document_exp.py` `write()`
 
+**Observed in code (post #028):**
+- Corrección del último movimiento manual: el poseedor actual puede corregir fojas,
+  user_id y legajo_number del movimiento con mayor id (solo si es manual, no automático).
+  → `me/models/document_movement.py` `write()`
+
+**Observed in code (post #029):**
+- Campo `current_holder_id` (Many2one res.users, stored computed) en `me.document_exp`:
+  user_id del movimiento con mayor id. False si no hay movimientos.
+  Se actualiza automáticamente al crear o corregir movimientos.
+  → `me/models/document_exp.py` `_compute_current_holder_id`
+- Filtro "En mi poder" en search view: domain `[('current_holder_id', '=', uid)]`.
+
 **Uncertain / pending definition:**
 - No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.

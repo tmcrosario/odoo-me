@@ -489,3 +489,13 @@ msgstr "Solo el responsable actual del expediente puede corregir este movimiento
 #, python-format
 msgid "File number can only be set on movements with destination 'Adjunto a Legajo'."
 msgstr "El número de legajo solo puede modificarse en movimientos con destino 'Adjunto a Legajo'."
+
+#. module: me
+#: model:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "In My Possession"
+msgstr "En mi poder"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__current_holder_id
+msgid "Current Holder"
+msgstr "Responsable Actual"

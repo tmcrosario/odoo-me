@@ -2608,3 +2608,114 @@ class TestMovementCorrection028(TransactionCase):
             self._o2m_update(self.manual_mov, {'fojas': 88})
         )
         self.assertEqual(self.manual_mov.fojas, 88)
+
+
+@tagged('post_install', '-at_install')
+class TestCurrentHolder029(TransactionCase):
+    """Tests para #029 — campo current_holder_id en me.document_exp."""
+
+    def setUp(self):
+        super().setUp()
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test 029', 'abbreviation': 'EXP',
+            })
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test 029', 'abbreviation': 'DEM',
+            })
+        self.dep_me = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'ME')], limit=1
+        )
+        if not self.dep_me:
+            self.dep_me = self.dep_dem
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test 029', 'abbreviation': 'JT029',
+        })
+        self.today = fields.Date.today()
+        self.current_year = str(self.today.year)
+
+        self.user_a = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Usuario A 029', 'login': 'user_a_029@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        self.user_b = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Usuario B 029', 'login': 'user_b_029@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+
+        self.expediente = self.env['me.document_exp'].with_user(self.user_a).create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 88901,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 1,
+        })
+
+    def test_holder_after_create_is_creator(self):
+        """Después de create, el holder es user_a (quien creó el expediente)."""
+        self.assertEqual(self.expediente.current_holder_id, self.user_a)
+
+    def test_holder_changes_after_new_movement(self):
+        """Cuando se registra un nuevo movimiento con user_b, el holder pasa a user_b."""
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_me.id,
+            'fojas': 2,
+            'user_id': self.user_b.id,
+        })
+        self.assertEqual(self.expediente.current_holder_id, self.user_b)
+
+    def test_holder_updates_when_user_id_corrected(self):
+        """Cuando se corrige el user_id del último movimiento (#028), el holder se actualiza."""
+        last_mov = self.expediente.document_movement_ids.sorted('id')[-1:]
+        last_mov.with_context(me_create_in_progress=True).write({'user_id': self.user_b.id})
+        self.assertEqual(self.expediente.current_holder_id, self.user_b)
+
+    def test_holder_follows_last_movement_not_first(self):
+        """El holder es el user_id del movimiento con mayor id, no del primero."""
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_me.id,
+            'destination_dependence_id': self.dep_dem.id,
+            'fojas': 3,
+            'user_id': self.user_b.id,
+        })
+        self.assertEqual(self.expediente.current_holder_id, self.user_b)
+        self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_me.id,
+            'fojas': 4,
+            'user_id': self.user_a.id,
+        })
+        self.assertEqual(self.expediente.current_holder_id, self.user_a)
+
+    def test_no_movements_holder_is_false(self):
+        """Sin movimientos, current_holder_id es False."""
+        self.expediente.sudo().document_movement_ids.unlink()
+        self.assertFalse(self.expediente.current_holder_id)
+
+    def test_search_filter_in_my_possession(self):
+        """El domain [('current_holder_id', '=', uid)] devuelve el expediente del holder."""
+        results = self.env['me.document_exp'].with_user(self.user_a).search(
+            [('current_holder_id', '=', self.user_a.id)]
+        )
+        self.assertIn(self.expediente, results)
+        results_b = self.env['me.document_exp'].with_user(self.user_b).search(
+            [('current_holder_id', '=', self.user_b.id)]
+        )
+        self.assertNotIn(self.expediente, results_b)

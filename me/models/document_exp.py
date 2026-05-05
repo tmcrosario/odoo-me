@@ -155,6 +155,23 @@ class DocumentExp(models.Model):
         help="True when the expediente's main topic is Licitación.",
     )
 
+    current_holder_id = fields.Many2one(
+        comodel_name='res.users',
+        string="Current Holder",
+        compute="_compute_current_holder_id",
+        store=True,
+        help=(
+            "The user designated as responsible in the last registered movement "
+            "(movement with the highest id). False when no movements exist."
+        ),
+    )
+
+    @api.depends('document_movement_ids.user_id')
+    def _compute_current_holder_id(self):
+        for record in self:
+            last = record.document_movement_ids.sorted('id')[-1:]
+            record.current_holder_id = last.user_id if last else False
+
     @api.depends('document_movement_ids.destination_dependence_id.is_internal')
     def _compute_is_currently_internal(self):
         for record in self:
