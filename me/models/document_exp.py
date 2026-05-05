@@ -211,7 +211,7 @@ class DocumentExp(models.Model):
             # The ME write() guard is the security boundary: operators only reach
             # this inverse after the guard has passed.
             record.document_id.sudo().write({
-                'main_topic_ids': [(6, 0, [record.main_topic_id.id])] if record.main_topic_id else [(5, 0, 0)]
+                'main_topic_ids': [(6, 0, [record.main_topic_id.id])] if record.main_topic_id else [(6, 0, [])]
             })
 
     @api.depends('secondary_topic_ids')
@@ -222,7 +222,7 @@ class DocumentExp(models.Model):
     def _set_secondary_topic_id(self):
         for record in self:
             record.document_id.sudo().write({
-                'secondary_topic_ids': [(6, 0, [record.secondary_topic_id.id])] if record.secondary_topic_id else [(5, 0, 0)]
+                'secondary_topic_ids': [(6, 0, [record.secondary_topic_id.id])] if record.secondary_topic_id else [(6, 0, [])]
             })
 
     @api.onchange('main_topic_id')

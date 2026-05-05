@@ -1241,6 +1241,40 @@ class TestFojasLock(TransactionCase):
         self.expediente.invalidate_recordset(['main_topic_id', 'main_topic_ids'])
         self.assertEqual(self.expediente.main_topic_id.id, topic.id)
 
+    def test_clear_main_topic_id_does_not_raise(self):
+        """Clearing main_topic_id writes (6,0,[]) to tmc.document — not (5,0,0).
+
+        (5,0,0)[2] = int 0 → set(0) → TypeError in tmc.document.write().
+        (6,0,[])[2] = [] → set([]) = set() → no error.
+        """
+        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not topic:
+            topic = self.env['tmc.document_topic'].create({'name': 'Clear Main Topic Test'})
+        self.expediente.with_user(self.manager_user).write({'main_topic_id': topic.id})
+        self.expediente.with_user(self.manager_user).write({'main_topic_id': False})
+        self.expediente.invalidate_recordset(['main_topic_id', 'main_topic_ids'])
+        self.assertFalse(self.expediente.main_topic_id)
+
+    def test_clear_secondary_topic_id_does_not_raise(self):
+        """Clearing secondary_topic_id writes (6,0,[]) to tmc.document — not (5,0,0)."""
+        parent_topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        if not parent_topic:
+            parent_topic = self.env['tmc.document_topic'].create({'name': 'Clear Secondary Parent'})
+        child_topic = self.env['tmc.document_topic'].search(
+            [('parent_id', '=', parent_topic.id)], limit=1
+        )
+        if not child_topic:
+            child_topic = self.env['tmc.document_topic'].create({
+                'name': 'Clear Secondary Child', 'parent_id': parent_topic.id,
+            })
+        self.expediente.with_user(self.manager_user).write({
+            'main_topic_id': parent_topic.id,
+            'secondary_topic_id': child_topic.id,
+        })
+        self.expediente.with_user(self.manager_user).write({'secondary_topic_id': False})
+        self.expediente.invalidate_recordset(['secondary_topic_id', 'secondary_topic_ids'])
+        self.assertFalse(self.expediente.secondary_topic_id)
+
     def test_manager_can_create_and_edit_without_tmc_manual_assignment(self):
         """me.group_manager puede crear y editar sin asignación manual de tmc.group_manager.
 
