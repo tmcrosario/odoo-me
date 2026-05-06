@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Inherit tmc.dependence form: expose is_internal and default_responsible_id
+         in a new "ME Configuration" tab, visible only to me.group_manager. -->
+    <record id="tmc_dependence_form_view_me_inherit" model="ir.ui.view">
+        <field name="name">tmc.dependence.view.form.me.inherit</field>
+        <field name="model">tmc.dependence</field>
+        <field name="inherit_id" ref="tmc.dependence_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="ME Configuration" name="me_config"
+                      groups="me.group_manager">
+                    <group>
+                        <field name="is_internal" readonly="1"/>
+                        <field name="default_responsible_id"
+                               invisible="not is_internal"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

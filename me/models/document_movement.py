@@ -45,6 +45,14 @@ class Movement(models.Model):
     )
     legajo_number = fields.Char(string="File Number")
 
+    @api.onchange('destination_dependence_id')
+    def _onchange_destination_dependence_id(self):
+        dest = self.destination_dependence_id
+        if not dest or not dest.is_internal:
+            self.user_id = False
+        elif dest.default_responsible_id:
+            self.user_id = dest.default_responsible_id
+
     @api.depends('destination_dependence_id')
     def _compute_destination_abbreviation(self):
         for record in self:

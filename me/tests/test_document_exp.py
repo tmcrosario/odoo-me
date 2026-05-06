@@ -2719,3 +2719,132 @@ class TestCurrentHolder029(TransactionCase):
             [('current_holder_id', '=', self.user_b.id)]
         )
         self.assertNotIn(self.expediente, results_b)
+
+
+@tagged('post_install', '-at_install')
+class TestDefaultResponsible030(TransactionCase):
+    """Tests para #030 — onchange de default_responsible_id en destination_dependence_id."""
+
+    def setUp(self):
+        super().setUp()
+        self.dep_internal = self.env['tmc.dependence'].search(
+            [('is_internal', '=', True)], limit=1
+        )
+        if not self.dep_internal:
+            self.dep_internal = self.env['tmc.dependence'].create({
+                'name': 'Dependencia Interna Test 030',
+                'abbreviation': 'INT030',
+                'is_internal': True,
+            })
+        self.dep_external = self.env['tmc.dependence'].search(
+            [('is_internal', '=', False)], limit=1
+        )
+        if not self.dep_external:
+            self.dep_external = self.env['tmc.dependence'].create({
+                'name': 'Dependencia Externa Test 030',
+                'abbreviation': 'EXT030',
+                'is_internal': False,
+            })
+        self.dep_internal_no_config = self.env['tmc.dependence'].create({
+            'name': 'Interna sin responsable 030',
+            'abbreviation': 'INT030B',
+            'is_internal': True,
+        })
+        self.responsible_user = self.env['res.users'].with_context(
+            no_reset_password=True
+        ).create({
+            'name': 'Responsable por Defecto 030',
+            'login': 'responsible_030@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        self.dep_internal.default_responsible_id = self.responsible_user
+
+    def _new_movement(self, destination_id=None):
+        """Crea un movimiento in-memory para disparar onchanges."""
+        vals = {}
+        if destination_id:
+            vals['destination_dependence_id'] = destination_id
+        return self.env['me.document_movement'].new(vals)
+
+    def test_internal_with_config_prefills_user_id(self):
+        """Destino interno con responsable configurado → user_id se pre-carga."""
+        mov = self._new_movement()
+        mov.destination_dependence_id = self.dep_internal
+        mov._onchange_destination_dependence_id()
+        self.assertEqual(mov.user_id, self.responsible_user)
+
+    def test_internal_without_config_does_not_change_user_id(self):
+        """Destino interno sin responsable configurado → user_id no se modifica."""
+        mov = self._new_movement()
+        other_user = self.env.ref('base.user_admin')
+        mov.user_id = other_user
+        mov.destination_dependence_id = self.dep_internal_no_config
+        mov._onchange_destination_dependence_id()
+        self.assertEqual(mov.user_id, other_user)
+
+    def test_external_destination_clears_user_id(self):
+        """Destino externo → user_id queda vacío."""
+        mov = self._new_movement()
+        mov.user_id = self.responsible_user
+        mov.destination_dependence_id = self.dep_external
+        mov._onchange_destination_dependence_id()
+        self.assertFalse(mov.user_id)
+
+    def test_no_destination_clears_user_id(self):
+        """Sin destino seleccionado → user_id queda vacío."""
+        mov = self._new_movement()
+        mov.user_id = self.responsible_user
+        mov.destination_dependence_id = False
+        mov._onchange_destination_dependence_id()
+        self.assertFalse(mov.user_id)
+
+    def test_changing_to_internal_overrides_previous_user(self):
+        """Cambiar de externo a interno con config → user_id se actualiza."""
+        mov = self._new_movement()
+        mov.destination_dependence_id = self.dep_external
+        mov._onchange_destination_dependence_id()
+        self.assertFalse(mov.user_id)
+        mov.destination_dependence_id = self.dep_internal
+        mov._onchange_destination_dependence_id()
+        self.assertEqual(mov.user_id, self.responsible_user)
+
+    def test_default_responsible_field_on_dependence(self):
+        """El campo default_responsible_id se puede leer y escribir en tmc.dependence."""
+        self.assertEqual(self.dep_internal.default_responsible_id, self.responsible_user)
+        self.assertFalse(self.dep_external.default_responsible_id)
+
+    def test_poseedor_logic_unaffected(self):
+        """Regresión #029: current_holder_id sigue basado en user_id del último movimiento."""
+        doc_type = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test 030', 'abbreviation': 'JT030',
+        })
+        operator = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'Operador Test 030', 'login': 'op_030@test.com',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        today = fields.Date.today()
+        exp = self.env['me.document_exp'].with_user(operator).create({
+            'dependence_id': dep_dem.id,
+            'document_type_id': doc_type.id,
+            'number': 89001,
+            'period': str(today.year),
+            'jurisdiction_dependence': dep_jur.id,
+            'intake_date': today,
+            'date': today,
+            'fojas': 1,
+        })
+        self.env['me.document_movement'].create({
+            'expediente_id': exp.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': dep_dem.id,
+            'destination_dependence_id': self.dep_internal.id,
+            'fojas': 2,
+            'user_id': self.responsible_user.id,
+        })
+        self.assertEqual(exp.current_holder_id, self.responsible_user)

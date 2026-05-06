@@ -2207,21 +2207,18 @@ No implementado en #029 (posibles ideas futuras):
 
 
 --------------------------------------------------
-### #030 – Asignación automática/sugerida del responsable según dependencia destino
+### #030 – Asignación automática del responsable según dependencia destino
 --------------------------------------------------
 
-[IDEA]
+[DONE]
 
 Contexto:
-El campo user_id en me.document_movement representa al responsable operativo
-en destino del pase. Hoy se completa con el usuario que registra el movimiento
-(default=usuario actual). En la práctica, para dependencias internas frecuentes
-suele existir un responsable fijo conocido (ej. Dirección de Coordinación y
-Despacho → Ariel Sacco). El sistema no aprovecha esa información: el operador
-debe seleccionarlo manualmente en cada pase.
-
-El objetivo es evaluar una forma de pre-cargar o sugerir el user_id correcto
-cuando se elige una dependencia destino, reduciendo la fricción en la carga.
+Al registrar un pase en me.document_movement, el campo user_id (responsable
+en destino) se completa por defecto con el usuario actual. En la práctica,
+cada dependencia interna del Tribunal tiene una persona a cargo conocida.
+El objetivo es pre-cargar automáticamente user_id cuando el operador elige
+un destino interno con responsable configurado, reduciendo la fricción sin
+cambiar la lógica de poseedor una vez guardado el movimiento.
 
 ---- Separación conceptual ----
 
@@ -2230,74 +2227,62 @@ Esta task es distinta de:
 - #029 (indicador "En mi poder"): visibilidad; no asignación.
 - Notificaciones: fuera de alcance de esta task.
 
-La asignación que aquí se define afecta únicamente al momento de crear el
-movimiento, no a la lógica de poseedor actual (que sigue siendo user_id del
-movimiento con mayor id una vez guardado).
+La asignación afecta únicamente el momento de crear el movimiento.
+Una vez guardado, el poseedor actual sigue siendo user_id del movimiento
+con mayor id (definición de #027, sin cambios).
 
----- Decisiones abiertas ----
+---- Nota: por qué no se usa la sección "Employees" ----
+
+La sección Employees del sistema usa el modelo tmc.hr.employee (módulo tmc).
+Descartado como base para #030 por dos bloqueos:
+1. tmc.hr.employee no tiene user_id → sin vínculo a res.users.
+2. tmc.hr.office (donde se agrupan empleados) y tmc.dependence son jerarquías
+   paralelas y desconectadas → no existe mapeo entre oficina y dependencia.
+Conectarlos requeriría modificaciones invasivas al módulo tmc.
+
+---- Decisiones cerradas ----
 
 A. ¿Automática o sugerida?
-   - Automática: el campo se completa sin intervención del usuario;
-     puede editarse antes de guardar (onchange/default dinámico).
-   - Sugerida: el sistema muestra un hint o placeholder, pero el campo
-     queda vacío hasta que el usuario lo confirme.
-   Impacto UX y en la semántica del poseedor: si se guarda sin tocar el
-   campo, el responsable pre-asignado queda como poseedor desde ese momento.
+   Automática vía onchange en destination_dependence_id: al cambiar el destino,
+   user_id se pre-completa con el responsable configurado. Editable antes de
+   guardar. Si el operador cambia user_id, el sistema no lo revierte.
 
-B. ¿Dónde configurar la relación dependencia → responsable por defecto?
-   Opciones:
-   1. Campo default_responsible_id en tmc.dependence vía _inherit en me
-      (un único responsable por dependencia; mínimo impacto de modelo).
-   2. Modelo nuevo me.dependence_default_responsible (Many2one tmc.dependence
-      + Many2one res.users); permite múltiples responsables por dependencia.
-   3. Config data en XML (hard-coded, no mantenible por el usuario).
-   La elección depende de la decisión C.
+B. ¿Dónde configurar la relación dependencia → responsable?
+   Campo default_responsible_id (Many2one res.users) en tmc.dependence,
+   extendido desde me en me/models/dependence_ext.py (donde ya vive is_internal).
+   Mismo patrón ya establecido en el módulo.
 
-C. ¿Una dependencia puede tener más de un posible responsable?
-   - Si la respuesta es sí → opción B.2 (tabla separada con posibles candidatos)
-     y la asignación automática no es determinista: requiere algún criterio de
-     selección o se convierte en sugerida.
-   - Si la respuesta es no → opción B.1 (campo único en la dependencia).
+C. ¿Una dependencia puede tener más de un responsable?
+   No para MVP. Uno a uno. Si surge la necesidad futura de múltiples candidatos
+   se abre task separada para migrar a modelo intermedio.
 
-D. ¿Quién puede mantener esa configuración?
-   Opciones: solo me.group_manager, o también tmc.group_manager,
-   o un grupo de configuración separado.
-   Impacto en vistas de settings / formulario de dependencia.
+D. ¿Quién puede mantener la configuración?
+   me.group_manager. El campo se expone en el formulario de la dependencia,
+   visible/editable solo para managers.
 
-E. ¿Aplica a todas las dependencias o solo a las internas?
-   Las dependencias externas (is_internal=False) también pueden tener
-   un responsable de contacto designado, o no. A definir.
+E. ¿Solo dependencias internas?
+   Sí. Si is_internal=False, user_id queda vacío al cambiar el destino.
+   El campo default_responsible_id se oculta en dependencias externas.
 
----- Impacto técnico estimado (sujeto a decisión) ----
+---- Impacto técnico ----
 
-- models:
-    · Opción B.1: me/_inherit de tmc.dependence → campo default_responsible_id
-    · Opción B.2: modelo nuevo me.dependence_default_responsible
-- views:
-    · Formulario/configuración de la dependencia para que el manager asigne el
-      responsable por defecto.
-    · me.document_movement: onchange en destination_dependence_id para pre-cargar
-      user_id según la config.
-- workflows:
-    · Flujo de carga de pase: destination_dependence_id cambia → user_id se
-      completa automáticamente o se sugiere.
-    · Poseedor actual (#027/#028/#029): sin cambios de lógica; solo cambia cómo
-      se popula user_id al crear el movimiento.
-- tests:
-    · Onchange: destino con responsable configurado → user_id pre-cargado.
-    · Destino sin responsable configurado → user_id queda con default actual.
-    · Regresión: #027 (poseedor puede agregar pase) y #029 (current_holder_id)
-      deben seguir pasando sin cambios.
-- documentación:
-    · domain-rules/me/workflows.md: Workflow 5, sección de asignación de responsable.
-    · me/ai-context.md: campo user_id en me.document_movement.
-    · docs/todo.md: esta task.
+- me/models/dependence_ext.py: campo default_responsible_id (Many2one res.users)
+- me/models/document_movement.py: @api.onchange('destination_dependence_id')
+    · destino interno con config → user_id = default_responsible_id
+    · destino externo o sin destino → user_id = False
+    · destino interno sin config → user_id sin cambio
+- me/views/dependence_views.xml: vista heredada de tmc.dependence (nuevo archivo)
+    · tab "ME Configuration" visible solo para me.group_manager
+    · is_internal readonly + default_responsible_id editable (invisible si externo)
+- me/__manifest__.py: dependence_views.xml agregado a data
+- me/i18n/es_AR.po: "Default Responsible" → "Responsable por Defecto"
+- me/tests/test_document_exp.py: clase TestDefaultResponsible030 (8 tests)
 
 ---- Dependencias ----
 
-- #002: modelo base de me.document_movement.
-- #027: define "poseedor actual"; la asignación automática lo alimenta, no lo redefine.
-- #028: corrección post-creación; independiente.
-- #029: current_holder_id computed desde user_id; funciona igual con asignación auto.
+- #002: modelo base de me.document_movement
+- #027: define "poseedor actual"; la asignación automática lo alimenta, no lo redefine
+- #028: corrección post-creación; independiente
+- #029: current_holder_id computed desde user_id; sin cambios de lógica
 
 --------------------------------------------------

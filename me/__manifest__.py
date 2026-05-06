@@ -10,6 +10,7 @@
         "security/me_groups.xml",
         "security/ir.model.access.csv",
         "data/dependence_data.xml",
+        "views/dependence_views.xml",
         "views/movement_views.xml",
         "views/document_exp_views.xml",
         "views/me_menus.xml",

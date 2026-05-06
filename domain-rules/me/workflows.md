@@ -243,6 +243,18 @@ desde la pestaña "Movimientos" en el formulario.
   → `me/models/document_exp.py` `_compute_current_holder_id`
 - Filtro "En mi poder" en search view: domain `[('current_holder_id', '=', uid)]`.
 
+**Observed in code (post #030):**
+- Campo `default_responsible_id` (Many2one res.users) en `tmc.dependence`,
+  extendido desde `me/models/dependence_ext.py`. Solo relevante cuando `is_internal=True`.
+  Configurable por `me.group_manager` desde el formulario de la dependencia.
+- `@api.onchange('destination_dependence_id')` en `me.document_movement`:
+  · Destino interno con config → user_id = default_responsible_id.
+  · Destino externo o sin destino → user_id = False.
+  · Destino interno sin config → user_id sin cambio.
+  La lógica de poseedor (#027/#028/#029) no cambia: solo cambia cómo se popula
+  user_id al crear el movimiento, no el comportamiento post-guardado.
+  → `me/models/document_movement.py` `_onchange_destination_dependence_id`
+
 **Uncertain / pending definition:**
 - No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.

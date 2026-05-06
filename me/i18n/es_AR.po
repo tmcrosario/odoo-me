@@ -491,6 +491,11 @@ msgid "File number can only be set on movements with destination 'Adjunto a Lega
 msgstr "El número de legajo solo puede modificarse en movimientos con destino 'Adjunto a Legajo'."
 
 #. module: me
+#: model:ir.model.fields,field_description:me.field_tmc_dependence__default_responsible_id
+msgid "Default Responsible"
+msgstr "Responsable por Defecto"
+
+#. module: me
 #: model:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "In My Possession"
 msgstr "En mi poder"
