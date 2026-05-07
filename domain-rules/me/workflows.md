@@ -232,8 +232,10 @@ desde la pestaña "Movimientos" en el formulario.
   → `me/models/document_exp.py` `write()`
 
 **Observed in code (post #028):**
-- Corrección del último movimiento manual: el poseedor actual puede corregir fojas,
-  user_id y legajo_number del movimiento con mayor id (solo si es manual, no automático).
+- Corrección del último movimiento manual: el poseedor actual puede corregir el
+  movimiento con mayor id (solo si es manual, no automático).
+  Campos corregibles por operador: fojas, user_id, legajo_number (este último solo si destino=LEG).
+  Campos bloqueados para operador: origin_dependence_id, destination_dependence_id, date.
   → `me/models/document_movement.py` `write()`
 
 **Observed in code (post #029):**

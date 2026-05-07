@@ -362,9 +362,13 @@ me.document_movement       raa.registry_aa
     │
     │ Many2one (origin / destination)
     ▼
-tmc.dependence  ← extended by me via _inherit: adds is_internal (Boolean)
+tmc.dependence  ← extended by me via _inherit: adds is_internal (Boolean) and
+                  default_responsible_id (Many2one res.users) — see dependence_ext.py.
                   Internal dependences: TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC, ARCH, LEG
-                  All others (DEM, CM, jurisdictions) are external (is_internal=False)
+                  All others (DEM, CM, jurisdictions) are external (is_internal=False).
+                  View extension: me/views/dependence_views.xml inherits tmc.dependence form
+                  and adds "ME Configuration" tab (visible only to me.group_manager) with
+                  is_internal (readonly) and default_responsible_id (editable, hidden when external).
 ```
 
 
