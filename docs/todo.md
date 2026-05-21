@@ -2374,3 +2374,66 @@ E. ¿Performance?
 - #029 (current_holder_id): campo que alimentaría "En mi poder" en el panel
 
 --------------------------------------------------
+
+
+--------------------------------------------------
+### #032 – Validación del número de expediente: máximo 6 dígitos
+--------------------------------------------------
+
+[TODO]
+
+Contexto:
+El campo number de me.document_exp (heredado de tmc.document vía _inherits)
+representa el número de expediente. Por convención, los números válidos son
+entre 1 y 999999 (6 dígitos máximo). Ejemplo válido: EXP-123456-TMC/2026.
+Ejemplo inválido: EXP-1234567-TMC/2026.
+
+tmc.document ya tiene _check_number con max_number = 999999 para EXP, pero
+el mensaje de error es "Invalid number" — genérico, sin contexto para el
+operador de ME. Además no hay validación de frontend (el campo acepta cualquier
+entero sin límite visual).
+
+Esta task agrega: constraint específica en me.document_exp con mensaje claro
+en inglés + traducción, y límites de valor en la vista de formulario.
+
+---- Decisiones cerradas ----
+
+1. Rango válido: 1 ≤ number ≤ 999999.
+   Cero y negativos son inválidos. El límite superior de 6 dígitos es 999999.
+
+2. Implementación dual:
+   - Backend: @api.constrains('number') en me.document_exp con mensaje
+     específico para ME (distinto del genérico de tmc.document).
+   - Frontend: atributos min="1" max="999999" en el campo number del form.
+
+3. El constraint de tmc.document sigue activo. El de me.document_exp
+   es una capa adicional más temprana con mejor mensaje, no un reemplazo.
+
+4. Mensaje de error en código (inglés, traducible):
+   "Expediente number must be between 1 and 999,999 (6 digits maximum)."
+   Traducción en es_AR.po: "El número de expediente debe estar entre 1 y 999.999 (máximo 6 dígitos)."
+
+5. No se tocan otros tipos de documento (ACT, CONV, etc.).
+   La constraint en me.document_exp aplica solo al modelo me.document_exp,
+   que registra únicamente expedientes (EXP).
+
+---- Impacto técnico ----
+
+- me/models/document_exp.py:
+    · @api.constrains('number') → _check_number_exp()
+    · condición: 1 ≤ number ≤ 999999
+- me/views/document_exp_views.xml:
+    · campo number con min="1" max="999999" (atributos de vista Integer field)
+- me/i18n/es_AR.po: nuevo msgid/msgstr para el mensaje de error
+- me/tests/test_document_exp.py:
+    · test: number=999999 → válido
+    · test: number=1000000 → ValidationError
+    · test: number=0 → ValidationError
+    · test: number negativo → ValidationError (si la vista lo permite)
+
+---- Dependencias ----
+
+- #002: modelo base de me.document_movement (define el patrón de constraints)
+- tmc.document._check_number: constraint preexistente en la capa base; sigue activa
+
+--------------------------------------------------
