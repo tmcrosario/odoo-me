@@ -2377,6 +2377,91 @@ E. ¿Performance?
 
 
 --------------------------------------------------
+### #033 – Revisión del filtrado de jurisdicciones para expedientes del DEM
+--------------------------------------------------
+
+[IDEA]
+
+Problema observado:
+Al cargar un expediente del DEM, el campo "Jurisdiction" no muestra todas las
+secretarías esperadas del nomenclador. Algunas opciones que deberían aparecer
+están ausentes.
+
+Contexto técnico:
+El campo jurisdiction_dependence del expediente muestra las opciones calculadas
+por allowed_jurisdiction_ids, que es un campo computed no stored.
+
+La lógica actual en me/models/document_exp.py (_compute_allowed_jurisdictions):
+
+  adm = env.ref('tmc_data.tmc_dependence_adm')
+  orders = tmc.dependence_order.search([('parent_id', '=', adm.id)])
+  jurisdictions = orders.mapped('dependence_id')
+
+Es decir: el dominio de opciones se construye buscando los hijos directos de
+tmc_dependence_adm en la tabla tmc.dependence_order. Si alguna secretaría
+no tiene una entrada en esa tabla con parent_id = adm, no aparece como opción.
+
+---- Hipótesis a investigar ----
+
+A. Datos incompletos en tmc.dependence_order:
+   Algunas secretarías existen en tmc.dependence pero no tienen entrada en
+   tmc.dependence_order con parent_id = tmc_dependence_adm.
+   → Solución: agregar los registros faltantes (tarea de datos, no de código).
+
+B. Referencia incorrecta a tmc_dependence_adm:
+   El XML ID tmc_data.tmc_dependence_adm podría apuntar a un nodo que no
+   es el padre de todas las secretarías esperadas.
+   → Solución: revisar qué nodo representa ADM y comparar con el árbol real.
+
+C. Estructura jerárquica no plana (niveles intermedios):
+   Puede que algunas secretarías estén definidas como hijos de un nodo
+   intermedio (no directamente de ADM), y la query solo busca hijos directos.
+   → Solución: revisar si la query debería ser recursiva o buscar en varios niveles.
+
+D. Inconsistencia de datos (tmc.dependence vs tmc.dependence_order):
+   tmc.dependence tiene registros que no están representados en
+   tmc.dependence_order → son visibles en el formulario de dependencias
+   pero nunca aparecen como opciones de jurisdicción.
+   → Diagnóstico: comparar tmc.dependence con in_actual_nomenclator=True
+     vs los nodos en tmc.dependence_order donde parent_id = adm.
+
+---- Alcance de la investigación ----
+
+1. Confirmar qué secretarías debería ver el operador (fuente: nomenclador oficial).
+2. Comparar contra lo que realmente retorna _compute_allowed_jurisdictions
+   ejecutando la query directamente en la base:
+     SELECT d.abbreviation, d.name FROM tmc_dependence d
+     JOIN tmc_dependence_order o ON o.dependence_id = d.id
+     WHERE o.parent_id = (SELECT id FROM tmc_dependence WHERE abbreviation = 'ADM' LIMIT 1)
+3. Identificar qué nodos faltan y por qué (hipótesis A, B, C o D).
+4. Determinar si el fix es de datos (tmc_data) o de lógica (me/models).
+
+---- Clasificación esperada del problema (a confirmar) ----
+
+- Bug de código: si la query es incorrecta (ej. falta un nivel de árbol).
+- Inconsistencia de datos: si falta un registro en tmc.dependence_order.
+- Comportamiento intencional mal documentado: si el filtro es deliberadamente
+  más estrecho que el nomenclador completo y no hay documentación de esa decisión.
+
+---- Impacto técnico estimado (sujeto a causa) ----
+
+- Si datos: tmc_data → agregar registros en dependence_order_data.xml (o equivalente).
+  Sin cambios de código en me.
+- Si lógica: me/models/document_exp.py → ajustar _compute_allowed_jurisdictions.
+  Tests: TestJurisdictionConditional012 puede ser punto de partida.
+- Si documentación: domain-rules/me/workflows.md + me/ai-context.md.
+
+---- Dependencias ----
+
+- domain-rules/me/workflows.md sección "Jurisdiction domain": describe el
+  comportamiento actual esperado (~21 primeros niveles del nomenclador).
+- me/models/document_exp.py: _compute_allowed_jurisdictions (línea ~270).
+- tmc_data: fuente de tmc_dependence_adm y datos del árbol.
+
+--------------------------------------------------
+
+
+--------------------------------------------------
 ### #032 – Validación del número de expediente: máximo 6 dígitos
 --------------------------------------------------
 
