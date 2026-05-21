@@ -2286,3 +2286,91 @@ E. ¿Solo dependencias internas?
 - #029: current_holder_id computed desde user_id; sin cambios de lógica
 
 --------------------------------------------------
+
+
+--------------------------------------------------
+### #031 – Search Panel en la vista list de expedientes
+--------------------------------------------------
+
+[IDEA]
+
+Contexto:
+La vista list de me.document_exp ya tiene una search view con filtros predefinidos:
+"In My Possession", "With Institutional Reentry", "Currently at Tribunal",
+"Licitaciones", "Originated at TMC". Estos filtros son funcionales pero están
+ocultos detrás del desplegable de la barra de búsqueda: el usuario los activa
+uno a uno y no ve de un vistazo qué está activo.
+
+El search panel de Odoo (<searchpanel>) agrega un panel lateral visible siempre
+en la vista list, con categorías (navegación excluyente) y filtros (checkboxes
+acumulables) que permiten explorar los registros sin abrir el dropdown de búsqueda.
+
+El objetivo es evaluar si conviene agregar este panel para mejorar la exploración
+y el filtrado rápido de expedientes.
+
+---- Separación conceptual ----
+
+Esta task es exclusivamente de UX de la vista list. No afecta modelos, permisos
+ni lógica de negocio. Los campos que alimentarían el panel ya existen:
+is_currently_internal, has_reentry, is_licitacion, current_holder_id, dependence_id,
+main_topic_ids. No se necesita código nuevo en models.
+
+---- Decisiones abiertas ----
+
+A. ¿Complementa o reemplaza parcialmente los filtros actuales?
+   - Complemento: el search panel convive con los filtros del dropdown.
+     Más claro para el usuario, sin ruptura de funcionalidad existente.
+   - Reemplazo parcial: los filtros booleanos simples se mueven al panel
+     y se eliminan del dropdown.
+   La elección afecta si se modifica o solo se extiende la search view existente.
+
+B. ¿Qué dimensiones incluir en el panel?
+   Candidatos y tipo de elemento:
+
+   Como filtros (Boolean/domain, checkboxes):
+   - "En mi poder" (current_holder_id = uid) → campo stored computed (#029)
+   - "Actualmente en el Tribunal" (is_currently_internal = True) → stored computed
+   - "Licitaciones" (is_licitacion = True) → stored computed
+   - "Originados en TMC" (dependence_id.abbreviation = 'TMC') → domain
+
+   Como categoría (Many2one/select, navegación excluyente):
+   - Origen (dependence_id) → puede tener muchos valores; requiere evaluación
+   - Tema principal (main_topic_ids) → Many2many; el panel soporta M2M con limitaciones
+
+   Candidatos descartados provisoriamente:
+   - "With Institutional Reentry" → poco usado en el día a día; más de auditoría
+   - Jurisdicción → demasiados valores para un panel lateral útil
+
+C. ¿Categoría o filtro para "origen"?
+   Como categoría: el usuario selecciona un origen y ve solo esos expedientes.
+     Claro, pero excluye ver "todos" salvo que haga click en "All".
+   Como filtro checkbox: puede combinar varios orígenes.
+     Más flexible pero la lista puede ser larga si hay muchas dependencias.
+   Requiere evaluar cuántos orígenes distintos existen en producción.
+
+D. ¿Aplica a operadores, managers o ambos?
+   Probable: ambos. El panel no implica permisos adicionales — solo visualización.
+   No hay razón para restringir por grupo. A confirmar.
+
+E. ¿Performance?
+   Los campos usados como filtros booleanos son stored computed → sin problema.
+   dependence_id como categoría carga todos los valores distintos con conteo:
+   impacto mínimo si el número de orígenes es razonable (<50 registros en tmc.dependence).
+   main_topic_ids como categoría M2M en panel puede tener comportamiento impredecible
+   en Odoo 19: requiere prueba antes de incluir.
+
+---- Impacto técnico estimado (sujeto a decisión) ----
+
+- views: solo me/views/document_exp_views.xml
+    · agregar <searchpanel> dentro del <search> existente
+    · sin cambios en models, security, tests ni i18n
+- performance: bajo para campos stored computed; requiere evaluación para Many2one
+  con muchos valores y para M2M (main_topic_ids)
+- sin impacto en lógica de negocio ni en guards de write()
+
+---- Dependencias ----
+
+- #022–#024 (filtros existentes): punto de partida que este panel extiende o reorganiza
+- #029 (current_holder_id): campo que alimentaría "En mi poder" en el panel
+
+--------------------------------------------------
