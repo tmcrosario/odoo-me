@@ -125,6 +125,9 @@
         <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <search>
+                <searchpanel>
+                    <field name="dependence_id" string="Origen" select="one"/>
+                </searchpanel>
                 <field name="name"/>
                 <field name="number"/>
                 <filter string="In My Possession" name="in_my_possession"
