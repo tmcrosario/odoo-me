@@ -2722,6 +2722,87 @@ class TestCurrentHolder029(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
+class TestNumberRange032(TransactionCase):
+    """Tests para #032 — número de expediente: rango válido 1 ≤ number ≤ 999999."""
+
+    def setUp(self):
+        super().setUp()
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test 032', 'abbreviation': 'EXP',
+            })
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'Dependencia DEM Test 032', 'abbreviation': 'DEM',
+            })
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test 032', 'abbreviation': 'JT032',
+        })
+        self.today = fields.Date.today()
+        self.current_year = str(self.today.year)
+
+    def _make_exp(self, number):
+        return self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': number,
+            'period': self.current_year,
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 1,
+        })
+
+    def test_number_1_is_valid(self):
+        """Límite inferior: number=1 es válido."""
+        exp = self._make_exp(1)
+        self.assertEqual(exp.number, 1)
+
+    def test_number_999999_is_valid(self):
+        """Límite superior: number=999999 es válido."""
+        exp = self._make_exp(999999)
+        self.assertEqual(exp.number, 999999)
+
+    def test_number_typical_is_valid(self):
+        """Número típico de 6 dígitos es válido."""
+        exp = self._make_exp(123456)
+        self.assertEqual(exp.number, 123456)
+
+    def test_number_1000000_raises(self):
+        """number=1000000 (7 dígitos) lanza ValidationError."""
+        with self.assertRaises(ValidationError):
+            self._make_exp(1000000)
+
+    def test_number_0_raises(self):
+        """number=0 lanza ValidationError."""
+        with self.assertRaises(ValidationError):
+            self._make_exp(0)
+
+    def test_number_negative_raises(self):
+        """number negativo lanza ValidationError."""
+        with self.assertRaises(ValidationError):
+            self._make_exp(-1)
+
+    def test_write_invalid_number_raises(self):
+        """Editar number a valor inválido vía write() también lanza ValidationError."""
+        exp = self._make_exp(100)
+        with self.assertRaises(ValidationError):
+            exp.sudo().write({'number': 9999999})
+
+    def test_write_valid_number_passes(self):
+        """Editar number a valor válido vía write() no lanza error."""
+        exp = self._make_exp(100)
+        exp.sudo().write({'number': 500})
+        self.assertEqual(exp.number, 500)
+
+
+@tagged('post_install', '-at_install')
 class TestDefaultResponsible030(TransactionCase):
     """Tests para #030 — onchange de default_responsible_id en destination_dependence_id."""
 

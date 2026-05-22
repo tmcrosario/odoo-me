@@ -2465,7 +2465,7 @@ D. Inconsistencia de datos (tmc.dependence vs tmc.dependence_order):
 ### #032 – Validación del número de expediente: máximo 6 dígitos
 --------------------------------------------------
 
-[TODO]
+[DONE]
 
 Contexto:
 El campo number de me.document_exp (heredado de tmc.document vía _inherits)
@@ -2487,8 +2487,11 @@ en inglés + traducción, y límites de valor en la vista de formulario.
    Cero y negativos son inválidos. El límite superior de 6 dígitos es 999999.
 
 2. Implementación dual:
-   - Backend: @api.constrains('number') en me.document_exp con mensaje
-     específico para ME (distinto del genérico de tmc.document).
+   - Backend: _validate_number() helper llamado desde create() y write(),
+     con mensaje específico para ME. @api.constrains no es viable porque
+     number es un campo delegado vía _inherits (pertenece a tmc.document).
+     @api.onchange('number') → _onchange_number() como feedback temprano
+     en el cliente (warning no bloqueante; no reemplaza la validación de backend).
    - Frontend: atributos min="1" max="999999" en el campo number del form.
 
 3. El constraint de tmc.document sigue activo. El de me.document_exp
@@ -2504,17 +2507,30 @@ en inglés + traducción, y límites de valor en la vista de formulario.
 
 ---- Impacto técnico ----
 
+Nota: @api.constrains('number') no aplica para campos delegados vía _inherits
+(el campo number pertenece a tmc.document, no a me.document_exp). Se usó en
+cambio un helper explícito llamado desde create() y write().
+
 - me/models/document_exp.py:
-    · @api.constrains('number') → _check_number_exp()
-    · condición: 1 ≤ number ≤ 999999
+    · _validate_number(number): helper que lanza ValidationError si 1 ≤ number ≤ 999999 no se cumple
+    · llamado desde create() (antes del super, por cada vals en vals_list)
+    · llamado desde write() (primera línea, antes del guard de permisos)
+    · @api.onchange('number') → _onchange_number(): feedback visual inmediato en el cliente
+      (warning no bloqueante; la validación real es en create/write)
+    · Nota: if self.number es falsy para number=0 → el warning no se muestra para 0,
+      pero el backend lo captura igualmente. Aceptable dado required="1" en vista.
 - me/views/document_exp_views.xml:
     · campo number con min="1" max="999999" (atributos de vista Integer field)
-- me/i18n/es_AR.po: nuevo msgid/msgstr para el mensaje de error
-- me/tests/test_document_exp.py:
-    · test: number=999999 → válido
-    · test: number=1000000 → ValidationError
-    · test: number=0 → ValidationError
-    · test: number negativo → ValidationError (si la vista lo permite)
+- me/i18n/es_AR.po: msgid/msgstr para "Invalid Number" y mensaje de error completo
+- me/tests/test_document_exp.py (clase TestNumberRange032, 8 tests):
+    · number=1 → válido
+    · number=999999 → válido
+    · number típico (12345) → válido
+    · number=1000000 → ValidationError
+    · number=0 → ValidationError
+    · number negativo → ValidationError
+    · write con número inválido → ValidationError
+    · write con número válido → sin error
 
 ---- Dependencias ----
 

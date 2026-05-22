@@ -496,6 +496,15 @@ msgid "Default Responsible"
 msgstr "Responsable por Defecto"
 
 #. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "Invalid Number"
+msgstr "Número inválido"
+
+msgid "Expediente number must be between 1 and 999,999 (6 digits maximum)."
+msgstr "El número de expediente debe estar entre 1 y 999.999 (máximo 6 dígitos)."
+
+#. module: me
 #: model:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "In My Possession"
 msgstr "En mi poder"

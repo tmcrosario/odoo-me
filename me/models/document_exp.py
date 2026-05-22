@@ -291,6 +291,13 @@ class DocumentExp(models.Model):
 
     _ALLOWED_DEPENDENCE_ABBREVIATIONS = frozenset({'DEM', 'TMC', 'CM'})
 
+    def _validate_number(self, number):
+        """Raise ValidationError if number is outside the valid range 1–999999."""
+        if not (1 <= number <= 999999):
+            raise exceptions.ValidationError(
+                _("Expediente number must be between 1 and 999,999 (6 digits maximum).")
+            )
+
     def _validate_dependence(self, dependence_id_val):
         """Valida que la dependencia de origen sea DEM, TMC o CM."""
         if not dependence_id_val:
@@ -387,6 +394,16 @@ class DocumentExp(models.Model):
             }
         }
 
+    @api.onchange('number')
+    def _onchange_number(self):
+        if self.number and not (1 <= self.number <= 999999):
+            return {
+                'warning': {
+                    'title': _('Invalid Number'),
+                    'message': _("Expediente number must be between 1 and 999,999 (6 digits maximum)."),
+                }
+            }
+
     @api.onchange('dependence_id', 'document_type_id', 'period', 'number', 'jurisdiction_dependence')
     def _onchange_document_data(self):
         """Validar que el expediente no exista cuando se completan los campos básicos"""
@@ -420,6 +437,8 @@ class DocumentExp(models.Model):
                     _("The document date is required.")
                 )
             dates.append(vals.pop('date'))
+            if 'number' in vals:
+                self._validate_number(vals['number'])
             if 'dependence_id' in vals:
                 self._validate_dependence(vals['dependence_id'])
             # Auto-assign jurisdiction_dependence for TMC and CM when not provided.
@@ -513,6 +532,8 @@ class DocumentExp(models.Model):
         self.document_id.invalidate_recordset(['date'])
 
     def write(self, vals):
+        if 'number' in vals:
+            self._validate_number(vals['number'])
         if (
             not self.env.context.get('me_create_in_progress')
             and not self.env.user.has_group('me.group_manager')

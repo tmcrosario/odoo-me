@@ -82,7 +82,7 @@ Own fields (defined in `me.document_exp`):
 | `intake_date` | Date | Yes | date of physical receipt at Mesa de Entradas; no default; future dates rejected |
 | `external_key` | Char | No | identifier used by the Municipality |
 | `fojas` | Yes (view) | Integer; number of pages; default=0; 0 is valid; required="1" in view only — Integer required=True at model level would reject 0 |
-| `number` | Integer | Yes | inherited from tmc.document, required enforced here |
+| `number` | Integer | Yes | inherited from tmc.document; range 1–999999 enforced via `_validate_number()` called from `create()`/`write()`; `@api.onchange('number')` for immediate UI warning; `min="1" max="999999"` in form view; note: `@api.constrains` does not fire for `_inherits`-delegated fields |
 | `is_valid` | Boolean | No | computed: True when 5 fields complete (dependence_id, document_type_id, number, period, jurisdiction_dependence) |
 | `is_origin_complete` | Boolean | No | computed: True when 3 fields complete (dependence_id, number, period); controls UI progression |
 | `dependence_abbreviation` | Char | No | computed proxy: `dependence_id.abbreviation or ''`; declared `invisible="1"` in view; used in view invisible/readonly expressions (dot-notation on _inherits fields is not reliable client-side) |
