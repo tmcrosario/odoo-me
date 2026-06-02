@@ -12,7 +12,7 @@
                         <!-- Dynamic title -->
                         <h2 class="text-center" t-if="data.get('maximum')">
                             Listado de Actos Administrativos faltantes hasta el Nº
-                            <t t-esc="data['maximum']"/>
+                            <t t-out="data['maximum']"/>
                         </h2>
                         <h2 class="text-center" t-else="">
                             Listado de Actos Administrativos faltantes
@@ -22,15 +22,15 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td><strong>Período:</strong></td>
-                                <td><t t-esc="o.period"/></td>
+                                <td><t t-out="o.period"/></td>
                             </tr>
                             <tr>
                                 <td><strong>Dependencia:</strong></td>
-                                <td><t t-esc="o.dependence_id.name"/></td>
+                                <td><t t-out="o.dependence_id.name"/></td>
                             </tr>
                             <tr>
                                 <td><strong>Tipo de Documento:</strong></td>
-                                <td><t t-esc="o.document_type_id.name"/></td>
+                                <td><t t-out="o.document_type_id.name"/></td>
                             </tr>
                         </table>
 
@@ -40,14 +40,14 @@
                         <t t-if="data.get('last')">
                             <p>
                                 <strong>Último Ingresado:</strong>
-                                <t t-esc="data['last']"/>
+                                <t t-out="data['last']"/>
                             </p>
                         </t>
 
                         <!-- Missing numbers loop -->
                         <t t-if="data.get('missing')">
                             <t t-foreach="data['missing']" t-as="number">
-                                <p><t t-esc="number"/></p>
+                                <p><t t-out="number"/></p>
                             </t>
                         </t>
                         <t t-elif="data.get('last')">
