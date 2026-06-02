@@ -16,7 +16,6 @@ def as_range(iterable):
 
 
 class Entry(models.TransientModel):
-
     _name = "raa.entry"
     _description = "Wizard to load administrative acts"
 
@@ -78,13 +77,13 @@ class Entry(models.TransientModel):
             sticky = False
 
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': title,
-                'message': message,
-                'type': notif_type,
-                'sticky': sticky,
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": title,
+                "message": message,
+                "type": notif_type,
+                "sticky": sticky,
             },
         }
 
@@ -120,7 +119,9 @@ class Entry(models.TransientModel):
 
     def generate_report(self):
         data = self.search_missing()
-        return self.env.ref('raa.action_missing_raa_report').report_action(self, data=data)
+        return self.env.ref("raa.action_missing_raa_report").report_action(
+            self, data=data
+        )
 
     def create_registry_aa(self):
         raa_ids = []
@@ -160,24 +161,24 @@ class Entry(models.TransientModel):
 
         if raa_ids:
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _("Success"),
-                    'message': _("Registries were created successfully"),
-                    'type': 'success',
-                    'sticky': False,
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Success"),
+                    "message": _("Registries were created successfully"),
+                    "type": "success",
+                    "sticky": False,
                 },
             }
         else:
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _("Info"),
-                    'message': _("No new registries were created. They already exist."),
-                    'type': 'warning',
-                    'sticky': False,
+                "type": "ir.actions.client",
+                "tag": "display_notification",
+                "params": {
+                    "title": _("Info"),
+                    "message": _("No new registries were created. They already exist."),
+                    "type": "warning",
+                    "sticky": False,
                 },
             }
 

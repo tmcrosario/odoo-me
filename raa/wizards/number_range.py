@@ -2,7 +2,6 @@ from odoo import _, api, exceptions, fields, models
 
 
 class NumberRange(models.TransientModel):
-
     _name = "raa.number_range"
     _description = "Administrative Acts Ranges"
 

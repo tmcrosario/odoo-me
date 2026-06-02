@@ -1,19 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-
     <!-- TREE VIEW -->
-    <record id="number_range_view_tree"
-        model="ir.ui.view">
+    <record id="number_range_view_tree" model="ir.ui.view">
         <field name="name">raa.number_range.view.tree</field>
         <field name="model">raa.number_range</field>
-        <field name="arch"
-            type="xml">
-            <list string="Document Range"
-                editable="bottom">
+        <field name="arch" type="xml">
+            <list string="Document Range" editable="bottom">
                 <field name="number_from" />
                 <field name="number_to" />
             </list>
         </field>
     </record>
-
 </odoo>

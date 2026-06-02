@@ -1,59 +1,56 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-
     <!-- WINDOW ACTION -->
-    <record id="registry_aa_action_view_form"
-        model="ir.actions.act_window">
+    <record id="registry_aa_action_view_form" model="ir.actions.act_window">
         <field name="name">Administrative Act Registries</field>
         <field name="res_model">raa.registry_aa</field>
         <field name="view_mode">list</field>
     </record>
 
     <!-- TREE VIEW -->
-    <record id="registry_aa_view_tree"
-        model="ir.ui.view">
+    <record id="registry_aa_view_tree" model="ir.ui.view">
         <field name="name">raa.registry_aa.view.tree</field>
         <field name="model">raa.registry_aa</field>
-        <field name="arch"
-            type="xml">
+        <field name="arch" type="xml">
             <list default_order="entry_date desc">
                 <field name="document_id" />
                 <field name="entry_date" />
                 <field name="dependence_id" />
-                <field name="create_uid"
-                    string="Ingresado por" />
+                <field name="create_uid" string="Ingresado por" />
             </list>
         </field>
     </record>
 
     <!-- SEARCH VIEW -->
-    <record id="registry_aa_view_search"
-        model="ir.ui.view">
+    <record id="registry_aa_view_search" model="ir.ui.view">
         <field name="name">raa.registry_aa.view.search</field>
         <field name="model">raa.registry_aa</field>
-        <field name="arch"
-            type="xml">
+        <field name="arch" type="xml">
             <search>
-                <field name="document_type_id"
-                    filter_domain="[('document_type_id', '=', self)]" />
-                <field name="number"
-                    filter_domain="[('number', '=', self)]" />
-                <field name="period"
-                    filter_domain="[('period', '=', self)]" />
-                <field name="dependence_id"
-                    filter_domain="[('dependence_id', 'ilike', self)]" />
-                <field name="entry_date"
-                    filter_domain="[('entry_date', '>=', self)]" />
+                <field
+                    name="document_type_id"
+                    filter_domain="[('document_type_id', '=', self)]"
+                />
+                <field name="number" filter_domain="[('number', '=', self)]" />
+                <field name="period" filter_domain="[('period', '=', self)]" />
+                <field
+                    name="dependence_id"
+                    filter_domain="[('dependence_id', 'ilike', self)]"
+                />
+                <field name="entry_date" filter_domain="[('entry_date', '>=', self)]" />
                 <group>
-                    <filter name="group_by_dependence"
+                    <filter
+                        name="group_by_dependence"
                         string="Dependencia"
-                        context="{'group_by':'dependence_id'}" />
-                    <filter name="group_by_period"
+                        context="{'group_by':'dependence_id'}"
+                    />
+                    <filter
+                        name="group_by_period"
                         string="Período"
-                        context="{'group_by':'period'}" />
+                        context="{'group_by':'period'}"
+                    />
                 </group>
             </search>
         </field>
     </record>
-
 </odoo>

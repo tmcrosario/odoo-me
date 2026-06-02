@@ -1,18 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <template id="missing_raa_report">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-
                         <!-- Print header subtitle -->
                         <h4 class="text-center">Reporte de Mesa de Entradas</h4>
 
                         <!-- Dynamic title -->
                         <h2 class="text-center" t-if="data.get('maximum')">
                             Listado de Actos Administrativos faltantes hasta el Nº
-                            <t t-out="data['maximum']"/>
+                            <t t-out="data['maximum']" />
                         </h2>
                         <h2 class="text-center" t-else="">
                             Listado de Actos Administrativos faltantes
@@ -21,33 +20,47 @@
                         <!-- Parameters -->
                         <table class="table table-sm table-borderless">
                             <tr>
-                                <td><strong>Período:</strong></td>
-                                <td><t t-out="o.period"/></td>
+                                <td>
+                                    <strong>Período:</strong>
+                                </td>
+                                <td>
+                                    <t t-out="o.period" />
+                                </td>
                             </tr>
                             <tr>
-                                <td><strong>Dependencia:</strong></td>
-                                <td><t t-out="o.dependence_id.name"/></td>
+                                <td>
+                                    <strong>Dependencia:</strong>
+                                </td>
+                                <td>
+                                    <t t-out="o.dependence_id.name" />
+                                </td>
                             </tr>
                             <tr>
-                                <td><strong>Tipo de Documento:</strong></td>
-                                <td><t t-out="o.document_type_id.name"/></td>
+                                <td>
+                                    <strong>Tipo de Documento:</strong>
+                                </td>
+                                <td>
+                                    <t t-out="o.document_type_id.name" />
+                                </td>
                             </tr>
                         </table>
 
-                        <hr/>
+                        <hr />
 
                         <!-- Último ingresado -->
                         <t t-if="data.get('last')">
                             <p>
                                 <strong>Último Ingresado:</strong>
-                                <t t-out="data['last']"/>
+                                <t t-out="data['last']" />
                             </p>
                         </t>
 
                         <!-- Missing numbers loop -->
                         <t t-if="data.get('missing')">
                             <t t-foreach="data['missing']" t-as="number">
-                                <p><t t-out="number"/></p>
+                                <p>
+                                    <t t-out="number" />
+                                </p>
                             </t>
                         </t>
                         <t t-elif="data.get('last')">
@@ -58,12 +71,11 @@
                         </t>
 
                         <!-- Footer -->
-                        <br/>
+                        <br />
                         <p class="text-muted small">
                             Reporte generado por RAA – Sistema de Registro de Actos Administrativos.
                             Tribunal Municipal de Cuentas – Municipalidad de Rosario.
                         </p>
-
                     </div>
                 </t>
             </t>

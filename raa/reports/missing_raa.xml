@@ -1,13 +1,12 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-
-    <record id="action_missing_raa_report"
-        model="ir.actions.report">
+    <record id="action_missing_raa_report" model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry</field>
         <field name="report_name">raa.missing_raa_report</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="print_report_name">'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)</field>
+        <field
+            name="print_report_name"
+        >'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)</field>
     </record>
-
 </odoo>
