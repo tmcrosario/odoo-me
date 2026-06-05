@@ -1,6 +1,6 @@
 # SETUP-001 — Bootstrap del framework SDD en odoo-me
 
-Estado: In progress
+Estado: Implemented (pasos A–D completos; pendiente commit del Paso D y cierre)
 Modo: L
 Riesgo: medio (mueve mucha doc; **no toca** código de `me/` ni `raa/`)
 Módulos: me + raa
@@ -91,12 +91,17 @@ Decisiones aplicadas: deprecar docs meta (salvar substancia + borrar) ·
   snapshot histórico; su reconciliación es trabajo de EPIC-001 (cubierto por la nota
   de vigencia).
 
-### Paso D — EPIC-001 + índices — PENDIENTE
+### Paso D — EPIC-001 + índices — DONE
 
-- [ ] `doc/tasks/_index.md`, `doc/epics/_index.md`.
-- [ ] `EPIC-001_baseline_mesa_de_entradas.md` + primeras task cards sembradas desde
-  `todo.md` + analysis report.
-- [ ] `doc/tasks/EPIC-001/_index.md`.
+Decisiones aplicadas: archivar `todo.md` como legacy read-only · #007 → EPIC-002 ·
+EPIC-001 con 3 tasks baseline + #033 como TASK-004.
+
+- [x] `doc/epics/_index.md`, `doc/tasks/_index.md`, `doc/tasks/EPIC-001/_index.md`.
+- [x] `EPIC-001_baseline_mesa_de_entradas.md` + TASK-001 (inventario verificado),
+  TASK-002 (seguridad), TASK-003 (tests), TASK-004 (#033 jurisdicciones DEM).
+- [x] `EPIC-002_integracion_me_junco.md` (Draft, decisiones #007 abiertas, sin tasks).
+- [x] `docs/todo.md` archivado en `doc/project/me/_legacy_backlog.md` (con banner
+  legacy); `docs/` ya no existe.
 
 ## Acceptance criteria
 
@@ -106,8 +111,9 @@ Decisiones aplicadas: deprecar docs meta (salvar substancia + borrar) ·
 - [x] `doc/skills/*` y plantillas de task/epic presentes.
 - [x] `.claude/commands/*` (9) presentes y consistentes con single-tool.
 - [x] `doc/project/me/` + `doc/project/raa/` sembrados; huérfanos resueltos.
-- [~] `doc/tasks/_index.md`, `doc/epics/_index.md` y `EPIC-001` creados (Paso D); `docs/`
-  (salvo `todo.md`), `ai-rules/`, `prompts/`, `domain-rules/`, `skills/` retirados.
+- [x] `doc/tasks/_index.md`, `doc/epics/_index.md` y `EPIC-001` creados; `docs/`,
+  `ai-rules/`, `prompts/`, `domain-rules/`, `skills/` retirados (`todo.md` archivado
+  como legacy).
 - [ ] `me/` y `raa/` (código) sin cambios — `git diff` solo toca doc/tooling.
 
 ## Tests evidenciados
@@ -116,10 +122,9 @@ Decisiones aplicadas: deprecar docs meta (salvar substancia + borrar) ·
 
 ## Estado / próximo paso
 
-Pasos A, B y C completos. Working tree con la columna C sin commitear. Esperando OK
-del usuario para: (a) commitear el Paso C como checkpoint, y/o (b) arrancar el Paso D
-(índices `_index` + `EPIC-001` sembrado desde `docs/todo.md` + analysis report, y
-retiro final de `docs/todo.md`).
+Pasos A–D completos. Working tree con el Paso D sin commitear. Esperando OK del
+usuario para commitear el Paso D. Bootstrap del framework efectivamente terminado;
+el trabajo de baseline real arranca en EPIC-001.
 
 ## Cierre
 

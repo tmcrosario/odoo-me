@@ -4,7 +4,8 @@
 > Report* original (snapshot de código del **2026-03-26**, versión 19.0.1.0.0
 > post-migración Odoo 14). Es la columna vertebral de la arquitectura de `me`, pero
 > **es parcialmente histórico**: las task cards #021–#030 introdujeron cambios que
-> ya están reflejados en [`workflows.md`](workflows.md) y en `docs/todo.md` y que
+> ya están reflejados en [`workflows.md`](workflows.md) y en
+> [`_legacy_backlog.md`](_legacy_backlog.md) y que
 > **superan** algunas afirmaciones de acá (p. ej. `is_origin_complete` reemplazó a
 > `is_valid` para visibilidad; `me.document_movement` ya tiene `_sql_constraints` y
 > checks de fecha; existen `current_holder_id`, `is_internal`/`has_reentry` y reglas

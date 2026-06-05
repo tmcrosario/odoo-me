@@ -1,4 +1,22 @@
-# ME – Backlog técnico y funcional
+# ME – Backlog técnico y funcional (LEGACY — archivo histórico)
+
+> ⚠️ **Archivo histórico de solo lectura.** Este era el `docs/todo.md` previo al
+> framework SDD. **No es el backlog activo**: el trabajo ahora vive en
+> `doc/epics/` + `doc/tasks/EPIC-XXX/`. Se conserva por su valor de memoria —cada
+> task #001–#033 incluye contexto y decisiones cerradas que las docs consolidadas
+> no capturan al detalle—. **No agregar tasks acá** (ver antipatrón "backlog plano"
+> en `doc/framework/antipatterns.md`).
+>
+> Estado de migración del contenido:
+> - **#001–#006, #008–#030, #032 (DONE)** → constituyen el baseline; se documentan/
+>   verifican en **EPIC-001**. Detalle de decisiones: acá.
+> - **#031** figura `[IDEA]` pero ya está en código (commit `cf3951c`): el estado de
+>   este archivo está **desfasado** respecto del código. La verdad la fija EPIC-001.
+> - **#007 (ME↔JUNCO)** → **EPIC-002**.
+> - **#033 (filtrado jurisdicciones DEM)** → **EPIC-001 / TASK-004**.
+>
+> Una vez que EPIC-001 extraiga lo durable, este archivo puede borrarse.
+
 
 --------------------------------------------------
 ### Regla 1 (obligatoria)

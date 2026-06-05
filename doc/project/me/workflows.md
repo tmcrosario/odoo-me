@@ -266,7 +266,7 @@ desde la pestaña "Movimientos" en el formulario.
 - No existe validación de orden cronológico entre movimientos (descartado para MVP, ver #002).
 - No existe estado actual del expediente derivado de los movimientos.
   (No hay campo `state` en el modelo.)
-- `docs/todo.md` lista el workflow de estados como `[IDEA]` — pendiente de definición.
+- `_legacy_backlog.md` lista el workflow de estados como `[IDEA]` — pendiente de definición.
 
 **Nota de comportamiento esperado:**
 - La pre-carga de `origin_dependence_id` consulta el estado persistido en base,
