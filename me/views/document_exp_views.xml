@@ -44,7 +44,8 @@
                             <field name="document_type_id" readonly="1" invisible="not dependence_id"/>
                         </group>
                         <group>
-                            <field name="number" required="1" min="1" max="999999"/>
+                            <field name="number" required="1" min="1" max="999999"
+                                   widget="integer" options="{'enable_formatting': false}"/>
                             <field name="period"/>
                         </group>
                     </group>
