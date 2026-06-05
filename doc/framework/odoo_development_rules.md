@@ -48,7 +48,20 @@ When a rule changes in a future Odoo version, update this file or document the e
 ## Constraints And Validations
 
 - Use `@api.constrains` for business rules.
-- Use SQL constraints for uniqueness and simple validations.
+- For uniqueness and simple DB-level validations in **Odoo 19**, use
+  `models.Constraint(...)` as a class attribute. The legacy `_sql_constraints` list is
+  **deprecated and has no effect in Odoo 19** — do not use it.
+
+  ```python
+  # Odoo 19:
+  _unique_movement = models.Constraint(
+      'UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date)',
+      'A movement with the same origin, destination and date already exists.',
+  )
+  ```
+
+  The attribute name must start with `_`; the DB constraint name becomes
+  `{model._table}_{name_without_leading_underscore}`; the message is shown on violation.
 - Business errors should use explicit exceptions (`ValidationError`, `UserError`) with translatable messages.
 - Do not rely only on `onchange` for validations; backend code must enforce the rule.
 

@@ -1,8 +1,23 @@
-# ME Architecture Analysis Report
+# Arquitectura — módulo `me` (Mesa de Entradas)
 
-**Fecha del análisis:** 2026-03-26
-**Versión analizada:** 19.0.1.0.0 (post-migración desde Odoo 14)
-**Alcance:** Módulo `me` (Mesa de Entradas), con contexto del módulo base `tmc` y referencia al módulo `raa`
+> **Vigencia.** Este documento es la consolidación del *ME Architecture Analysis
+> Report* original (snapshot de código del **2026-03-26**, versión 19.0.1.0.0
+> post-migración Odoo 14). Es la columna vertebral de la arquitectura de `me`, pero
+> **es parcialmente histórico**: las task cards #021–#030 introdujeron cambios que
+> ya están reflejados en [`workflows.md`](workflows.md) y en `docs/todo.md` y que
+> **superan** algunas afirmaciones de acá (p. ej. `is_origin_complete` reemplazó a
+> `is_valid` para visibilidad; `me.document_movement` ya tiene `_sql_constraints` y
+> checks de fecha; existen `current_holder_id`, `is_internal`/`has_reentry` y reglas
+> de poseedor; `ir.model.access` definido para los modelos de `me`). Donde este doc
+> y `workflows.md` discrepen, **`workflows.md` es más reciente**.
+>
+> La **reconciliación definitiva contra el código actual** es trabajo de **EPIC-001
+> (baseline de mesa de entradas)**. No tratar las secciones marcadas como
+> *Uncertain* como reglas cerradas.
+>
+> Docs hermanos: [`models.md`](models.md) · [`business_rules.md`](business_rules.md)
+> · [`workflows.md`](workflows.md) · [`security.md`](security.md) ·
+> [`tmc_base_reference.md`](tmc_base_reference.md).
 
 ---
 
@@ -615,5 +630,70 @@ El archivo es referenciado en múltiples lugares pero no existe. Debería crears
 
 ---
 
-*Este documento es un análisis de solo lectura. No propone cambios de código ni refactors.*
-*Fuente primaria: código fuente del módulo `me` en la rama `develop`.*
+*Las secciones 1–10 provienen del análisis de solo lectura original. No proponen
+cambios de código ni refactors. Fuente primaria: código del módulo `me`.*
+
+---
+
+## 11. Capas del sistema y boundaries
+
+> Consolidado desde el antiguo `docs/architecture_diagram.md`. Relaciones observadas
+> en código.
+
+```
+    ┌─────────────────────────────────────┐
+    │   Base Document System (odoo-tmc)   │
+    │   tmc.document / tmc.dependence /    │
+    │   tmc.document_type                  │
+    └──────────────────┬──────────────────┘
+                       │ _inherits (delegación) — document_id → tmc.document
+                       ▼
+    ┌─────────────────────────────────────┐
+    │         ME Module (odoo-me)         │
+    │   me.document_exp                   │
+    │        │ One2many                   │
+    │        ▼                            │
+    │   me.document_movement              │
+    └──────────────────┬──────────────────┘
+                       │ auto-creado en create() — document_id → tmc.document
+                       ▼
+    ┌─────────────────────────────────────┐
+    │        RAA Module (odoo-me)         │
+    │   raa.registry_aa                   │
+    │   (read-only desde la óptica de ME) │
+    └─────────────────────────────────────┘
+```
+
+**Boundaries de módulo:**
+
+- **ME (`me/`)** — gestiona el ingreso de expedientes. Owns: `me.document_exp`,
+  `me.document_movement`. Depende de `tmc.document`, `tmc.dependence`,
+  `tmc.document_type`. Usa implícitamente `raa.registry_aa` (**no declarado** en
+  `me/__manifest__.py`).
+- **RAA (`raa/`)** — registro de actos administrativos. Owns: `raa.registry_aa`
+  (UNIQUE en `document_id`). Se lee/crea desde ME en `create()`; **no se modifica
+  desde ME**. Ver [`../raa/architecture.md`](../raa/architecture.md).
+- **Base TMC (`odoo-tmc`, repo externo)** — provee `tmc.document`/`tmc.dependence`/
+  `tmc.document_type`. Define `_check_date_not_future`, que `me.document_exp` evita
+  vía SQL directo. Solo lectura. Ver [`tmc_base_reference.md`](tmc_base_reference.md).
+
+> **Acoplamiento implícito (riesgo):** `me.document_exp.create()` llama a
+> `self.env["raa.registry_aa"].create(...)` pero `raa` no figura en las dependencias
+> del manifest de `me`. Si `raa` no está instalado, `create()` falla en runtime.
+> (`me/models/document_exp.py:138`).
+
+## 12. Principios de arquitectura
+
+> Consolidado desde el antiguo `domain-rules/me/me_architecture.md`.
+
+- **Single source of truth** — cada concepto del dominio tiene una representación
+  canónica.
+- **Extensión sobre duplicación** — ME extiende el sistema documental base en vez de
+  crear modelos de documento duplicados.
+- **Separación de responsabilidades** — la lógica de negocio vive en los modelos;
+  las vistas definen la UI; la documentación describe las reglas del dominio.
+- **Comportamiento predecible** — el routing y la trazabilidad deben comportarse de
+  forma consistente.
+- **Seguridad de desarrollo asistido por IA** — inspeccionar modelos existentes
+  antes de crear; extender la arquitectura existente; no inventar comportamiento; lo
+  no claro se marca como *pending definition* (ver `AGENTS.md`).

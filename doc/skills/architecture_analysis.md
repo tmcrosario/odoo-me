@@ -68,11 +68,11 @@ me/wizards
 Secondary context:
 
 raa/models  
-docs/system_overview.md  
-docs/models.md  
-docs/model_registry.md  
-docs/rules_business.md  
-domain-rules/me/me_architecture.md  
+doc/project/me/architecture.md  
+doc/project/me/models.md  
+doc/project/me/business_rules.md  
+doc/project/me/workflows.md  
+doc/project/me/tmc_base_reference.md  
 
 
 --------------------------------------------------
@@ -190,9 +190,9 @@ Produce a structured analysis report with the following sections:
 ## Outcome
 --------------------------------------------------
 
-The results of this analysis will be used to update:
+The results of this analysis will be used to update the canonical project docs:
 
-docs/models.md  
-docs/rules_business.md  
-domain-rules/me/me_architecture.md  
-me/ai-context.md
+doc/project/me/architecture.md  
+doc/project/me/models.md  
+doc/project/me/business_rules.md  
+doc/project/me/workflows.md

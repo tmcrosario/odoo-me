@@ -1,5 +1,10 @@
 # Módulo ME — Workflows
 
+> Consolidado desde `domain-rules/me/workflows.md`. Es la descripción de
+> comportamiento **más actual** del módulo (incorpora cambios hasta #021–#030):
+> ante discrepancias con [`architecture.md`](architecture.md), **este doc manda**.
+> La verificación contra el código vigente se cierra en EPIC-001.
+
 Este archivo documenta los workflows principales del módulo Mesa de Entradas
 basándose en el comportamiento real del código.
 
@@ -123,7 +128,7 @@ el registro ME. No es un workflow independiente.
 **Inferred:**
 - Si `raa` no está instalado, la llamada `self.env["raa.registry_aa"]` falla en runtime.
   `raa` no está declarado como dependencia en `me/__manifest__.py`.
-  Ver también: `docs/architecture_diagram.md` — sección IMPORTANT.
+  Ver también: [`architecture.md`](architecture.md) — sección 11 (boundaries / acoplamiento).
 
 **Uncertain / pending definition:**
 - No está definido qué ocurre si `raa.registry_aa` ya existe para ese `document_id`

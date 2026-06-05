@@ -70,15 +70,26 @@ No incluye:
 - [x] **Decisión cerrada:** destino de PR `develop -> 19.0`, **gestionado por el
   usuario** (el framework no abre/mergea PRs).
 
-### Paso C — Columna C (reconciliar doc → `doc/project/{me,raa}/`) — PENDIENTE
+### Paso C — Columna C (reconciliar doc → `doc/project/{me,raa}/`) — DONE
 
-- [ ] Mapear `docs/` y `domain-rules/` a los slots por módulo.
-- [ ] Incorporar la skill extra `architecture_analysis` a `doc/skills/`.
-- [ ] Resolver los 6 huérfanos del mapa (`architecture_diagram`, `system_narrative`,
-  `tmc_base_system`, `ai_bootstrap`, `prompt_examples`, `repository_dependencies`):
-  slot o deprecación explícita.
-- [ ] Fusionar `coding_standards` en `odoo_development_rules`; convertir `.mdc`.
-- [ ] Retirar `docs/`, `ai-rules/`, `prompts/` al cierre del paso.
+Decisiones aplicadas: deprecar docs meta (salvar substancia + borrar) ·
+`tmc_base_system` → `doc/project/me/tmc_base_reference.md` · `raa` solo `architecture.md`.
+
+- [x] `doc/project/me/`: `architecture.md` (backbone = analysis report + diagrama +
+  principios, con nota de **vigencia**: snapshot 2026-03-26, reconciliar en EPIC-001),
+  `workflows.md` (el más actual), `models.md` (dedup models+registry, corrige
+  `_inherits`), `business_rules.md` (rules + narrative), `security.md` (stub),
+  `tests_plan.md` (stub), `tmc_base_reference.md` (recortada).
+- [x] `doc/project/raa/architecture.md` (stub boundary).
+- [x] Skill `architecture_analysis` → `doc/skills/` (rutas actualizadas).
+- [x] Fusión Odoo 19 `models.Constraint()` en `odoo_development_rules.md`
+  (reconcilia contradicción con la línea de `_sql_constraints`).
+- [x] Deprecados y borrados: `docs/*` (excepto `todo.md`), `ai-rules/`, `prompts/`,
+  `domain-rules/`, `skills/`.
+- [x] `docs/todo.md` **se conserva** (semilla de EPIC-001, Paso D).
+- Nota: `architecture.md` §7/§10 conservan referencias a rutas viejas como parte del
+  snapshot histórico; su reconciliación es trabajo de EPIC-001 (cubierto por la nota
+  de vigencia).
 
 ### Paso D — EPIC-001 + índices — PENDIENTE
 
@@ -94,9 +105,9 @@ No incluye:
   `.opencode`/mirror/`/code-*-prompt`).
 - [x] `doc/skills/*` y plantillas de task/epic presentes.
 - [x] `.claude/commands/*` (9) presentes y consistentes con single-tool.
-- [ ] `doc/project/me/` + `doc/project/raa/` sembrados; huérfanos resueltos.
-- [ ] `doc/tasks/_index.md`, `doc/epics/_index.md` y `EPIC-001` creados; `docs/`,
-  `ai-rules/`, `prompts/` retirados.
+- [x] `doc/project/me/` + `doc/project/raa/` sembrados; huérfanos resueltos.
+- [~] `doc/tasks/_index.md`, `doc/epics/_index.md` y `EPIC-001` creados (Paso D); `docs/`
+  (salvo `todo.md`), `ai-rules/`, `prompts/`, `domain-rules/`, `skills/` retirados.
 - [ ] `me/` y `raa/` (código) sin cambios — `git diff` solo toca doc/tooling.
 
 ## Tests evidenciados
@@ -105,9 +116,10 @@ No incluye:
 
 ## Estado / próximo paso
 
-Pasos A y B completos. Esperando OK del usuario para arrancar Paso C (reconciliar
-`docs/` y `domain-rules/` a `doc/project/{me,raa}/`, resolver huérfanos, retirar lo
-viejo).
+Pasos A, B y C completos. Working tree con la columna C sin commitear. Esperando OK
+del usuario para: (a) commitear el Paso C como checkpoint, y/o (b) arrancar el Paso D
+(índices `_index` + `EPIC-001` sembrado desde `docs/todo.md` + analysis report, y
+retiro final de `docs/todo.md`).
 
 ## Cierre
 
