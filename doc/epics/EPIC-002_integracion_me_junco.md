@@ -1,81 +1,80 @@
 # EPIC-002 — Integración ME ↔ JUNCO (proceso licitatorio)
 
-Estado: Draft
-Riesgo global: alto (relación entre módulos, modelos persistentes, reglas de negocio abiertas)
-Módulo: `me` (+ `junco`, repo `odoo-junco`)
-Owner: sin asignar
+Estado: Gobernada en `odoo-junco` (acá: solo contrato de campos + decisión #4 parkeada)
+Riesgo global en `me`: bajo (no se implementa lógica de integración en este repo)
+Módulo: `me` (consumido por `junco`, repo `odoo-junco`)
+Owner: `odoo-junco`
 
-## Objetivo
+## Dueño y dirección del acoplamiento
 
-Definir y, eventualmente, implementar la relación entre los expedientes de Mesa de
-Entradas (`me.document_exp`) y los procesos licitatorios gestionados por JUNCO. Un
-proceso puede incorporar varios expedientes a lo largo de su historia, con un
-expediente vigente y otros históricos.
+**La integración se implementa y documenta en `odoo-junco`, no acá.** `junco` depende
+de `me` (`__manifest__.py: depends = ["tmc", "me"]`); `me` **no** referencia a `junco`
+ni puede hacerlo con dependencia dura (sería circular). Por eso toda la lógica de la
+relación proceso↔expedientes vive del lado JUNCO.
 
-## Contexto
+- Épica dueña: `odoo-junco/doc/epics/EPIC-002_integracion_junco_me.md` (+
+  `odoo-junco/doc/tasks/EPIC-002/`).
+- Este documento queda como **puntero**: registra qué espera JUNCO de `me` y la única
+  decisión que podría tocar `me`. **No abrir tasks de integración en `odoo-me`.**
 
-Semilla: task #007 (`doc/project/me/_legacy_backlog.md`). JUNCO es la otra punta de
-esta integración y ya tiene su contraparte documental en `odoo-junco`. Principios
-acordados:
+## Estado real (AS-IS, ya implementado en JUNCO)
 
-- ME es la puerta de entrada de los expedientes.
-- JUNCO usa expedientes ya creados en ME como insumo del proceso.
-- La relación es dinámica: un proceso acumula expedientes en el tiempo.
-- Siempre debe poder identificarse el expediente vigente vs. los históricos.
+Verificado contra el código de `odoo-junco` (`junco/models/process_expediente.py`,
+`junco/models/purchase_process.py`):
 
-## Alcance
+| Tema | Estado | Dónde |
+| --- | --- | --- |
+| Modelado de la relación | ✅ Tabla intermedia `junco.process_expediente` con metadatos (`date_linked`, `linked_by`, `change_reason`, `decree_ref`, `notes`) | junco |
+| Expediente vigente | ✅ `is_current` + constraint `_check_single_current` (máximo uno vigente) | junco |
+| Historial | ✅ One2many `expediente_ids` + `date_linked` + `linked_by` + `has_expediente_history` | junco |
+| Seguridad | ✅ ACL del modelo link para manager/user/read_only | junco |
+| Exclusividad (exp. en >1 proceso) | ❌ Abierta — sin constraint que lo impida | junco |
+| Anulación del vigente | ❌ Abierta — comportamiento no definido | junco |
+| Evento que motiva la incorporación | ⚠️ Parcial — `change_reason` captura el motivo; `continuity_event_id` está como TODO | junco |
 
-Incluye (a definir en spec):
+> Las decisiones que faltan son de negocio y se cierran **en JUNCO** (su EPIC-002),
+> no en este repo.
 
-- modelado de la relación proceso↔expedientes;
-- identificación del expediente vigente;
-- reglas de exclusividad y visibilidad desde ME;
-- representación del historial.
+## Contrato de `me` hacia JUNCO (lo único que obliga a este repo)
 
-No incluye:
+La responsabilidad de `me` frente a la integración es **pasiva**: mantener estable la
+superficie pública que JUNCO ya consume de `me.document_exp`. Cualquier cambio a estos
+campos (rename, semántica, eliminación) **rompe JUNCO** y debe coordinarse:
 
-- el baseline de `me` (EPIC-001);
-- la lógica interna de JUNCO ajena a la relación.
+- `computed_name`
+- `date`
+- `dependence_id`
+- `jurisdiction_dependence`
+- `document_movement_ids`
 
-## Módulos afectados
+Este contrato es una **restricción de entrada para EPIC-001** (baseline de `me`): el
+inventario y cualquier refactor del baseline deben preservar estos campos o versionar
+el cambio con JUNCO.
 
-- Módulo principal: `me`
-- Módulos secundarios afectados: `junco` (repo `odoo-junco`)
-- Dependencias entre módulos: la dirección del acoplamiento (¿`junco`→`me`,
-  `me`→`junco`, o tabla intermedia neutral?) es una decisión abierta.
+## Única decisión que podría tocar `me` (parkeada)
+
+**#4 — Visibilidad desde ME.** Si en algún momento se quiere que el form del expediente
+en ME muestre a qué proceso de JUNCO pertenece:
+
+- está **bloqueado por arquitectura**: `me` no puede importar `junco` (dependencia
+  circular);
+- requeriría un **módulo puente** o un computed sin dependencia de manifest;
+- es una **decisión de UX/negocio aún no tomada**.
+
+**Default actual: no se implementa.** La relación se ve desde JUNCO. Si se reabre,
+se trata como épica/spec aparte (escala a L por tocar la frontera entre módulos).
 
 ## Reglas / decisiones durables
 
-- No inventar reglas de negocio: las decisiones abiertas se cierran con el usuario
-  antes de implementar.
-- Cambios que toquen modelos persistentes o la relación entre módulos escalan a L/XL.
+- No inventar reglas de negocio: las decisiones abiertas (exclusividad, anulación del
+  vigente, `continuity_event_id`) se cierran **en JUNCO** con el usuario.
+- No abrir trabajo de integración en `odoo-me`. Si surge necesidad en `me`, es solo la
+  decisión #4 y se evalúa como épica nueva.
+- No romper el contrato de campos consumidos por JUNCO sin coordinar.
 
-## Tasks
+## Cierre de épica (lado `me`)
 
-| Task | Título | Responsable | Modo | Módulo | Estado |
-| --- | --- | --- | --- | --- | --- |
-
-> Sin tasks aún. Próximo paso sugerido: `/product-spec` para cerrar las decisiones
-> abiertas antes de abrir una task implementable.
-
-## Preguntas abiertas
-
-(Heredadas de #007 — ninguna decidida.)
-
-1. **Modelado de la relación**: ¿Many2many simple o tabla intermedia con metadatos
-   (fecha de incorporación, motivo, estado)? ¿Se registra el evento que motivó cada
-   incorporación (inicio, anulación, relanzamiento, ampliación)?
-2. **Expediente vigente**: ¿campo booleano `is_current` en la relación o inferencia
-   cronológica? ¿Puede haber más de uno vigente? ¿Qué pasa si el vigente se anula?
-3. **Exclusividad**: ¿un expediente puede pertenecer a más de un proceso? Si no,
-   ¿quién valida (ME, JUNCO o ambos)?
-4. **Visibilidad desde ME**: ¿ME muestra referencia a JUNCO en el form del
-   expediente? ¿Unidireccional JUNCO→ME? ¿Informativa o navegable?
-5. **Eventos que disparan incorporación**: ¿qué estados/eventos del proceso habilitan
-   agregar un expediente? ¿Selección manual en JUNCO o ME "notifica" candidatos?
-6. **Historial**: ¿línea de tiempo, tabla o listado? ¿Se registra quién incorporó
-   cada expediente y cuándo?
-
-## Cierre de épica
-
-Pendiente.
+Esta épica no produce implementación en `odoo-me`. Se considera **encaminada** una vez
+que: (a) este puntero queda registrado, (b) el contrato de campos está reflejado como
+restricción en EPIC-001, y (c) la decisión #4 permanece parkeada o se promueve a épica
+propia. El avance funcional se mide en `odoo-junco`.
