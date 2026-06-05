@@ -10,7 +10,7 @@ Nomenclatura:
 
 | Referencia | Título | Responsable | Modo | Estado | Notas |
 | --- | --- | --- | --- | --- | --- |
-| SETUP-001 | Bootstrap del framework SDD en odoo-me | Ale Gallo | L | In progress | Port del framework; ver task card |
+| SETUP-001 | Bootstrap del framework SDD en odoo-me | Ale Gallo | L | Done | Port del framework completo (pasos A–D) |
 | EPIC-001/TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | Draft | Reconciliar doc ↔ código |
 | EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Draft | Completa `security.md` |
 | EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Draft | Completa `tests_plan.md` |

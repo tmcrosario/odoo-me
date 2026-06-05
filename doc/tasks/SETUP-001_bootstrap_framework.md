@@ -1,6 +1,6 @@
 # SETUP-001 — Bootstrap del framework SDD en odoo-me
 
-Estado: Implemented (pasos A–D completos; pendiente commit del Paso D y cierre)
+Estado: Done
 Modo: L
 Riesgo: medio (mueve mucha doc; **no toca** código de `me/` ni `raa/`)
 Módulos: me + raa
@@ -114,18 +114,30 @@ EPIC-001 con 3 tasks baseline + #033 como TASK-004.
 - [x] `doc/tasks/_index.md`, `doc/epics/_index.md` y `EPIC-001` creados; `docs/`,
   `ai-rules/`, `prompts/`, `domain-rules/`, `skills/` retirados (`todo.md` archivado
   como legacy).
-- [ ] `me/` y `raa/` (código) sin cambios — `git diff` solo toca doc/tooling.
+- [x] `me/` y `raa/` (código) sin cambios — `git diff develop..HEAD -- me raa` vacío.
 
 ## Tests evidenciados
 
 - Estado: N/A + motivo — cambio puramente documental/tooling, sin código Odoo.
 
-## Estado / próximo paso
+## Verifier / close gate
 
-Pasos A–D completos. Working tree con el Paso D sin commitear. Esperando OK del
-usuario para commitear el Paso D. Bootstrap del framework efectivamente terminado;
-el trabajo de baseline real arranca en EPIC-001.
+- Implementación: OK — pasos A–D completos y commiteados (`a101b4c`, `6670764`,
+  `2d571f1`, `dbdad15`).
+- Acceptance criteria: OK — todos satisfechos.
+- Seguridad: N/A — no se tocó security ni código del módulo.
+- Tests evidenciados: N/A + motivo (doc/tooling, sin código).
+- Verificación: revisión liviana (verifier-lite) — modo L pero **doc-only**, no
+  corresponde verifier crítico de código. Chequeos hechos: sin deuda
+  OpenCode/`.cursor`/`/code-*-prompt` en lo portado; `git diff` no toca `me/`/`raa/`;
+  sin directorios vacíos remanentes; refs a rutas viejas solo en el snapshot
+  histórico de `architecture.md` (cubierto por su nota de vigencia).
+- Decisión de cierre: **Ready**.
 
 ## Cierre
 
-Pendiente.
+**Done (cierre documental).** Bootstrap del framework SDD completado y portado a
+odoo-me como copia propia single-tool. Docs canónicas: los slots `doc/project/me/*`
+quedan **sembrados**; su verificación contra código real es trabajo de EPIC-001 (no
+es deuda de esta task). Índices actualizados. El desarrollo del módulo `me` continúa
+en EPIC-001 sobre `develop` una vez integrada esta branch.
