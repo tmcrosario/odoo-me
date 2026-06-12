@@ -19,38 +19,71 @@ funcional/clasificatoria.
 ## Contexto
 
 Hasta ahora ME funcionaba con una carga más completa del expediente. El cambio mueve a
-JUNCO la responsabilidad de **dos campos de origen/jurisdicción**, pero **solo para los
-expedientes que JUNCO maneja (DEM/CM compras)**; los expedientes TMC conservan su carga
-actual. ME conserva además los campos de clasificación temática y el objeto del
-expediente.
+JUNCO la responsabilidad de **dos campos de origen/jurisdicción**, pero **solo en el
+flujo DEM compras** (ver D-3): CM no cede nada y TMC queda intacto. ME conserva además
+los campos de clasificación temática y el objeto del expediente.
 El cambio impacta el contrato de campos que JUNCO ya consume de `me.document_exp`
-(ver EPIC-002): hoy JUNCO **lee** `jurisdiction_dependence`; con este cambio podría
-pasar a **escribirlo**, invirtiendo la dirección del dato. Requiere contraparte en la
-EPIC-002 de `odoo-junco`.
+(ver EPIC-002): hoy JUNCO **lee** `jurisdiction_dependence`; con este cambio pasa a
+**escribirlo** (inversión de la dirección del dato). La contraparte JUNCO está en
+**EPIC-010 de `odoo-junco`** (`EPIC-010_contraparte_jurisdiccion_origen_dem_cm.md`).
+
+## Decisiones joint cerradas con JUNCO (contrato)
+
+Cerradas con el usuario, valen para las dos puntas (espejo de EPIC-010):
+
+- **D-1 — Momento de completado:** JUNCO escribe `jurisdiction_dependence` y
+  `source_dependence_id` sobre `me.document_exp` **al vincular el expediente al proceso**
+  (en su `_set_current_expediente_id`, único punto de escritura). ⇒ Para ME: en el flujo
+  DEM estos campos quedan **vacíos al ingresar** y los completa JUNCO después.
+- **D-2 — JUNCO escribe en ME (acotado):** se deroga la regla "JUNCO no escribe en ME"
+  (era D-005 de la EPIC-002 de junco). JUNCO escribe **solo esos 2 campos y solo en DEM**,
+  vía ORM. Se eligió así porque la lógica de ME depende de la jurisdicción; ver
+  **Verificación técnica (D-2)** abajo.
+- **D-3 — Alcance solo DEM:** el traspaso aplica únicamente a **DEM**. **CM no cede nada**
+  (su jurisdicción ya es auto `= dependence_id` y no usa source) y **TMC queda intacto**.
+  Esto cierra la pregunta abierta "¿qué cede CM?": nada.
+
+## Verificación técnica (D-2) — ¿puede `jurisdiction_dependence` quedar vacío en DEM?
+
+Revisado en `me/models/document_exp.py` (responde el punto que JUNCO marcó como el más
+sensible de este lado):
+
+| Punto | Impacto si `jurisdiction_dependence` está vacío (DEM) | Veredicto |
+| --- | --- | --- |
+| `computed_name` (`_compute_name`, l.345) | depende de `dependence_id`/`number`/`period`, **NO de jurisdiction** | ✅ no se rompe |
+| `is_origin_complete` (l.321) | depende de `dependence_id`/`number`/`period` | ✅ no se rompe |
+| `is_valid` (l.333) | pasa a `False`, pero el campo es `invisible="1"` en la vista → no gatea nada | ✅ sin efecto funcional |
+| Constraints (l.313, l.360) | el de source/jurisdiction no se dispara si jurisdiction vacío (sin `allowed_sub_dependence_ids`) | ✅ no bloquea |
+| `create()` — campo `required=True` (l.38) | **bloquea**: ORM rechaza crear sin jurisdiction | ❌ **hay que quitar/condicionar el `required=True`** |
+| Movimiento 1 auto (`create()`, l.487-497) | el 1er movimiento usa `jurisdiction_dependence` como **origen** y está guardado por `and record.jurisdiction_dependence` → **si vacío, el movimiento NO se crea** (no rompe, se omite) | ⚠️ el 1er pase no se genera al ingresar |
+
+**Conclusión:** `jurisdiction_dependence` puede quedar vacío en DEM sin romper nada,
+con **una condición obligatoria** (quitar/condicionar el `required=True`) y **una
+consecuencia de diseño**: el movimiento del 1er pase hoy se deriva de la jurisdicción en
+`create()`, así que sin ella no se genera al ingresar (ver pregunta abierta del 1er pase).
 
 ## Alcance por tipo de origen (clave)
 
-El traspaso aplica **solo a los expedientes que JUNCO maneja**: origen **DEM o CM** y
-que sean **compras**. Los expedientes de **TMC no se ven en JUNCO** y **conservan su
-carga actual en ME** (incluida `source_dependence_id`). Esto ya está aclarado del lado
-JUNCO (solo ve DEM/CM compras).
+Por D-3, el traspaso de carga aplica **únicamente a DEM compras**. JUNCO igualmente solo
+ve expedientes DEM/CM compras, pero **CM no cede campos** (su jurisdicción ya es auto) y
+**TMC ni siquiera entra en JUNCO** y conserva toda su carga (incluida `source_dependence_id`).
 
 Comportamiento actual por origen (`_onchange_dependence`, ~líneas 371-395):
 
-| Origen | `jurisdiction_dependence` | `source_dependence_id` | ¿Va a JUNCO? |
-| --- | --- | --- | --- |
-| **DEM** (else) | manual (queda `False` hasta cargar) | manual; required si hay sub-dependencias (constraint ~línea 360) | Sí (si es compra) |
-| **CM** | auto `= dependence_id` (línea 385) | se limpia (`False`), no se usa | Sí (si es compra) |
-| **TMC** | auto `= dependence_id` (línea 383) | manual, **se conserva** (no required) | **No** |
+| Origen | `jurisdiction_dependence` | `source_dependence_id` | Visible en JUNCO | ¿Cede carga? |
+| --- | --- | --- | --- | --- |
+| **DEM** (else) | manual (queda `False` hasta cargar) | manual; required si hay sub-dependencias (constraint ~línea 360) | Sí (compra) | **Sí** |
+| **CM** | auto `= dependence_id` (línea 385) | se limpia (`False`), no se usa | Sí (compra) | No (ya es auto) |
+| **TMC** | auto `= dependence_id` (línea 383) | manual, **se conserva** (no required) | No | No |
 
 ## Campos afectados (AS-IS, grounded en `me/models/document_exp.py`)
 
-ME **deja de cargar — solo para expedientes DEM/CM que van a JUNCO** (pasan a JUNCO):
+ME **deja de cargar — solo para expedientes DEM** (los completa JUNCO al vincular, D-1):
 
 | Campo | Estado actual | Cambio propuesto |
 | --- | --- | --- |
-| `jurisdiction_dependence` | Many2one, **required=True**; en DEM es manual, en CM es auto; alimenta `_compute_allowed_*`, `computed_name`, constraints y la derivación de movimientos | dejar de cargarse en ME para DEM/CM (lo completa JUNCO) |
-| `source_dependence_id` | Many2one; en DEM es manual (lo relevante), en CM no se usa; **en TMC se conserva** | dejar de cargarse en ME para el flujo DEM/CM; **intacto para TMC** |
+| `jurisdiction_dependence` | Many2one, **required=True** (l.38); en DEM es manual; alimenta `_compute_allowed_*` (domain de sub-deps), `is_valid` (invisible) y el **origen del 1er movimiento auto** en `create()`. **No** alimenta `computed_name` (corrección) | dejar de cargarse en ME para DEM → lo escribe JUNCO; **quitar/condicionar el `required=True`** |
+| `source_dependence_id` | Many2one; en DEM es manual; en CM no se usa; **en TMC se conserva** | dejar de cargarse en ME solo en DEM; **intacto para CM/TMC** |
 
 ME **conserva** (siguen cargándose en ME — corrección sobre la versión inicial):
 
@@ -71,9 +104,22 @@ Flujo objetivo:
 - **1er pase:** DEM → TMC
 - **2do pase:** TMC → ME
 
-Hoy el origen del 1er pase se deriva de la carga manual de jurisdicción/dependencia de
-origen (compute que setea `jurisdiction_dependence = dependence_id`, ~líneas 380-386).
-Sin esa carga, hay que definir **cómo se determina el origen del 1er pase**.
+AS-IS (grounded en `create()`, l.479-508): el **2do pase (TMC→ME)** se crea siempre. El
+**1er pase** se crea solo si `record.jurisdiction_dependence` existe, y usa **la
+jurisdicción como origen** (`origin_dependence_id = record.jurisdiction_dependence`,
+l.492), no el `dependence_id` DEM literal. Si la jurisdicción queda vacía al ingresar
+(nuevo flujo DEM), el 1er movimiento simplemente **no se genera** (el guard ya lo omite).
+
+Opciones para el origen del 1er pase en DEM:
+
+- **A) ✅ DECIDIDA (usuario):** cambiar el origen del 1er movimiento de
+  `jurisdiction_dependence` a `dependence_id` (DEM), que **sí está presente al ingresar** →
+  el 1er pase **DEM→TMC se crea y se ve en Mesa de Entradas al ingresar**, independiente
+  de si JUNCO carga la jurisdicción después. Es lo que se maneja por ahora.
+- **B)** (descartada por ahora) diferir la creación hasta que JUNCO escriba la jurisdicción.
+
+> Pendiente futuro (no ahora): evaluar si los movimientos se gestionan también desde una
+> pestaña en JUNCO. Por ahora la trazabilidad de movimientos vive en ME.
 
 ## Alcance
 
@@ -107,10 +153,11 @@ No incluye:
   origen del 1er pase y la migración se deciden con el usuario en el spec.
 - Cambios sobre campos persistentes required, workflow y create() escalan a L/XL y
   exigen contrato técnico antes de tocar código.
-- Coordinar con la EPIC-002 de `odoo-junco`: el contrato de campos cambia de dirección.
-- **Scoping por origen (no negociable):** el traspaso aplica solo a expedientes DEM/CM
-  compras (los que ve JUNCO). Los expedientes TMC conservan su carga actual, incluida
-  `source_dependence_id`. Cualquier cambio de carga debe ser condicional por origen.
+- Contraparte JUNCO: EPIC-010 de `odoo-junco`. El contrato cambia de dirección y se
+  deroga "JUNCO no escribe en ME" (D-2) — acotado a 2 campos y solo DEM.
+- **Scoping por origen (no negociable, D-3):** el traspaso de carga aplica solo a
+  expedientes **DEM** compras. CM no cede (jurisdicción auto) y TMC queda intacto
+  (incluida `source_dependence_id`). Cualquier cambio de carga es condicional por origen.
 
 ## Tasks
 
@@ -121,22 +168,25 @@ No incluye:
 
 ## Preguntas abiertas
 
-1. Para los dos campos cedidos (solo flujo DEM/CM): ¿se ocultan, se quitan de la fase de
-   carga, dejan de ser required, o pasan a readonly alimentados por JUNCO?
-   (`jurisdiction_dependence` es hoy `required=True` → cambia constraints y `create()`).
-   El tratamiento debe ser **condicional por origen**: TMC no se toca.
-2. CM ya tiene `jurisdiction_dependence` auto (`= dependence_id`) y no usa source: ¿qué
-   cede CM realmente, o el traspaso aplica en la práctica solo a DEM?
-3. ¿Cómo se determina el origen del 1er pase (DEM→TMC) sin la carga manual de
-   jurisdicción/origen en los expedientes DEM?
-4. EPIC-002 / dirección del dato: si JUNCO completa `jurisdiction_dependence`, ¿quién es
-   la fuente de verdad y en qué momento? ¿ME lo deja vacío al ingresar?
-5. Expedientes existentes cargados con la lógica anterior: ¿migración, convivencia, o
-   se respeta el dato viejo? ¿Qué pasa con el required histórico?
-6. ¿ME sigue mostrando los dos campos cedidos en modo lectura (provenientes de JUNCO) o
-   desaparecen de su UI de carga (solo para DEM/CM)?
-7. `document_object` como objeto compartido: ¿JUNCO lo reutiliza como objeto de la
-   compra/contratación? Si es así, ME es la fuente (JUNCO lee) — definir cómo se enlaza.
+**Cerradas** (ver Decisiones joint): momento de completado y fuente de verdad → JUNCO al
+vincular (D-1/D-2); alcance → solo DEM, CM no cede (D-3).
+
+**Abiertas — ME-interno** (no requieren JUNCO; se resuelven en el `/product-spec` de ME):
+
+1. Tratamiento de los 2 campos cedidos en DEM: ¿ocultar / quitar de la fase de carga /
+   dejar de ser required / readonly alimentado por JUNCO? **Obligatorio:**
+   quitar/condicionar el `required=True` de `jurisdiction_dependence` (Verificación D-2).
+2. ~~Origen del 1er pase en DEM~~ **RESUELTA (opción A):** el 1er movimiento DEM→TMC se
+   crea al ingresar con origen = `dependence_id` y se ve en ME, sin esperar a JUNCO.
+3. ¿ME muestra los 2 campos en readonly (provenientes de JUNCO) o desaparecen de la UI de
+   carga DEM?
+4. Migración: expedientes DEM existentes ya tienen jurisdiction/source cargados —
+   ¿se respetan / conviven? (JUNCO trata su lado igual).
+
+**Abierta — cross con JUNCO:**
+
+5. `document_object` como objeto compartido: JUNCO evalúa reutilizarlo como objeto de la
+   compra/contratación (JUNCO lector, ME fuente) — definir cómo se enlaza.
 
 ## Cierre de épica
 
