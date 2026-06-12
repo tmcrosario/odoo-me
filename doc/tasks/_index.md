@@ -15,6 +15,8 @@ Nomenclatura:
 | EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Draft | Completa `security.md` |
 | EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Draft | Completa `tests_plan.md` |
 | EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Draft | Diagnóstico (datos/lógica/intencional) |
+| EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Draft | UI sobre `current_holder_id`; sin cambios de modelo |
+| EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Draft | Campo persistente nuevo; contrato previo |
 
-> EPIC-002 (Integración ME ↔ JUNCO) está en Draft **sin tasks aún**: requiere
-> `/product-spec` para cerrar decisiones abiertas antes de abrir una task.
+> EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
+> sin tasks de integración acá).
