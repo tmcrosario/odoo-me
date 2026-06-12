@@ -18,21 +18,34 @@ funcional/clasificatoria.
 
 ## Contexto
 
-Hasta ahora ME funcionaba con una carga más completa del expediente. El cambio mueve la
-responsabilidad de cuatro campos hacia JUNCO y simplifica la carga inicial. Esto
-impacta directamente el contrato de campos que JUNCO ya consume de `me.document_exp`
+Hasta ahora ME funcionaba con una carga más completa del expediente. El cambio mueve a
+JUNCO la responsabilidad de **dos campos de origen/jurisdicción** y simplifica la carga
+inicial. ME conserva los campos de clasificación temática y el objeto del expediente.
+El cambio impacta el contrato de campos que JUNCO ya consume de `me.document_exp`
 (ver EPIC-002): hoy JUNCO **lee** `jurisdiction_dependence`; con este cambio podría
 pasar a **escribirlo**, invirtiendo la dirección del dato. Requiere contraparte en la
 EPIC-002 de `odoo-junco`.
 
 ## Campos afectados (AS-IS, grounded en `me/models/document_exp.py`)
 
+ME **deja de cargar** (pasan a JUNCO):
+
 | Campo | Estado actual | Cambio propuesto |
 | --- | --- | --- |
 | `jurisdiction_dependence` | Many2one, **required=True**; alimenta `_compute_allowed_*`, `computed_name`, constraints y la derivación de movimientos | dejar de cargarse en ME (lo completa JUNCO) |
 | `source_dependence_id` | Many2one; constraint cruzada con jurisdiction (`_check` ~línea 360) | dejar de cargarse en ME |
-| `main_topic_id` (subject) | proxy compute/inverse sobre `main_topic_ids` (tmc.document) | dejar de cargarse en ME |
-| `document_object` (specification) | **required=True** (~línea 100) | dejar de cargarse en ME |
+
+ME **conserva** (siguen cargándose en ME — corrección sobre la versión inicial):
+
+| Campo | Nombre funcional | Estado actual | Nota |
+| --- | --- | --- | --- |
+| `main_topic_id` | subject (tema) | proxy compute/inverse sobre `main_topic_ids` (tmc.document) | ej. "Licitación" |
+| `secondary_topic_id` | specification (subtema) | proxy sobre topics secundarios, domain por `main_topic_id` | ej. "Privada"/"Pública" |
+| `document_object` | reference (objeto) | **required=True** (~línea 100); la UI ya lo etiqueta "Reference" | ej. "Compra de Equipamiento Informático". **Candidato a reutilizarse en JUNCO como objeto de la compra/contratación** (JUNCO lo leería; sin inversión, ME sigue siendo fuente) |
+
+> UX: estos tres se quieren mostrar con etiquetas Subject / Specification / Reference,
+> no como "Tema/Subtema/Objeto" (relabel menor en la vista de carga; `main_topic_id` y
+> `secondary_topic_id` no tienen `string` propio hoy).
 
 ## Cambio en movimientos automáticos
 
@@ -49,8 +62,9 @@ Sin esa carga, hay que definir **cómo se determina el origen del 1er pase**.
 
 Incluye (a precisar en spec):
 
-- qué campos dejan de cargarse en ME exactamente y **con qué tratamiento** (ocultar /
-  quitar de la fase de carga / dejar de ser required / pasar a readonly desde JUNCO);
+- tratamiento de los dos campos cedidos (`jurisdiction_dependence`, `source_dependence_id`):
+  ocultar / quitar de la fase de carga / dejar de ser required / pasar a readonly desde JUNCO;
+- relabel UX de los campos conservados (subject/specification/reference);
 - rediseño de la lógica de movimientos automáticos y de la determinación del origen;
 - impacto en `create()`, validaciones/constraints, fases del formulario, tests y docs;
 - reparto de responsabilidad ME↔JUNCO (fuente de verdad y momento de completado);
@@ -87,17 +101,19 @@ No incluye:
 
 ## Preguntas abiertas
 
-1. Por cada campo: ¿se oculta, se quita de la fase de carga, deja de ser required, o
-   pasa a readonly alimentado por JUNCO? (`jurisdiction_dependence` y `document_object`
-   son hoy `required=True` → cambia constraints y `create()`).
+1. Para los dos campos cedidos: ¿se ocultan, se quitan de la fase de carga, dejan de ser
+   required, o pasan a readonly alimentados por JUNCO? (`jurisdiction_dependence` es hoy
+   `required=True` → cambia constraints y `create()`).
 2. ¿Cómo se determina el origen del 1er pase (DEM→TMC) sin carga de jurisdicción ni
    dependencia de origen?
 3. EPIC-002 / dirección del dato: si JUNCO completa `jurisdiction_dependence`, ¿quién es
    la fuente de verdad y en qué momento? ¿ME lo deja vacío al ingresar?
 4. Expedientes existentes cargados con la lógica anterior: ¿migración, convivencia, o
    se respeta el dato viejo? ¿Qué pasa con el required histórico?
-5. ¿ME sigue mostrando estos campos en modo lectura (provenientes de JUNCO) o
+5. ¿ME sigue mostrando los dos campos cedidos en modo lectura (provenientes de JUNCO) o
    desaparecen de su UI de carga?
+6. `document_object` como objeto compartido: ¿JUNCO lo reutiliza como objeto de la
+   compra/contratación? Si es así, ME es la fuente (JUNCO lee) — definir cómo se enlaza.
 
 ## Cierre de épica
 
