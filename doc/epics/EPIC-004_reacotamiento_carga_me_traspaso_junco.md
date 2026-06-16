@@ -60,7 +60,45 @@ sensible de este lado):
 **Conclusión:** `jurisdiction_dependence` puede quedar vacío en DEM sin romper nada,
 con **una condición obligatoria** (quitar/condicionar el `required=True`) y **una
 consecuencia de diseño**: el movimiento del 1er pase hoy se deriva de la jurisdicción en
-`create()`, así que sin ella no se genera al ingresar (ver pregunta abierta del 1er pase).
+`create()`, así que sin ella no se genera al ingresar (resuelto con opción A).
+
+## D-4 — Write-guard y método de escritura JUNCO→ME (prerequisito joint)
+
+**Hallazgo:** `write()` de `me.document_exp` (l.534-576) tiene un guard de seguridad:
+si el usuario no es `me.group_manager` y no hay contexto `me_create_in_progress`, lo
+único permitido son comandos de `document_movement_ids`; **cualquier otro write lanza
+`AccessError`** ("Existing expedientes can only be modified by an Intake Register
+manager."). Un `exp.sudo().write({jurisdiction, source})` desde JUNCO chocaría con esto
+(el superusuario no está confiablemente en `me.group_manager`).
+
+**Decisión (acordada con JUNCO):** ME expone un método controlado que JUNCO llama desde
+su `_set_current_expediente_id` (en vez de write crudo). ME es dueño de la frontera y la
+elevación de privilegio ocurre dentro del método.
+
+Firma propuesta: `action_set_origin_from_junco(jurisdiction_id, source_id=False)`.
+
+Requisitos del método (pedidos por JUNCO, defensa en profundidad):
+
+1. **Llamable por `junco.group_user`**: JUNCO lo invoca como el usuario actual; el
+   `sudo()` / elevación lo hace ME adentro.
+2. **Valida y lanza `UserError` claro** si: el expediente no es DEM, o jurisdiction/source
+   no son válidos según el dominio del nomenclador (`tmc.dependence_order`). Surface en UI.
+3. **`source_id` opcional (acepta `False`)**: para jurisdicciones DEM sin sub-dependencias.
+   La obligatoriedad condicional la chequean ambos lados.
+4. **Idempotente**: se llama en el inverse en cada save; llamarlo 2 veces con los mismos
+   valores no debe fallar.
+
+> Solo escribe `jurisdiction_dependence` y `source_dependence_id`, solo en DEM. No abre
+> el guard general: es un punto de entrada único y validado.
+
+## Orden de merge (acordado)
+
+**(a) Misma ventana/deploy.** Cada repo se pushea por separado y en la instancia se corre
+`-u me,junco` en la misma corrida (ME carga antes por dependencia). JUNCO-primero queda
+**descartado** (su llamada necesita el método de ME). Fallback **(b) ME-primero, JUNCO
+inmediatamente después** (los cambios de ME son backward-compatible con la versión actual
+de JUNCO, que solo lee jurisdicción). Sin flag. La derogación formal de D-005 (EPIC-002
+de junco) la hace JUNCO al implementar.
 
 ## Alcance por tipo de origen (clave)
 
