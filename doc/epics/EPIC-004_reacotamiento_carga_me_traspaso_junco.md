@@ -201,8 +201,7 @@ No incluye:
 
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
-
-> Sin tasks aún. Se abren recién tras `/product-spec`.
+| TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | `me` | Draft (contrato cerrado, bloqueada por joint) |
 
 ## Preguntas abiertas
 
