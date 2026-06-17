@@ -4,4 +4,4 @@
 
 | Task | Título | Responsable | Modo | Estado | Notas |
 | --- | --- | --- | --- | --- | --- |
-| TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Draft | Contrato cerrado. Merge joint con odoo-junco EPIC-010 (`-u me,junco`). No implementar sin luz verde de JUNCO |
+| TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Implementada (tests OK, UI verificada) | Pendiente push ME + deploy joint con odoo-junco EPIC-010 (`-u me,junco`). Cierre tras deploy |

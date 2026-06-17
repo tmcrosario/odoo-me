@@ -35,8 +35,11 @@ class DocumentExp(models.Model):
     jurisdiction_dependence = fields.Many2one(
         'tmc.dependence',
         string="Jurisdiction",
-        required=True,
-        help="Jurisdiction dependence for this expediente"
+        help=(
+            "Jurisdiction dependence for this expediente. For DEM origin it is left "
+            "empty at intake and written later by JUNCO via "
+            "action_set_origin_from_junco() (EPIC-004). TMC/CM auto-assign it in create()."
+        ),
     )
     source_dependence_id = fields.Many2one(
         'tmc.dependence',
@@ -368,6 +371,60 @@ class DocumentExp(models.Model):
                       "when the selected jurisdiction has sub-dependences available.")
                 )
 
+    def action_set_origin_from_junco(self, jurisdiction_id, source_id=False):
+        """Single controlled entry point for JUNCO to write the origin of a DEM
+        expediente (EPIC-004 / D-4).
+
+        JUNCO calls this instead of writing directly because write() rejects any
+        non-manager write that is not a movement. Scope (DEM only) and values (against
+        the nomenclador in tmc.dependence_order) are validated here, BEFORE elevating,
+        so the security boundary stays in ME. Only jurisdiction_dependence and
+        source_dependence_id are written. Idempotent: re-calling with the same values
+        is a safe no-op write (used from JUNCO's inverse, which may run on every save).
+        """
+        self.ensure_one()
+        if self.dependence_id.abbreviation != 'DEM':
+            raise exceptions.UserError(_(
+                "The origin can only be set from JUNCO on DEM expedientes "
+                "(this expediente's origin is %s).",
+                self.dependence_id.abbreviation or _("undefined"),
+            ))
+        jurisdiction = self.env['tmc.dependence'].browse(jurisdiction_id)
+        if jurisdiction not in self.allowed_jurisdiction_ids:
+            raise exceptions.UserError(_(
+                "Invalid jurisdiction: it is not a valid DEM jurisdiction in the "
+                "nomenclador."
+            ))
+        # Sub-dependences valid for the jurisdiction being set (mirror of
+        # _compute_allowed_sub_dependences, computed for that jurisdiction).
+        valid_sources = self.env['tmc.dependence_order'].search(
+            [('parent_id', '=', jurisdiction.id)]
+        ).mapped('dependence_id')
+        if valid_sources:
+            if not source_id:
+                raise exceptions.UserError(_(
+                    "A source dependence is required: the selected jurisdiction has "
+                    "sub-dependences."
+                ))
+            if self.env['tmc.dependence'].browse(source_id) not in valid_sources:
+                raise exceptions.UserError(_(
+                    "Invalid source dependence: it is not a sub-dependence of the "
+                    "selected jurisdiction."
+                ))
+        elif source_id:
+            raise exceptions.UserError(_(
+                "The selected jurisdiction has no sub-dependences; a source dependence "
+                "must not be provided."
+            ))
+        # Boundary validated above. sudo() grants ORM write permission; the
+        # me_origin_from_junco context flag passes the write() guard, restricted there
+        # to exactly these two fields.
+        self.with_context(me_origin_from_junco=True).sudo().write({
+            'jurisdiction_dependence': jurisdiction.id,
+            'source_dependence_id': source_id or False,
+        })
+        return True
+
     @api.onchange('dependence_id')
     def _onchange_dependence(self):
         """Set document_type_id and auto-assign jurisdiction for TMC/CM."""
@@ -477,19 +534,21 @@ class DocumentExp(models.Model):
                 "document_id": record.document_id.id,
             })
             # Movimientos automáticos de ingreso.
-            # Si el expediente proviene de TMC, jurisdiction_dependence == TMC,
-            # por lo que el movimiento jurisdicción→TMC sería TMC→TMC (sin sentido).
-            # En ese caso se genera únicamente el movimiento TMC→ME.
+            # Si el expediente proviene de TMC, el origen ya es TMC, por lo que el
+            # movimiento origen→TMC sería TMC→TMC (sin sentido): se genera solo TMC→ME.
+            # El 1er movimiento usa la dependencia de origen (dependence_id), NO la
+            # jurisdicción (EPIC-004, opción A): así el 1er pase DEM→TMC se crea al
+            # ingresar aunque la jurisdicción quede vacía (la completa JUNCO después).
             origin_is_tmc = (
                 tmc_dependence and
                 record.dependence_id == tmc_dependence
             )
-            if not origin_is_tmc and record.jurisdiction_dependence and tmc_dependence:
-                # Movimiento 1 (solo para DEM/CM): jurisdicción → TMC
+            if not origin_is_tmc and tmc_dependence:
+                # Movimiento 1 (DEM/CM): dependencia de origen → TMC
                 env_create['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
-                    'origin_dependence_id': record.jurisdiction_dependence.id,
+                    'origin_dependence_id': record.dependence_id.id,
                     'destination_dependence_id': tmc_dependence.id,
                     'user_id': self.env.uid,
                     'fojas': record.fojas,
@@ -538,6 +597,16 @@ class DocumentExp(models.Model):
             not self.env.context.get('me_create_in_progress')
             and not self.env.user.has_group('me.group_manager')
         ):
+            # Controlled origin write from JUNCO (EPIC-004 / D-4). action_set_origin_from_junco()
+            # validates scope (DEM) and values before reaching here; this branch only
+            # confirms the write is restricted to the two origin fields, so the context
+            # flag can never become a general bypass of the guard below.
+            if self.env.context.get('me_origin_from_junco'):
+                if not set(vals.keys()) <= {'jurisdiction_dependence', 'source_dependence_id'}:
+                    raise exceptions.AccessError(_(
+                        "The JUNCO origin write may only set the jurisdiction and source."
+                    ))
+                return super().write(vals)
             movement_cmds = vals.get('document_movement_ids', [])
             _editable = self.env['me.document_movement']._OPERATOR_EDITABLE_FIELDS
             is_only_create_cmds = (

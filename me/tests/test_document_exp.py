@@ -96,8 +96,10 @@ class TestDocumentExp(TransactionCase):
     def test_create_generates_two_movements(self):
         """
         Verifica que al crear un expediente se generan exactamente 2 movimientos automáticos:
-        - movimiento 1: jurisdiction_dependence → TMC
+        - movimiento 1: dependence_id (origen, p.ej. DEM) → TMC
         - movimiento 2: TMC → Mesa de Entradas
+        El 1er movimiento usa dependence_id, NO jurisdiction_dependence (EPIC-004,
+        opción A): así el 1er pase existe aunque la jurisdicción quede vacía.
         Condición: ambas dependencias deben existir en la base (garantizado por setUp).
         """
         expediente = self.env['me.document_exp'].create(self.valid_vals)
@@ -108,10 +110,12 @@ class TestDocumentExp(TransactionCase):
         origins = movements.mapped('origin_dependence_id')
         destinations = movements.mapped('destination_dependence_id')
 
-        self.assertIn(self.dep_jur, origins)
+        self.assertIn(self.dep_dem, origins)
         self.assertIn(self.dep_tmc, origins)
         self.assertIn(self.dep_tmc, destinations)
         self.assertIn(self.dep_mesa, destinations)
+        # El 1er pase ya no usa la jurisdicción como origen.
+        self.assertNotIn(self.dep_jur, origins)
 
     def test_create_tmc_generates_one_movement(self):
         """
@@ -190,8 +194,7 @@ class TestDocumentExp(TransactionCase):
     def test_is_valid_false_without_jurisdiction(self):
         """
         Verifica que is_valid=False cuando falta jurisdiction_dependence.
-        Usa env.new() para crear un registro en memoria sin tocar la DB,
-        evitando restricciones required=True del ORM en campos obligatorios.
+        Usa env.new() para crear un registro en memoria sin tocar la DB.
         """
         record = self.env['me.document_exp'].new({
             'dependence_id': self.dep_dem.id,
@@ -201,6 +204,115 @@ class TestDocumentExp(TransactionCase):
             # jurisdiction_dependence ausente → is_valid debe ser False
         })
         self.assertFalse(record.is_valid)
+
+    # --- EPIC-004: reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) ---
+
+    def _create_dem_without_origin(self, number):
+        """Crear un expediente DEM con jurisdiction/source vacíos (nuevo flujo DEM)."""
+        vals = dict(self.valid_vals, number=number)
+        vals.pop('jurisdiction_dependence', None)
+        vals.pop('source_dependence_id', None)
+        return self.env['me.document_exp'].create(vals)
+
+    def _wire_nomenclator(self):
+        """Crear jurisdicciones DEM válidas bajo tmc_dependence_adm para que el método
+        action_set_origin_from_junco pueda validarlas. Devuelve (jur_con_sub, source,
+        jur_sin_sub). Saltea el test si el nomenclador de tmc_data no está disponible."""
+        adm = self.env.ref('tmc_data.tmc_dependence_adm', raise_if_not_found=False)
+        if not adm:
+            self.skipTest("tmc_data.tmc_dependence_adm no disponible en esta DB")
+        Dep = self.env['tmc.dependence']
+        Order = self.env['tmc.dependence_order']
+        jur = Dep.create({'name': 'Jur Con Sub Test', 'abbreviation': 'JURW'})
+        Order.create({'code': 'TEST-JURW', 'dependence_id': jur.id, 'parent_id': adm.id})
+        src = Dep.create({'name': 'Source Test', 'abbreviation': 'SRCW'})
+        Order.create({'code': 'TEST-SRCW', 'dependence_id': src.id, 'parent_id': jur.id})
+        jur_nosub = Dep.create({'name': 'Jur Sin Sub Test', 'abbreviation': 'JURN'})
+        Order.create({'code': 'TEST-JURN', 'dependence_id': jur_nosub.id, 'parent_id': adm.id})
+        return jur, src, jur_nosub
+
+    def test_create_dem_without_origin_ok(self):
+        """Un expediente DEM se crea con jurisdiction/source vacíos (los completa JUNCO),
+        sin error, y genera igual los 2 movimientos (1er pase DEM→TMC, 2do TMC→ME)."""
+        exp = self._create_dem_without_origin(99994)
+        self.assertFalse(exp.jurisdiction_dependence)
+        self.assertFalse(exp.source_dependence_id)
+        movements = exp.document_movement_ids
+        self.assertEqual(len(movements), 2)
+        self.assertIn(self.dep_dem, movements.mapped('origin_dependence_id'))
+        self.assertIn(self.dep_mesa, movements.mapped('destination_dependence_id'))
+
+    def test_set_origin_from_junco_sets_fields(self):
+        """Happy path: el método escribe jurisdiction + source en un DEM vacío."""
+        jur, src, _ = self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99995)
+        exp.action_set_origin_from_junco(jur.id, src.id)
+        self.assertEqual(exp.jurisdiction_dependence, jur)
+        self.assertEqual(exp.source_dependence_id, src)
+
+    def test_set_origin_from_junco_source_optional(self):
+        """source_id=False es válido para una jurisdicción sin sub-dependencias."""
+        _, _, jur_nosub = self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99996)
+        exp.action_set_origin_from_junco(jur_nosub.id)
+        self.assertEqual(exp.jurisdiction_dependence, jur_nosub)
+        self.assertFalse(exp.source_dependence_id)
+
+    def test_set_origin_from_junco_non_dem_raises(self):
+        """El método rechaza expedientes que no son DEM (UserError)."""
+        tmc_vals = dict(
+            self.valid_vals, number=99997,
+            dependence_id=self.dep_tmc.id,
+            jurisdiction_dependence=self.dep_tmc.id,
+            source_dependence_id=self.dep_mesa.id,
+        )
+        exp = self.env['me.document_exp'].create(tmc_vals)
+        with self.assertRaises(UserError):
+            exp.action_set_origin_from_junco(self.dep_jur.id)
+
+    def test_set_origin_from_junco_invalid_jurisdiction_raises(self):
+        """Jurisdicción fuera del nomenclador (no hija de adm) → UserError."""
+        self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99998)
+        bogus = self.env['tmc.dependence'].create(
+            {'name': 'Bogus Jur', 'abbreviation': 'BOGUS'})
+        with self.assertRaises(UserError):
+            exp.action_set_origin_from_junco(bogus.id)
+
+    def test_set_origin_from_junco_invalid_source_raises(self):
+        """source que no es hijo de la jurisdicción → UserError."""
+        jur, _, _ = self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99999)
+        bogus_src = self.env['tmc.dependence'].create(
+            {'name': 'Bogus Src', 'abbreviation': 'BSRC'})
+        with self.assertRaises(UserError):
+            exp.action_set_origin_from_junco(jur.id, bogus_src.id)
+
+    def test_set_origin_from_junco_idempotent(self):
+        """Llamar 2 veces con los mismos valores no falla (se llama en el inverse)."""
+        jur, src, _ = self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99980)
+        exp.action_set_origin_from_junco(jur.id, src.id)
+        exp.action_set_origin_from_junco(jur.id, src.id)
+        self.assertEqual(exp.jurisdiction_dependence, jur)
+        self.assertEqual(exp.source_dependence_id, src)
+
+    def test_set_origin_from_junco_callable_by_non_manager(self):
+        """Un no-manager (me.group_user) NO puede escribir la jurisdicción con un write
+        crudo (guard), pero SÍ a través del método controlado (canal JUNCO, D-4)."""
+        jur, src, _ = self._wire_nomenclator()
+        exp = self._create_dem_without_origin(99981)
+        user = self.env['res.users'].create({
+            'name': 'ME User Test',
+            'login': 'me_user_test',
+            'group_ids': [(6, 0, [self.env.ref('me.group_user').id])],
+        })
+        with self.assertRaises(AccessError):
+            exp.with_user(user).write({'jurisdiction_dependence': jur.id})
+        exp.with_user(user).action_set_origin_from_junco(jur.id, src.id)
+        exp.invalidate_recordset(['jurisdiction_dependence', 'source_dependence_id'])
+        self.assertEqual(exp.jurisdiction_dependence, jur)
+        self.assertEqual(exp.source_dependence_id, src)
 
     def test_is_origin_complete_true(self):
         """is_origin_complete = True con dependence_id, number y period presentes."""
@@ -1304,7 +1416,7 @@ class TestJurisdictionConditional012(TransactionCase):
     - allowed_jurisdiction_ids: retorna las ~21 jurisdicciones madre del nomenclador
     - Regla 1 TMC: auto-asignación de jurisdiction_dependence = TMC
     - Regla 2 CM: auto-asignación interna CM, movimiento CM→TMC generado
-    - Regla 3 domain: DEM sin jurisdiction_dependence falla (required=True)
+    - Regla 3 (EPIC-004): DEM sin jurisdiction_dependence ahora se crea (la completa JUNCO)
     - onchange: comportamiento de _onchange_dependence para TMC y DEM
     """
 
@@ -1419,13 +1531,15 @@ class TestJurisdictionConditional012(TransactionCase):
         self.assertIn(self.dep_tmc, origins)
         self.assertIn(self.dep_mesa, destinations)
 
-    def test_create_dem_without_jurisdiction_raises(self):
-        """create() con dependence_id=DEM sin jurisdiction_dependence falla
-        (DEM no es auto-asignado, required=True activo)."""
-        with self.assertRaises(Exception):
-            self.env['me.document_exp'].create(
-                self._make_vals(55555, self.dep_dem.id)
-            )
+    def test_create_dem_without_jurisdiction_succeeds(self):
+        """EPIC-004: create() con dependence_id=DEM sin jurisdiction_dependence ya NO
+        falla. La jurisdicción queda vacía al ingresar (la completa JUNCO después vía
+        action_set_origin_from_junco). Antes era required=True; ahora es opcional."""
+        exp = self.env['me.document_exp'].create(
+            self._make_vals(55555, self.dep_dem.id)
+        )
+        self.assertTrue(exp.id)
+        self.assertFalse(exp.jurisdiction_dependence)
 
     def test_create_dem_with_jurisdiction_succeeds(self):
         """create() con dependence_id=DEM y jurisdiction_dependence explícito no falla."""
@@ -2920,11 +3034,14 @@ class TestDefaultResponsible030(TransactionCase):
             'date': today,
             'fojas': 1,
         })
+        # Destino interno distinto de TMC: el 1er movimiento automático ahora es
+        # DEM→TMC (EPIC-004, origen = dependence_id), por lo que un movimiento manual
+        # DEM→TMC con la misma fecha colisionaría con el unique de movimientos.
         self.env['me.document_movement'].create({
             'expediente_id': exp.id,
             'date': fields.Datetime.now(),
             'origin_dependence_id': dep_dem.id,
-            'destination_dependence_id': self.dep_internal.id,
+            'destination_dependence_id': self.dep_internal_no_config.id,
             'fojas': 2,
             'user_id': self.responsible_user.id,
         })

@@ -35,7 +35,7 @@ depende de jurisdicción; el único bloqueo de carga era el `required=True` del 
 Incluye:
 
 - quitar el `required=True` de `jurisdiction_dependence` (modelo);
-- readonly de los 2 campos en la vista de carga DEM;
+- en DEM, ocultar los 2 campos cuando están vacíos y mostrarlos readonly cuando tienen valor;
 - desacoplar el 1er movimiento (origin = `dependence_id`);
 - método `action_set_origin_from_junco(jurisdiction_id, source_id=False)`;
 - tests.
@@ -51,7 +51,8 @@ No incluye:
 - **D-3 scoping (no negociable):** todo cambio de carga es **condicional por origen = DEM**.
 - **D-1:** en DEM los 2 campos quedan vacíos al ingresar; JUNCO los escribe al vincular.
 - **D-4:** JUNCO escribe vía el método, no con write crudo (sortea el write-guard).
-- **UI (decidido):** los 2 campos van **readonly** en DEM (visibles, no editables).
+- **UI (decidido):** en DEM los 2 campos están **ocultos cuando vacíos** (carga inicial)
+  y aparecen **readonly cuando JUNCO los completó**.
 - **Movimiento (opción A, decidido):** 1er pase DEM→TMC con origin = `dependence_id`.
 - No inventar reglas de negocio; el dominio del nomenclador se reusa de los computes
   existentes (`_compute_allowed_jurisdictions` / `_compute_allowed_sub_dependences`).
@@ -64,21 +65,21 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] Un expediente DEM se crea con `jurisdiction_dependence` y `source_dependence_id`
+- [x] Un expediente DEM se crea con `jurisdiction_dependence` y `source_dependence_id`
       vacíos, sin error (required quitado; constraints no disparan).
-- [ ] CM y TMC conservan su carga actual (jurisdicción auto; TMC mantiene source manual).
-- [ ] Al crear un DEM se generan el 1er movimiento DEM→TMC (origin = `dependence_id`) y el
+- [x] CM y TMC conservan su carga actual (jurisdicción auto; TMC mantiene source manual).
+- [x] Al crear un DEM se generan el 1er movimiento DEM→TMC (origin = `dependence_id`) y el
       2do TMC→ME, visibles en ME al ingresar.
-- [ ] En la UI de carga DEM, `jurisdiction_dependence` y `source_dependence_id` son
-      readonly (no editables); TMC/CM sin cambios de comportamiento.
-- [ ] `action_set_origin_from_junco(jurisdiction_id, source_id=False)`:
+- [x] En la UI de carga DEM, `jurisdiction_dependence` y `source_dependence_id` están
+      **ocultos cuando vacíos** y **readonly cuando tienen valor**; TMC/CM sin cambios.
+- [x] `action_set_origin_from_junco(jurisdiction_id, source_id=False)`:
       · invocable por un usuario no-manager (eleva con `sudo()` internamente);
       · escribe solo esos 2 campos y solo si el expediente es DEM (si no, `UserError`);
       · valida `jurisdiction_id` (jurisdicción válida del nomenclador) y `source_id`
         (hijo de la jurisdicción) → `UserError` claro si inválidos;
       · acepta `source_id=False`;
       · idempotente (repetir la misma llamada con los mismos valores no falla).
-- [ ] Expedientes DEM existentes conservan su jurisdiction/source (sin migración masiva).
+- [x] Expedientes DEM existentes conservan su jurisdiction/source (sin migración masiva).
 
 ## Contrato técnico
 
@@ -97,11 +98,11 @@ No incluye:
     = hijo de `tmc_dependence_adm`; source = hijo de la jurisdicción) reusando la lógica
     de los computes existentes; escribe vía `sudo()` solo esos 2 campos; idempotente.
 - **Vistas** (`me/views/document_exp_views.xml`):
-  - `jurisdiction_dependence` (l.57-60): `readonly` para TMC **y DEM**
-    (`dependence_abbreviation in ('TMC','DEM')`), invisible CM como hoy.
-  - `source_dependence_id` (l.61-64): `readonly` en DEM; revisar interacción con
-    `required="allowed_sub_dependence_ids"` (con jurisdicción vacía no exige; al completarse
-    desde JUNCO, queda satisfecho por el valor escrito).
+  - `jurisdiction_dependence`: `readonly` para TMC y DEM; `invisible` para CM y, en DEM,
+    también cuando el campo está vacío (`... or (DEM and not jurisdiction_dependence)`).
+  - `source_dependence_id`: `readonly` en DEM; `invisible` para CM y, en DEM, cuando el
+    campo está vacío. El `required="allowed_sub_dependence_ids"` no estorba: con
+    jurisdicción vacía no exige, y al completarse desde JUNCO queda satisfecho.
 - **Seguridad:**
   - El método hace `sudo()` interno acotado a 2 campos + scope DEM: es el único punto de
     escritura JUNCO→ME y la frontera la valida ME. No se abre el guard general de `write()`.
@@ -115,28 +116,36 @@ No incluye:
 
 ## Execution report
 
-Pendiente.
+Implementado en `me/models/document_exp.py` (required quitado, `create()` desacoplado,
+guard de `write()` con canal `me_origin_from_junco`, método `action_set_origin_from_junco`)
+y `me/views/document_exp_views.xml` (ocultar vacíos / readonly con valor en DEM). 9 tests
+nuevos + 3 preexistentes ajustados al nuevo comportamiento. UI verificada por el usuario.
 
 ## Verifier / close gate
 
-Pendiente.
+Tests verdes (evidencia abajo) + verificación manual de UI por el usuario. Cierre
+documental formal queda para `/doc-close` tras el deploy joint con JUNCO.
 
 ## Tests evidenciados
 
-- Estado: PENDIENTE USER-RUN
-- Comando: `docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u me --test-tags /me --stop-after-init --log-level=test`
-- Fecha: N/A
-- Resultado: N/A
-- Salida (resumen): N/A — pendiente de implementación
+- Estado: OK
+- Comando: `docker compose -f develop.yml run --rm odoo odoo -d me1 --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco,/mnt/addons/oca/* -u me --test-tags /me --stop-after-init --log-level=test`
+  (el `--addons-path` explícito es necesario porque `run` sobrescribe el `command:` de develop.yml)
+- Fecha: 2026-06-17
+- Resultado: **0 failed, 0 error(s) of 196 tests** (240 métodos, 7.2s, 19499 queries)
+- Salida (resumen):
 
-Casos a cubrir:
-- create DEM con jurisdiction/source vacíos → OK (no error).
-- `_check_source_dependence_required` no se dispara con jurisdicción vacía.
-- 1er movimiento usa `dependence_id` como origen (DEM→TMC) y existe al ingresar.
-- TMC/CM: jurisdicción auto y carga sin cambios (no regresión).
-- método: happy path (setea jurisdiction + source); `source_id=False`;
-  UserError en no-DEM; UserError jurisdiction inválida; UserError source inválido;
-  idempotencia (2 llamadas iguales no fallan).
+  ```text
+  me: 240 tests 7.21s 19499 queries
+  0 failed, 0 error(s) of 196 tests when loading database 'me1'
+  ```
+
+Casos cubiertos (9 nuevos en `test_document_exp.py`):
+- create DEM con jurisdiction/source vacíos → OK; 1er movimiento DEM→TMC (origin = `dependence_id`).
+- método: happy path; `source_id=False`; UserError no-DEM / jurisdiction inválida / source inválido;
+  idempotencia; no-manager bloqueado en write crudo pero OK vía el método.
+- Ajustados: `test_create_generates_two_movements` (origen DEM), `test_create_dem_without_jurisdiction_succeeds`
+  (antes `_raises`), `test_poseedor_logic_unaffected` (destino interno ≠ TMC para evitar colisión).
 
 ## Docs canónicas
 
@@ -155,8 +164,9 @@ frontera). `workflows` si se documenta el cambio de movimientos.
 
 ## Estado / próximo paso
 
-Draft, contrato cerrado. Bloqueada por coordinación joint. Próximo paso al destrabar:
-implementación + `/test-run`. JUNCO espera el aviso "EPIC-004 lista" para dar luz verde.
+Implementada en ME y con tests verdes + UI verificada. Próximo paso: push de ME →
+JUNCO implementa contra el método → deploy conjunto (`-u me,junco`). Cierre documental
+(`/doc-close`) tras el deploy joint. Al implementar JUNCO deroga D-005 en su EPIC-002.
 
 ## Resultado / cierre
 

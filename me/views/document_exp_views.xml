@@ -56,12 +56,13 @@
                         <group>
                             <field name="jurisdiction_dependence"
                                    domain="[('id', 'in', allowed_jurisdiction_ids)]"
-                                   readonly="dependence_abbreviation == 'TMC'"
-                                   invisible="dependence_abbreviation == 'CM'"/>
+                                   readonly="dependence_abbreviation in ('TMC', 'DEM')"
+                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not jurisdiction_dependence)"/>
                             <field name="source_dependence_id"
                                    domain="[('id', 'in', allowed_sub_dependence_ids)]"
                                    required="allowed_sub_dependence_ids"
-                                   invisible="dependence_abbreviation == 'CM'"/>
+                                   readonly="dependence_abbreviation == 'DEM'"
+                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not source_dependence_id)"/>
                         </group>
                         <group>
                             <field name="intake_date"/>
