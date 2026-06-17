@@ -29,6 +29,13 @@ El módulo `me` define tres grupos de acceso:
 - Solo el `user_id` del último movimiento puede registrar un pase nuevo desde la UI
   (managers sin restricción) — guard en `write()` de `me.document_exp` (#027/#029).
 - Corrección del último movimiento manual restringida por campos (#028).
+- **Escritura JUNCO→ME (EPIC-004):** el guard de `write()` rechaza con `AccessError`
+  cualquier escritura de no-manager que no sea de movimientos. JUNCO escribe la
+  jurisdicción/origen de un DEM **solo** vía `action_set_origin_from_junco()`, que valida
+  (DEM-only + nomenclador), eleva con `sudo()` y usa un canal de contexto
+  (`me_origin_from_junco`) restringido en `write()` a exactamente
+  `jurisdiction_dependence`/`source_dependence_id`. No referencia grupos de `junco`
+  (evita dependencia inversa); la seguridad es la validación interna + superficie mínima.
 
 ## Pendiente de baseline (EPIC-001)
 

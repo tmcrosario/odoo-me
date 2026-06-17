@@ -24,7 +24,8 @@ explícitamente las reglas.
 | Tipo de documento automático | Al elegir la dependencia de origen, el tipo `EXP` se asigna sin intervención del usuario. |
 | Dependencias de origen permitidas | Solo DEM, TMC o CM (filtro hardcodeado `['DEM','TMC','CM']`). |
 | Nombre generado | Formato `EXP-XXXXXX-ORIGEN/AÑO` (ej. `EXP-000042-DEM/2025`), calculado en tiempo real. |
-| Movimientos iniciales automáticos | Al crear: DEM → 2 movimientos (jurisdicción→TMC, TMC→ME); TMC → 1 (TMC→ME, omite TMC→TMC); CM → 2 (CM→TMC, TMC→ME). |
+| Movimientos iniciales automáticos | Al crear: DEM → 2 movimientos (**DEM→TMC**, TMC→ME); TMC → 1 (TMC→ME, omite TMC→TMC); CM → 2 (CM→TMC, TMC→ME). El 1er movimiento usa `dependence_id` como origen (EPIC-004), no la jurisdicción, así existe aunque la jurisdicción esté vacía. |
+| Carga de jurisdicción/origen en DEM (EPIC-004) | En **DEM**, `jurisdiction_dependence` y `source_dependence_id` ya **no se cargan en ME** (campo no required): quedan vacíos al ingresar y los completa **JUNCO** al vincular el expediente a un proceso, vía `action_set_origin_from_junco()`. En la UI de carga DEM se ocultan si vacíos y readonly si tienen valor. **CM** (jurisdicción auto = origen) y **TMC** (jurisdicción auto, source manual) **no cambian**. |
 | Registro automático en RAA | Todo expediente queda registrado en `raa.registry_aa` al crearse. |
 | Fojas — bloqueo post-creación | El número de fojas no se modifica una vez guardado, excepto por un Responsable de Mesa de Entradas; las variaciones se registran vía movimientos. |
 | Aviso de duplicado | Si existe un expediente con igual origen+número+período, el sistema **avisa pero no bloquea** el guardado. |

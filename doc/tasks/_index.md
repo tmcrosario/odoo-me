@@ -17,7 +17,7 @@ Nomenclatura:
 | EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Draft | Diagnóstico (datos/lógica/intencional) |
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Draft | UI sobre `current_holder_id`; sin cambios de modelo |
 | EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Draft | Campo persistente nuevo; contrato previo |
-| EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Implementada (tests OK) | Pendiente push ME + deploy joint con odoo-junco EPIC-010 (`-u me,junco`) |
+| EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

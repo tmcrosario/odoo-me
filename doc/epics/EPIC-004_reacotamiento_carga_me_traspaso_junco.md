@@ -1,6 +1,6 @@
 # EPIC-004 — Reacotamiento de la carga de ME: traspaso de clasificación a JUNCO
 
-Estado: Draft
+Estado: Done (sobre develop; deploy a prod diferido)
 Riesgo global: alto/sensible (campos persistentes hoy required, workflow de movimientos, create(), validaciones, migración de datos, contrato cross-módulo)
 Módulo: `me` (contraparte en `junco`, repo `odoo-junco`)
 Owner: sin asignar
@@ -201,7 +201,7 @@ No incluye:
 
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
-| TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | `me` | Draft (contrato cerrado, bloqueada por joint) |
+| TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | `me` | Done (sobre develop) |
 
 ## Preguntas abiertas
 
@@ -227,4 +227,7 @@ vincular (D-1/D-2); alcance → solo DEM, CM no cede (D-3).
 
 ## Cierre de épica
 
-Pendiente.
+Cerrada (Done) el 2026-06-17 sobre `develop`, con TASK-001 entregada y la integración
+ME↔JUNCO validada end-to-end en `me2` (deploy conjunto `-u me,junco`). Contraparte
+`odoo-junco` EPIC-010 cerrada (Done), D-005 derogada en su EPIC-002. **Deploy a
+producción diferido** (lo gestiona el usuario, `-u me,junco` conjunto cuando corresponda).

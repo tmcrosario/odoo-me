@@ -39,6 +39,12 @@ Modelos extendidos por `me` vía `_inherit` (no son `_name` propios): `tmc.depen
 - Campos, computed (`computed_name`, `is_origin_complete`/`is_valid`,
   `current_holder_id`, `has_reentry`…) y métodos: ver [`architecture.md`](architecture.md)
   y [`workflows.md`](workflows.md).
+- **EPIC-004**: `jurisdiction_dependence` ya **no es required** (solo DEM queda vacío al
+  ingresar; TMC/CM se autoasignan en `create()`). Para DEM, `jurisdiction_dependence` y
+  `source_dependence_id` los completa **JUNCO** vía el método público
+  `action_set_origin_from_junco(jurisdiction_id, source_id=False)` (valida DEM-only +
+  nomenclador `tmc.dependence_order`, `sudo()` acotado, idempotente). Ver
+  [`security.md`](security.md) (canal de escritura) y [`business_rules.md`](business_rules.md).
 
 ## `me.document_movement`
 

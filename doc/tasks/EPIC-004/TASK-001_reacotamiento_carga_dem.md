@@ -1,6 +1,6 @@
 # EPIC-004 / TASK-001 — Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO)
 
-Estado: Draft
+Estado: Done (sobre develop; deploy a prod diferido)
 Modo: L
 Riesgo: alto/sensible (campo persistente required, create(), movimientos, método con frontera de seguridad cross-módulo)
 Módulo: `me`
@@ -8,12 +8,12 @@ Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: bloqueada (joint)
+- Estado de toma: cerrada (Done sobre develop)
 - Responsable: sin asignar
 - Fecha de toma: N/A
-- Notas de coordinación: implementación **joint** con `odoo-junco` EPIC-010. No mergear
-  una punta sin la otra; deploy conjunto `-u me,junco` (ME carga antes por dependencia).
-  Arrancar solo con luz verde de JUNCO (su EPIC-010/TASK-002 ya está listo y a la espera).
+- Notas de coordinación: implementación **joint** con `odoo-junco` EPIC-010 (cerrada Done).
+  Validación end-to-end en `me2` con deploy conjunto `-u me,junco`. **Deploy a producción
+  diferido** (lo gestiona el usuario, `-u me,junco` conjunto cuando sea).
 
 ## Objetivo
 
@@ -149,25 +149,32 @@ Casos cubiertos (9 nuevos en `test_document_exp.py`):
 
 ## Docs canónicas
 
-Actualizar al implementar: `doc/project/me/models.md` (required + método nuevo),
-`business_rules.md` (cesión DEM, 1er movimiento), `security.md` (método con sudo y su
-frontera). `workflows` si se documenta el cambio de movimientos.
+**Actualizadas** en el cierre:
+- `doc/project/me/models.md` — `jurisdiction_dependence` no required + método `action_set_origin_from_junco`.
+- `doc/project/me/business_rules.md` — 1er movimiento DEM→TMC (origin = dependence_id) + cesión de jurisdicción/origen DEM a JUNCO.
+- `doc/project/me/security.md` — canal de escritura JUNCO→ME (guard + `me_origin_from_junco` + método).
+
+`architecture.md` / `workflows.md` / `tests_plan.md`: N/A — sin cambios estructurales
+nuevos; la evidencia de tests vive en esta task card.
 
 ## Bloqueos
 
-- Bloqueada por: coordinación joint — requiere luz verde de JUNCO (EPIC-010) y ventana de
-  deploy conjunta `-u me,junco`.
-- Propietario del bloqueo: usuario (coordina ambas puntas).
-- Fecha de bloqueo: 2026-06-12.
-- Acción mínima para destrabar: confirmación de JUNCO de que arranca implementación en la
-  misma ventana; entonces ME implementa y se despliega junto.
+N/A — destrabada y cerrada. La coordinación joint se completó (JUNCO implementó y validó
+end-to-end; EPIC-010 Done). El único pendiente es el deploy a producción, **diferido por
+decisión del usuario**, no un bloqueo de la task.
 
 ## Estado / próximo paso
 
-Implementada en ME y con tests verdes + UI verificada. Próximo paso: push de ME →
-JUNCO implementa contra el método → deploy conjunto (`-u me,junco`). Cierre documental
-(`/doc-close`) tras el deploy joint. Al implementar JUNCO deroga D-005 en su EPIC-002.
+**Done sobre develop.** Implementada, suite ME 196/0/0, UI verificada, e integración
+validada end-to-end en `me2` con deploy conjunto `-u me,junco` (lado JUNCO EPIC-010 Done,
+D-005 derogada). Único pendiente: **deploy a producción, diferido** (lo gestiona el
+usuario, `-u me,junco` conjunto cuando corresponda).
 
 ## Resultado / cierre
 
-Pendiente.
+Cerrada (Done) el 2026-06-17 sobre `develop`, tomando la entrega a develop como cierre
+(simétrico con JUNCO EPIC-010). Entregado: `jurisdiction_dependence` no required;
+1er movimiento DEM→TMC desacoplado (`dependence_id`); método controlado
+`action_set_origin_from_junco` (canal único de escritura JUNCO→ME, validado y acotado);
+UI DEM (ocultar vacíos / readonly con valor). Docs canónicas (models/business_rules/
+security) actualizadas. **Deploy a prod diferido.**
