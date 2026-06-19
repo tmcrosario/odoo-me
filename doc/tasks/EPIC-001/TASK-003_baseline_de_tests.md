@@ -1,6 +1,6 @@
 # EPIC-001 / TASK-003 — Baseline de tests (inventario y gaps)
 
-Estado: Draft
+Estado: Done
 Modo: M
 Riesgo: bajo
 Módulo: `me`
@@ -8,7 +8,7 @@ Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: disponible
+- Estado de toma: cerrada (Done)
 - Responsable: sin asignar
 - Fecha de toma: N/A
 - Notas de coordinación: N/A
@@ -40,9 +40,10 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] `tests_plan.md` lista los tests existentes y qué reglas/workflows cubren.
-- [ ] Gaps priorizados registrados.
-- [ ] Estado de CI confirmado.
+- [x] `tests_plan.md` lista los tests existentes y qué reglas/workflows cubren (23 clases,
+  201 métodos; tabla de inventario + mapa de cobertura contra `business_rules.md`).
+- [x] Gaps priorizados registrados (5 gaps; el más alto: CI no corre los tests).
+- [x] Estado de CI confirmado (`pipeline.yml` = build/Snyk/deploy; **no** corre tests).
 
 ## Plan técnico preliminar
 
@@ -60,8 +61,17 @@ Lectura de `me/tests/`. Opcionalmente correr la suite para confirmar que pasa
 
 ## Estado / próximo paso
 
-Draft, sembrada en el bootstrap. Próximo paso: `/prepare-task`.
+**Done.** `tests_plan.md` completado (inventario + cobertura + gaps + CI). Relevamiento
+read-only, sin cambios de código. Los gaps quedan como insumo para tasks futuras (el de
+CI es el más relevante; escribir tests nuevos no es parte de esta task).
 
 ## Resultado / cierre
 
-Pendiente.
+Cerrada (Done) el 2026-06-19. Entregado en `doc/project/me/tests_plan.md`:
+- Inventario: **23 clases, 201 métodos** (177 en `test_document_exp.py` + 24 en
+  `test_document_movement.py`), con tabla clase→qué prueba→semilla.
+- Mapa de cobertura contra las reglas activas de `business_rules.md` (mayoría ✅).
+- **Gaps priorizados:** (1) ALTA — CI (`pipeline.yml`) no ejecuta la suite (solo
+  build/Snyk/deploy); (2) MEDIA — aviso de duplicado de expediente sin test;
+  (3-5) BAJA — multi-año, continuidad/append-only, camino negativo "ME inexistente".
+- Estado de CI confirmado (no corre tests; verificación manual vía `me_test`).
