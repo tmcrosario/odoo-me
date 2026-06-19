@@ -1,14 +1,14 @@
 # EPIC-001 / TASK-004 — Investigación: filtrado de jurisdicciones del DEM (#033)
 
-Estado: Draft
+Estado: Done (diagnóstico)
 Modo: M
-Riesgo: medio (puede derivar en fix de datos o de lógica)
+Riesgo: bajo (fue read-only; el fix queda fuera, en `tmc_data`)
 Módulo: `me`
 Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: disponible
+- Estado de toma: cerrada (Done)
 - Responsable: sin asignar
 - Fecha de toma: N/A
 - Notas de coordinación: N/A
@@ -43,11 +43,12 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] Diferencia entre jurisdicciones esperadas y mostradas, documentada con evidencia
-  (resultado de la query).
-- [ ] Causa clasificada (A/B/C/D) con referencia a código/datos.
-- [ ] Recomendación de fix: dato vs lógica vs "intencional → documentar", con alcance
-  estimado.
+- [x] Diferencia entre jurisdicciones esperadas y mostradas, documentada con evidencia
+  (resultado de la query) — ver Resultado.
+- [x] Causa clasificada (A/B/C/D) con referencia a código/datos — A (datos faltantes) + D
+  (intencional, multi-año).
+- [x] Recomendación de fix: dato vs lógica vs "intencional → documentar" — documentar la
+  regla multi-año (hecho en `business_rules.md`) + cargar nomenclador 2025 en `tmc_data`.
 
 ## Plan técnico preliminar
 
@@ -68,8 +69,32 @@ Query de diagnóstico sobre `tmc_dependence` / `tmc_dependence_order`; lectura d
 
 ## Estado / próximo paso
 
-Draft, sembrada en el bootstrap (desde #033). Próximo paso: `/prepare-task`.
+**Done.** Diagnóstico completo; no requiere cambios en `me`. El único accionable (cargar
+nomenclador 2025) vive en `tmc_data` (repo externo, gestionado aparte) y quedó anotado en
+`business_rules.md` → "Limitaciones conocidas".
 
 ## Resultado / cierre
 
-Pendiente.
+Cerrada (Done, diagnóstico) el 2026-06-19.
+
+**Estructura del nomenclador (entendida, read-only sobre seed `tmc_data` + queries me2):**
+- `tmc.dependence` = catálogo maestro de nombres (acumulativo entre años/versiones).
+- `tmc.dependence_order` = árbol jerárquico con `code` `X.YY.ZZ` (`1.00.00` raíz =
+  `tmc_dependence_adm` "ADMINISTRACIÓN CENTRAL"; `1.YY.00` = jurisdicciones/secretarías,
+  hijas de adm; `1.YY.ZZ` = sub-dependencias/source) y `institutional_classifier_ids` = años.
+- `_compute_allowed_jurisdictions` = hijos de `adm`, **sin filtrar por año** (intencional).
+
+**Evidencia (me2):** muestra 21 jurisdicciones (árbol 2020). Faltan 6 secretarías 2025 en
+MAYÚSCULAS (Género y DDHH, Modernización y Cercanía, Desarrollo Humano y Hábitat, Desarrollo
+Económico y Empleo, Movilidad, Deporte y Turismo): existen en el catálogo pero `en_order=0`
+o cuelgan de otro padre. Además ~20 duplicados case-variant (Tipo-Oración), sueltos de adm.
+
+**Causa:** A (datos faltantes — está cargado el nomenclador 2020, falta el 2025) + D
+(comportamiento intencional — el no-filtrar-por-año es a propósito, para soportar documentos
+generados en estructuras anteriores con secretarías que ya no existen). **No es bug de `me`**;
+el compute es correcto. La ref a `adm` es correcta (descarta B).
+
+**Recomendación:** (1) documentar la regla multi-año → **hecho** en `business_rules.md`.
+(2) Cargar el nomenclador **2025 de forma aditiva** (sin quitar el 2020) en **`odoo-tmc-data`**
+(repo externo, no se toca desde este flujo) → anotado en `business_rules.md` "Limitaciones
+conocidas". (3) Higiene de datos: deduplicar los registros case-variant al cargar el 2025.

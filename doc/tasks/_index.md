@@ -14,7 +14,7 @@ Nomenclatura:
 | EPIC-001/TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | Draft | Reconciliar doc ↔ código |
 | EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Draft | Completa `security.md` |
 | EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Draft | Completa `tests_plan.md` |
-| EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Draft | Diagnóstico (datos/lógica/intencional) |
+| EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Done | Causa: dato (falta nomenclador 2025) + intencional (multi-año). No es bug de me. Fix en tmc_data (externo), anotado en business_rules |
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Done | UI sobre `current_holder_id`; buscable + group-by. Verificada en UI |
 | EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Done | Campo `current_location_dependence_id` (internal-only) + filtro/group-by "Destination Office". Suite 201/0/0 |
 | EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |

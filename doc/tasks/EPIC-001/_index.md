@@ -7,4 +7,4 @@
 | TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | Draft | Reconciliar `architecture`/`workflows`/`models`/`business_rules` ↔ código; §7/§8 |
 | TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Draft | Completa `security.md`; matriz #018 |
 | TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Draft | Completa `tests_plan.md` |
-| TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Draft | Diagnóstico de causa, recomendación de fix |
+| TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Done | Causa: dato (falta nomenclador 2025) + intencional (multi-año). Fix en tmc_data (externo) |
