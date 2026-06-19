@@ -1,6 +1,6 @@
 # EPIC-003 / TASK-001 — Filtro por usuario poseedor en la vista de lista
 
-Estado: Draft
+Estado: Done
 Modo: S
 Riesgo: bajo
 Módulo: `me`
@@ -8,7 +8,7 @@ Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: disponible
+- Estado de toma: cerrada (Done)
 - Responsable: sin asignar
 - Fecha de toma: N/A
 - Notas de coordinación: N/A
@@ -33,27 +33,29 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] La search view permite buscar/filtrar expedientes por usuario poseedor
-  (`current_holder_id`), no solo por el usuario propio.
-- [ ] Existe group-by "Poseedor" que agrupa los expedientes por `current_holder_id`.
-- [ ] Los filtros existentes ("In My Possession", reentry, tribunal, licitación,
+- [x] La search view permite buscar/filtrar expedientes por usuario poseedor
+  (`current_holder_id`), no solo por el usuario propio (campo buscable "Holder").
+- [x] Existe group-by "Holder" que agrupa los expedientes por `current_holder_id`.
+- [x] Los filtros existentes ("In My Possession", reentry, tribunal, licitación,
   origen TMC) siguen funcionando (sin regresión).
 
 ## Validación
 
-Manual (UI): cargar expedientes con distintos poseedores y verificar filtro + group-by.
-Sin tests automatizados nuevos (cambio de vista, sin lógica).
+Manual (UI) verificada por el usuario: campo buscable + Group By por poseedor OK; filtros
+existentes sin regresión. El módulo actualiza limpio (`-u me --stop-after-init` exit 0,
+sin errores de validación de vista). Sin tests automatizados nuevos (cambio de vista).
 
 ## Preguntas abiertas
 
-- UI: ¿alcanza con campo buscable + group-by, o se quiere también entrada en la
-  searchpanel lateral? (definir en `/prepare-task`).
+- Ninguna. **UI decidida:** campo buscable `current_holder_id` + Group By "Poseedor".
+  **Sin** entrada en la searchpanel lateral (se descartó por no escalar con muchos usuarios).
 
 ## Estado / próximo paso
 
-Draft, creada desde idea de backlog del usuario. Próximo paso: `/prepare-task` para
-cerrar la UI exacta y pasar a implementación.
+**Done.** Implementado en `document_exp_view_search` y verificado en UI.
 
 ## Resultado / cierre
 
-Pendiente.
+Cerrada (Done) el 2026-06-19. Entregado: campo buscable `current_holder_id` ("Holder") +
+filtro group-by por poseedor en la search view de expedientes, sin cambios de modelo ni
+regresión de los filtros existentes.

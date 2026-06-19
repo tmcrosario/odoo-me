@@ -132,6 +132,7 @@
                 </searchpanel>
                 <field name="name"/>
                 <field name="number"/>
+                <field name="current_holder_id" string="Holder"/>
                 <filter string="In My Possession" name="in_my_possession"
                         domain="[('current_holder_id', '=', uid)]"/>
                 <filter string="With Institutional Reentry" name="has_reentry"
@@ -142,6 +143,8 @@
                         domain="[('is_licitacion', '=', True)]"/>
                 <filter string="Originated at TMC" name="origin_tmc"
                         domain="[('dependence_id.abbreviation', '=', 'TMC')]"/>
+                <filter name="group_by_holder" string="Holder"
+                        context="{'group_by': 'current_holder_id'}"/>
             </search>
         </field>
     </record>
