@@ -11,6 +11,11 @@
 **no implementado en este repo**). ME **extiende, no reemplaza** ese modelo. Ver
 [`tmc_base_reference.md`](tmc_base_reference.md).
 
+`depends`: `["tmc", "tmc_data"]`. `tmc_data` es necesario porque
+`me/data/dependence_data.xml` referencia registros del nomenclador definidos en ese
+módulo (ej. `tmc_data.tmc_dependence_tmc`); sin declararlo, una instalación fresca de
+`me` falla por orden de carga (Odoo no respeta el orden del `-i`, usa los `depends`).
+
 ## Registro autoritativo de modelos de `me`
 
 Lista de modelos `_name` propios del módulo. **Antes de introducir un modelo nuevo**,

@@ -5,7 +5,7 @@
     "author": "Tribunal Municipal de Cuentas - Municipalidad de Rosario",
     "website": "https://www.tmcrosario.gob.ar",
     "license": "AGPL-3",
-    "depends": ["tmc"],
+    "depends": ["tmc", "tmc_data"],
     "data": [
         "security/me_groups.xml",
         "security/ir.model.access.csv",
