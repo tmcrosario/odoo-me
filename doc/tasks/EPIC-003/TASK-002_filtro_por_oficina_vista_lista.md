@@ -52,13 +52,13 @@ No incluye:
   "belongs to the Tribunal"). Confirmado contra el sistema viejo (select "Oficina de
   destino" lista solo dependencias internas de TMC).
 - **UI decidida:** campo **buscable (typeahead)** `current_location_dependence_id` con
-  dominio `is_internal=True`. Sin searchpanel lateral (se descartó por los ~20 + duplicados).
+  dominio `is_internal=True`. Sin searchpanel lateral (se descartó por la cantidad de oficinas).
 - Nombre del campo: `current_location_dependence_id`.
 
 ## Preguntas abiertas
 
-- Ninguna bloqueante (todas cerradas arriba). Resta solo la **limitación de datos** (no
-  se arregla acá): ver Riesgos.
+- Ninguna. (La sospecha de duplicados de oficinas resultó falsa para el sistema nuevo —
+  ver "Limitaciones conocidas".)
 
 ## Acceptance criteria
 
@@ -73,10 +73,13 @@ No incluye:
 
 ## Limitaciones conocidas
 
-- El nomenclador tiene **dependencias internas duplicadas** (visto en el sistema viejo:
-  Dir. de Asuntos Legales ×2, Dir. de Coordinación y Despacho ×2, variantes de "Tribunal
-  Municipal de Cuentas"). El filtro las mostrará duplicadas. **No se sanea en esta task**
-  (es problema de datos, territorio #033 / EPIC-001/TASK-004); se documenta como limitación.
+- **Sin limitación de duplicados (verificado).** Los duplicados vistos en la captura eran
+  del **sistema viejo**. En me2 el filtro lista las dependencias con `is_internal=True`,
+  que son **12 oficinas curadas y sin nombres duplicados** (`is_internal` lo setea
+  `me/data/dependence_data.xml` sobre un set acotado, no sobre todo el seed). El seed de
+  `tmc_data` tiene variantes de mayúsculas/acentos, pero no quedan marcadas internas, así
+  que **no aparecen en este filtro**. Diagnóstico: `is_internal=True` → 12 deps, 0 nombres
+  duplicados.
 
 ## Contrato técnico
 
@@ -141,6 +144,7 @@ Office"), suite `me_test` 201/0/0, UI verificada en me2. Push y deploy a prod: u
 Cerrada (Done) el 2026-06-19. Entregado: campo stored `current_location_dependence_id`
 (oficina interna de destino del último movimiento; False si salió del Tribunal o sin
 movimientos) + filtro buscable y group-by "Destination Office" (dominio `is_internal=True`)
-en la search view. Limitación conocida: duplicados de dependencias internas en el
-nomenclador (#033). Hallazgo registrado: `me` tiene dependencia implícita de `tmc_data`
-(data) no declarada en el manifest — candidato a corregir en EPIC-001 con aprobación.
+en la search view. **Sin limitación de duplicados** (verificado: 12 oficinas internas
+curadas, 0 nombres duplicados; los duplicados eran del sistema viejo). Hallazgo derivado
+**resuelto**: la dependencia implícita de `tmc_data` se declaró en el manifest de `me`
+(commit `[FIX] declarar dependencia tmc_data en el manifest de me`).
