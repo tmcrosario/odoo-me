@@ -2836,6 +2836,94 @@ class TestCurrentHolder029(TransactionCase):
 
 
 @tagged('post_install', '-at_install')
+class TestCurrentLocation(TransactionCase):
+    """Tests para current_location_dependence_id (EPIC-003/TASK-002): ubicación actual =
+    destino (destination_dependence_id) del último movimiento, espejo de current_holder_id."""
+
+    def setUp(self):
+        super().setUp()
+        self.doc_type_exp = self.env['tmc.document_type'].search(
+            [('abbreviation', '=', 'EXP')], limit=1
+        )
+        if not self.doc_type_exp:
+            self.doc_type_exp = self.env['tmc.document_type'].create({
+                'name': 'Expediente Test Loc', 'abbreviation': 'EXP',
+            })
+        self.dep_dem = self.env['tmc.dependence'].search(
+            [('abbreviation', '=', 'DEM')], limit=1
+        )
+        if not self.dep_dem:
+            self.dep_dem = self.env['tmc.dependence'].create({
+                'name': 'DEM Test Loc', 'abbreviation': 'DEM',
+            })
+        self.dep_jur = self.env['tmc.dependence'].create({
+            'name': 'Jurisdiccion Test Loc', 'abbreviation': 'JTLOC',
+        })
+        self.office_a = self.env['tmc.dependence'].create({
+            'name': 'Oficina A Test', 'abbreviation': 'OFA', 'is_internal': True,
+        })
+        self.office_b = self.env['tmc.dependence'].create({
+            'name': 'Oficina B Test', 'abbreviation': 'OFB', 'is_internal': True,
+        })
+        self.office_ext = self.env['tmc.dependence'].create({
+            'name': 'Oficina Externa Test', 'abbreviation': 'OFEXT', 'is_internal': False,
+        })
+        self.today = fields.Date.today()
+        self.exp = self.env['me.document_exp'].create({
+            'dependence_id': self.dep_dem.id,
+            'document_type_id': self.doc_type_exp.id,
+            'number': 87701,
+            'period': str(self.today.year),
+            'jurisdiction_dependence': self.dep_jur.id,
+            'intake_date': self.today,
+            'date': self.today,
+            'fojas': 1,
+        })
+
+    def _move_to(self, office, origin, fojas):
+        return self.env['me.document_movement'].create({
+            'expediente_id': self.exp.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': origin.id,
+            'destination_dependence_id': office.id,
+            'fojas': fojas,
+            'user_id': self.env.uid,
+        })
+
+    def test_location_is_internal_destination(self):
+        """Un movimiento a una oficina interna fija la ubicación en esa oficina."""
+        self._move_to(self.office_a, self.dep_dem, 2)
+        self.assertEqual(self.exp.current_location_dependence_id, self.office_a)
+
+    def test_location_false_when_left_tribunal(self):
+        """Si el último destino NO es interno (salió del Tribunal), la ubicación es False."""
+        self._move_to(self.office_a, self.dep_dem, 2)
+        self.assertEqual(self.exp.current_location_dependence_id, self.office_a)
+        self._move_to(self.office_ext, self.office_a, 3)
+        self.assertFalse(self.exp.current_location_dependence_id)
+
+    def test_location_follows_last_movement_not_first(self):
+        """La ubicación es el destino del movimiento con mayor id, no del primero."""
+        self._move_to(self.office_a, self.dep_dem, 2)
+        self.assertEqual(self.exp.current_location_dependence_id, self.office_a)
+        self._move_to(self.office_b, self.office_a, 3)
+        self.assertEqual(self.exp.current_location_dependence_id, self.office_b)
+
+    def test_no_movements_location_is_false(self):
+        """Sin movimientos, current_location_dependence_id es False."""
+        self.exp.sudo().document_movement_ids.unlink()
+        self.assertFalse(self.exp.current_location_dependence_id)
+
+    def test_search_filter_by_location(self):
+        """El domain por current_location_dependence_id devuelve el expediente tras moverlo."""
+        self._move_to(self.office_a, self.dep_dem, 2)
+        results = self.env['me.document_exp'].search(
+            [('current_location_dependence_id', '=', self.office_a.id)]
+        )
+        self.assertIn(self.exp, results)
+
+
+@tagged('post_install', '-at_install')
 class TestNumberRange032(TransactionCase):
     """Tests para #032 — número de expediente: rango válido 1 ≤ number ≤ 999999."""
 

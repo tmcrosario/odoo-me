@@ -175,6 +175,33 @@ class DocumentExp(models.Model):
             last = record.document_movement_ids.sorted('id')[-1:]
             record.current_holder_id = last.user_id if last else False
 
+    current_location_dependence_id = fields.Many2one(
+        comodel_name='tmc.dependence',
+        string="Destination Office",
+        compute="_compute_current_location_dependence_id",
+        store=True,
+        help=(
+            "Current internal location office: destination dependence of the last "
+            "registered movement, only when that destination is internal "
+            "(is_internal=True). False when there are no movements or the expediente "
+            "has left the Tribunal (last movement to a non-internal dependence)."
+        ),
+    )
+
+    @api.depends(
+        'document_movement_ids.destination_dependence_id',
+        'document_movement_ids.destination_dependence_id.is_internal',
+    )
+    def _compute_current_location_dependence_id(self):
+        for record in self:
+            last = record.document_movement_ids.sorted('id')[-1:]
+            dest = last.destination_dependence_id if last else False
+            # Solo ubicación interna: si el expediente ya salió del Tribunal (último
+            # destino no interno), no interesa dónde fue → queda vacío.
+            record.current_location_dependence_id = (
+                dest if (dest and dest.is_internal) else False
+            )
+
     @api.depends('document_movement_ids.destination_dependence_id.is_internal')
     def _compute_is_currently_internal(self):
         for record in self:

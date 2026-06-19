@@ -37,8 +37,12 @@ Modelos extendidos por `me` vía `_inherit` (no son `_name` propios): `tmc.depen
   otra tabla y otro propósito).
 - Relación principal: `document_movement_ids` (One2many → `me.document_movement`).
 - Campos, computed (`computed_name`, `is_origin_complete`/`is_valid`,
-  `current_holder_id`, `has_reentry`…) y métodos: ver [`architecture.md`](architecture.md)
-  y [`workflows.md`](workflows.md).
+  `current_holder_id`, `current_location_dependence_id`, `has_reentry`…) y métodos: ver
+  [`architecture.md`](architecture.md) y [`workflows.md`](workflows.md).
+- `current_location_dependence_id` (EPIC-003): Many2one stored computed = oficina
+  **interna** de destino del último movimiento (`is_internal=True`); False sin movimientos
+  o si el expediente salió del Tribunal. Espejo de `current_holder_id`. Alimenta el filtro
+  "Destination Office" de la vista de lista.
 - **EPIC-004**: `jurisdiction_dependence` ya **no es required** (solo DEM queda vacío al
   ingresar; TMC/CM se autoasignan en `create()`). Para DEM, `jurisdiction_dependence` y
   `source_dependence_id` los completa **JUNCO** vía el método público

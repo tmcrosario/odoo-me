@@ -16,7 +16,7 @@ Nomenclatura:
 | EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Draft | Completa `tests_plan.md` |
 | EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Draft | Diagnóstico (datos/lógica/intencional) |
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Done | UI sobre `current_holder_id`; buscable + group-by. Verificada en UI |
-| EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Draft | Campo persistente nuevo; contrato previo |
+| EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Done | Campo `current_location_dependence_id` (internal-only) + filtro/group-by "Destination Office". Suite 201/0/0 |
 | EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,

@@ -133,6 +133,8 @@
                 <field name="name"/>
                 <field name="number"/>
                 <field name="current_holder_id" string="Holder"/>
+                <field name="current_location_dependence_id" string="Destination Office"
+                       domain="[('is_internal', '=', True)]"/>
                 <filter string="In My Possession" name="in_my_possession"
                         domain="[('current_holder_id', '=', uid)]"/>
                 <filter string="With Institutional Reentry" name="has_reentry"
@@ -145,6 +147,8 @@
                         domain="[('dependence_id.abbreviation', '=', 'TMC')]"/>
                 <filter name="group_by_holder" string="Holder"
                         context="{'group_by': 'current_holder_id'}"/>
+                <filter name="group_by_location" string="Destination Office"
+                        context="{'group_by': 'current_location_dependence_id'}"/>
             </search>
         </field>
     </record>

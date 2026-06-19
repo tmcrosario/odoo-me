@@ -58,7 +58,7 @@ No incluye:
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | `me` | Done |
-| TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | `me` | Draft |
+| TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | `me` | Done |
 
 ## Preguntas abiertas
 
