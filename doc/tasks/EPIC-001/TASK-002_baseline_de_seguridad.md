@@ -1,6 +1,6 @@
 # EPIC-001 / TASK-002 — Baseline de seguridad (ACL/grupos/record rules)
 
-Estado: Draft
+Estado: Done
 Modo: M
 Riesgo: medio (toca lectura de security; sin cambios)
 Módulo: `me`
@@ -8,7 +8,7 @@ Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: disponible
+- Estado de toma: cerrada (Done)
 - Responsable: sin asignar
 - Fecha de toma: N/A
 - Notas de coordinación: N/A
@@ -43,10 +43,11 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] `security.md` lista grupos, ACL y record rules reales con referencia a archivo.
-- [ ] Matriz permisos CRUD × grupo × modelo completa.
-- [ ] Caminos negativos sensibles identificados (con o sin test — se deriva a TASK-003).
-- [ ] Dudas §8.5 resueltas (existe/qué contiene `ir.model.access.csv`).
+- [x] `security.md` lista grupos (con `implied_ids`), ACL y record rules reales con ref a
+  archivo. Record rules: **no hay `ir.rule`** → la seguridad de fila/operación es por guards.
+- [x] Matriz permisos CRUD × grupo × modelo completa (2 modelos × 3 grupos).
+- [x] Caminos negativos sensibles identificados (mapeados a tests de `tests_plan.md`).
+- [x] Dudas §8.5 resueltas: `ir.model.access.csv` **existe** y se documentó su contenido.
 
 ## Plan técnico preliminar
 
@@ -62,8 +63,19 @@ Lectura de `me/security/`, grupos en XML y guards en `me/models/*.py`. Sin modif
 
 ## Estado / próximo paso
 
-Draft, sembrada en el bootstrap. Próximo paso: `/prepare-task`.
+**Done.** `security.md` completado con el baseline verificado. Relevamiento read-only, sin
+cambios de permisos ni código.
 
 ## Resultado / cierre
 
-Pendiente.
+Cerrada (Done) el 2026-06-19. Entregado en `doc/project/me/security.md`:
+- **Grupos** (`me_groups.xml`): `group_user` (⇒ `tmc.group_user`), `group_manager`
+  (⇒ user + `tmc.group_manager`; `implied_by base.group_erp_manager`), `group_read_only`.
+- **Matriz ACL** real (`ir.model.access.csv`): 2 modelos × 3 grupos; user sin unlink,
+  read_only solo lectura. §8.5 resuelto (el CSV existe).
+- **Record rules:** no hay `ir.rule` → la seguridad de fila/operación se hace por **guards
+  imperativos** en `write()` (de ahí el insight: el CSV es permisivo, el código restringe).
+- **Guards documentados:** `me.document_exp.write()` (#027/#029 + canal EPIC-004),
+  `me.document_movement.write()` (#028: último movimiento + poseedor + campos editables).
+- **`sudo()`** como fronteras deliberadas (RAA, campos delegados `tmc.document`, canal JUNCO).
+- Caminos negativos mapeados a tests; ACL de modelos externos (`tmc`/`raa`) aclarada.

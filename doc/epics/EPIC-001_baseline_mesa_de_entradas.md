@@ -62,7 +62,7 @@ No incluye:
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | `me` | Draft |
-| TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | `me` | Draft |
+| TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | `me` | Done |
 | TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | `me` | Done |
 | TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | `me` | Done |
 

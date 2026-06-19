@@ -12,7 +12,7 @@ Nomenclatura:
 | --- | --- | --- | --- | --- | --- |
 | SETUP-001 | Bootstrap del framework SDD en odoo-me | Ale Gallo | L | Done | Port del framework completo (pasos A–D) |
 | EPIC-001/TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | Draft | Reconciliar doc ↔ código |
-| EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Draft | Completa `security.md` |
+| EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Done | `security.md` completo: grupos, matriz ACL, sin record rules (seguridad por guards), sudo |
 | EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Done | `tests_plan.md` completo: 23 clases/201 métodos, cobertura, 5 gaps (CI no corre tests) |
 | EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Done | Causa: dato (falta nomenclador 2025) + intencional (multi-año). No es bug de me. Fix en tmc_data (externo), anotado en business_rules |
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Done | UI sobre `current_holder_id`; buscable + group-by. Verificada en UI |
