@@ -1,6 +1,6 @@
 # EPIC-003 — Usabilidad y filtros de la vista de expedientes
 
-Estado: Draft
+Estado: Done (sobre develop; deploy a prod diferido)
 Riesgo global: medio (una task toca un campo persistente nuevo)
 Módulo: `me`
 Owner: sin asignar
@@ -62,11 +62,11 @@ No incluye:
 
 ## Preguntas abiertas
 
-1. UI exacta de cada filtro: barra de filtros, group-by y/o entrada en la searchpanel
-   lateral (como `dependence_id`/Origen).
-2. (TASK-002) Criterio de "oficina TMC": ¿`is_internal = True` en `tmc.dependence`?
-3. (TASK-002) ¿El filtro lista cualquier dependencia de destino o solo internas?
+Cerradas: UI = campo buscable + group-by (sin searchpanel); "oficina TMC" = `is_internal=True`;
+el filtro lista solo internas (campo internal-only).
 
 ## Cierre de épica
 
-Pendiente.
+Cerrada (Done) el 2026-06-19 sobre `develop`, con TASK-001 (filtro por poseedor) y
+TASK-002 (filtro por oficina interna de destino) entregadas, suite `me` 201/0/0 y UI
+verificada en me2. Deploy a producción diferido (usuario).
