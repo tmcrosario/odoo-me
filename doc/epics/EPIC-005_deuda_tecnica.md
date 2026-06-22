@@ -1,6 +1,6 @@
 # EPIC-005 — Deuda técnica (limpieza post-baseline)
 
-Estado: Draft
+Estado: Done (sobre develop)
 Riesgo global: bajo/medio (uno toca el manifest = dependencia de módulo)
 Módulo: `me`
 Owner: sin asignar
@@ -20,7 +20,7 @@ Salidos de la reconciliación §8 en EPIC-001/TASK-001 (2026-06-19). Son cambios
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | `me` | Done |
-| TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | `me` | Draft |
+| TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | `me` | Done |
 
 ## Detalle de los follow-ups
 
@@ -41,8 +41,11 @@ Salidos de la reconciliación §8 en EPIC-001/TASK-001 (2026-06-19). Son cambios
 
 ## Preguntas abiertas
 
-- (TASK-002) ¿`raa` pasa a ser dependencia dura o se mantiene implícita?
+Ninguna. (TASK-002 resuelta: `raa` no se declara — sería circular; acoplamiento implícito
+documentado.)
 
 ## Cierre de épica
 
-Pendiente.
+Cerrada (Done) el 2026-06-22 sobre `develop`. TASK-001 (`[REM]` campo muerto
+`allowed_dependence_ids`, suite 201/0/0) y TASK-002 (decisión `raa`: no declarable por ciclo
+`raa→me`, documentado en `models.md`). Deploy a prod: N/A.

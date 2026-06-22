@@ -68,8 +68,16 @@ Modelos extendidos por `me` vía `_inherit` (no son `_name` propios): `tmc.depen
 ## Modelo externo: `raa.registry_aa`
 
 Pertenece al módulo `raa` (fuera de scope de ME). Se crea automáticamente desde
-`me.document_exp.create()`. **No proponer cambios estructurales** salvo pedido
-explícito. Ver [`../raa/architecture.md`](../raa/architecture.md).
+`me.document_exp.create()` (vía `sudo()`). **No proponer cambios estructurales** salvo
+pedido explícito. Ver [`../raa/architecture.md`](../raa/architecture.md).
+
+**Acoplamiento implícito (no se declara en el manifest — a propósito):** `me` crea
+registros de `raa.registry_aa`, pero **`raa` depende de `me`** (`raa/__manifest__.py`:
+`depends = ["tmc", "me"]`). Declarar `raa` en los `depends` de `me` crearía una
+**dependencia circular** `me ↔ raa` que rompe la carga. Por eso el acoplamiento queda
+implícito (decisión EPIC-005/TASK-002, §8.8). **Consecuencia:** `me` asume que `raa` está
+co-instalado; si se instalara `me` sin `raa`, `create()` fallaría al crear el registro RAA.
+En este stack siempre se co-instalan (`-i me,raa`).
 
 ## Guardrails de arquitectura
 
