@@ -19,7 +19,7 @@ Salidos de la reconciliación §8 en EPIC-001/TASK-001 (2026-06-19). Son cambios
 
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
-| TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | `me` | Draft |
+| TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | `me` | Done |
 | TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | `me` | Draft |
 
 ## Detalle de los follow-ups

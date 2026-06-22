@@ -18,7 +18,7 @@ Nomenclatura:
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Done | UI sobre `current_holder_id`; buscable + group-by. Verificada en UI |
 | EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Done | Campo `current_location_dependence_id` (internal-only) + filtro/group-by "Destination Office". Suite 201/0/0 |
 | EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |
-| EPIC-005/TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Draft | Follow-up de EPIC-001/TASK-001 (§8.6); `[REM]` |
+| EPIC-005/TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Done | Removido; sin referencias; suite 201/0/0 |
 | EPIC-005/TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | Draft | Follow-up de EPIC-001/TASK-001 (§8.8); decisión de deps |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,

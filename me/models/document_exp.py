@@ -13,13 +13,6 @@ class DocumentExp(models.Model):
         string="Document",
     )
 
-    # Field for filtering allowed dependences (origin: DEM, TMC, CM)
-    allowed_dependence_ids = fields.Many2many(
-        'tmc.dependence',
-        compute='_compute_allowed_dependencies',
-        string='Allowed Dependences'
-    )
-
     # Field for filtering jurisdiction (first-level nodes 1.XX.00 in the nomenclator)
     allowed_jurisdiction_ids = fields.Many2many(
         'tmc.dependence',
@@ -286,15 +279,6 @@ class DocumentExp(models.Model):
             if exp_type:
                 defaults['document_type_id'] = exp_type.id
         return defaults
-
-    @api.depends()
-    def _compute_allowed_dependencies(self):
-        """Computar las dependencias permitidas para expedientes"""
-        allowed_deps = self.env['tmc.dependence'].search([
-            ('abbreviation', 'in', ['DEM', 'TMC', 'CM'])
-        ])
-        for record in self:
-            record.allowed_dependence_ids = allowed_deps
 
     @api.depends()
     def _compute_allowed_jurisdictions(self):

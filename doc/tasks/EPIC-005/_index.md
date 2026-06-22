@@ -7,5 +7,5 @@
 
 | Task | Título | Responsable | Modo | Estado | Notas |
 | --- | --- | --- | --- | --- | --- |
-| TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Draft | `[REM]`; verificar sin referencias antes |
+| TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Done | Removido + compute; sin referencias; suite 201/0/0; ai-context corregido |
 | TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | Draft | Decisión de deps; requiere aprobación |

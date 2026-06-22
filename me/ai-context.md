@@ -89,7 +89,6 @@ Own fields (defined in `me.document_exp`):
 | `computed_name` | Char | No | computed: format EXP-XXXXXX-ABR/YEAR; shown as soon as dependence_id + number + period are set |
 | `source_dependence_id` | Many2one(tmc.dependence) | Conditional | required when `allowed_sub_dependence_ids` is non-empty AND dependence_id is not TMC or CM; enforced by `@api.constrains` + `required="allowed_sub_dependence_ids"` in view; cleared when `jurisdiction_dependence` changes; invisible in view when dependence_abbreviation == 'CM' |
 | `allowed_sub_dependence_ids` | Many2many(tmc.dependence) | No | computed; depends on `jurisdiction_dependence`; queries `tmc.dependence_order` where `parent_id = jurisdiction_dependence.id`; provides domain for `source_dependence_id` |
-| `allowed_dependence_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; hardcoded to DEM/TMC/CM |
 | `allowed_jurisdiction_ids` | Many2many(tmc.dependence) | No | computed, no declared dependencies; queries tmc.dependence_order children of tmc_dependence_adm (~21 first-level institutional bodies); declared `invisible="1"` in view; provides domain for `jurisdiction_dependence` |
 | `document_movement_ids` | One2many(me.document_movement) | No | movement history |
 | `has_reentry` | Boolean | No | stored computed: True when the expediente has at least one movement to an external dependence followed by a movement to an internal dependence (institutional reentry detection); depends on `document_movement_ids.destination_dependence_id.is_internal`; initialized to False for pre-existing rows when the column is first added — see upgrade note below |
@@ -203,8 +202,8 @@ Business Rules and Constraints
 `dependence_id` is restricted to dependences with abbreviations:
 `['DEM', 'TMC', 'CM']`
 
-This filter is enforced both in the computed field `allowed_dependence_ids`
-and in the view domain. It is static — not configurable.
+This filter is enforced by the **hardcoded view domain** on `dependence_id`
+(`[('abbreviation', 'in', ['DEM','TMC','CM'])]`). It is static — not configurable.
 
 Do not propose changes to this list without explicit requirement.
 
