@@ -1,6 +1,6 @@
 # EPIC-001 / TASK-001 — Inventario técnico-funcional verificado
 
-Estado: Draft
+Estado: Done
 Modo: L
 Riesgo: medio
 Módulo: `me`
@@ -8,7 +8,7 @@ Responsable: sin asignar
 
 ## Asignación
 
-- Estado de toma: disponible
+- Estado de toma: cerrada (Done)
 - Responsable: sin asignar
 - Fecha de toma: N/A
 - Notas de coordinación: N/A
@@ -43,12 +43,13 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] `architecture.md`, `workflows.md`, `models.md`, `business_rules.md`
-  reflejan el estado **actual** del código, con marcas de vigencia.
-- [ ] Cada inconsistencia §7 y aspecto incierto §8 queda: resuelto (con referencia a
-  código) o reclasificado como pregunta/riesgo/`N/A` justificado.
-- [ ] Estado real de #031 (y cualquier otro desfase del legacy) confirmado.
-- [ ] Lista de deltas doc↔código registrada en la task card.
+- [x] `architecture.md` (datada: §1–6 snapshot histórico, fuente de verdad = docs hermanos),
+  `workflows.md` (verificada/datada, Workflow 4 corregido), `models.md`/`business_rules.md`/
+  `security.md`/`tests_plan.md` (actualizados en EPIC-003/004 + TASK-002/003/004).
+- [x] Cada §7 (8) y §8 (8) resuelto/obsoleto/reclasificado, con referencia a código.
+- [x] #031 confirmado: searchpanel **implementado** (commit cf3951c, en la vista); `[IDEA]`
+  del legacy es etiqueta vieja (el header del legacy ya lo flagea).
+- [x] Deltas doc↔código registrados (abajo).
 
 ## Plan técnico preliminar
 
@@ -66,13 +67,10 @@ Lectura dirigida de `me/models/document_exp.py`, `document_movement.py`,
 
 ## Estado / próximo paso
 
-**En progreso** (relevamiento por pasadas). **Pasadas 1 (§7) y 2 (§8) — hechas** el
-2026-06-19: §7 e §8 reconciliados en `architecture.md` (notas de reconciliación + texto
-original conservado). **Pausa para revisión del usuario.** Próximo: pasada 3 (cuerpo
-architecture.md §1–6).
+**Done** el 2026-06-19. Las 5 pasadas completas (relevamiento read-only, sin cambios de código).
 
-Pasadas: 1 §7 ✅ · 2 §8 ✅ · 3 cuerpo architecture.md (§1–6) ⬜ · 4 workflows.md ⬜ ·
-5 legacy (#031) + cierre ⬜.
+Pasadas: 1 §7 ✅ · 2 §8 ✅ · 3 cuerpo architecture.md (§1–6 datado) ✅ · 4 workflows.md
+(verificado, Workflow 4 corregido) ✅ · 5 legacy (#031 confirmado) + cierre ✅.
 
 **Follow-ups detectados (tasks de código aparte, NO en esta task doc-only):**
 - 8.6 — `allowed_dependence_ids` es artefacto muerto → candidato a remoción (`[REM]`).
@@ -105,6 +103,18 @@ Pasadas: 1 §7 ✅ · 2 §8 ✅ · 3 cuerpo architecture.md (§1–6) ⬜ · 4 w
 - 8.7 routing de movimientos posteriores → **reclasificado**: quién=resuelto (#027/#028); routing/continuidad=limitación conocida.
 - 8.8 `raa` no declarada en manifest → **riesgo abierto**: dependencia implícita → follow-up.
 
+**§1–6 / workflows / legacy (pasadas 3–5):**
+- `architecture.md` §1–6: snapshot 2026-03-26 **datado como histórico**; nota de Vigencia
+  ampliada apuntando a los docs hermanos como fuente de verdad (deltas EPIC-003/004).
+- `workflows.md`: **Workflow 4 corregido** (1er movimiento usa `dependence_id`, EPIC-004);
+  nota de vigencia con deltas EPIC-003/004.
+- Legacy: #031 (searchpanel) confirmado implementado; `[IDEA]` stale ya flageado en el header.
+
 ## Resultado / cierre
 
-Pendiente (en progreso — pasadas 1 y 2 de 5 completas).
+Cerrada (Done) el 2026-06-19. Reconciliación documental completa de `me` (read-only): §7
+(8) e §8 (8) cerrados, `architecture.md` datado como histórico con fuente de verdad en los
+docs hermanos, `workflows.md` verificado y corregido (Workflow 4), #031 confirmado.
+**Cierra EPIC-001** (4/4 tasks Done). Dos follow-ups de **código** quedaron registrados en
+EPIC-005 (deuda técnica): remover `allowed_dependence_ids` (8.6) y decidir la declaración
+de `raa` en el manifest (8.8).

@@ -3,7 +3,13 @@
 > Consolidado desde `domain-rules/me/workflows.md`. Es la descripción de
 > comportamiento **más actual** del módulo (incorpora cambios hasta #021–#030):
 > ante discrepancias con [`architecture.md`](architecture.md), **este doc manda**.
-> La verificación contra el código vigente se cierra en EPIC-001.
+>
+> **Verificado contra código vigente — EPIC-001/TASK-001 (2026-06-19).** Deltas posteriores
+> a #030 incorporados: **EPIC-004** (en DEM, `jurisdiction_dependence`/`source_dependence_id`
+> ya no se cargan en ME — los completa JUNCO vía `action_set_origin_from_junco()`; el 1er
+> movimiento automático usa `dependence_id` como origen — ver Workflow 4 y `business_rules.md`);
+> **EPIC-003** (campo `current_location_dependence_id` = oficina interna actual, + filtros
+> por poseedor y por oficina de destino en la search view).
 
 Este archivo documenta los workflows principales del módulo Mesa de Entradas
 basándose en el comportamiento real del código.
@@ -147,11 +153,16 @@ El número y recorrido depende de la dependencia de origen (`dependence_id`).
 
 ### Pasos
 
+> **Actualizado EPIC-004 (2026-06):** el Movimiento 1 ahora usa **`dependence_id`** como
+> origen (no `jurisdiction_dependence`), y el guard ya no exige la jurisdicción. Así el 1er
+> pase DEM→TMC se crea al ingresar aunque la jurisdicción esté vacía (en DEM la completa
+> JUNCO después). Ver `business_rules.md`.
+
 **Rama DEM (y cualquier origen distinto de TMC):**
 
 1. El sistema busca `tmc.dependence` con `abbreviation = 'TMC'` y con `abbreviation = 'ME'`.
-2. Crea Movimiento 1 (jurisdicción → TMC):
-   - origen: `jurisdiction_dependence`
+2. Crea Movimiento 1 (**origen → TMC**):
+   - origen: **`dependence_id`** (DEM) — EPIC-004, opción A (antes era `jurisdiction_dependence`)
    - destino: TMC
    - `fojas`: `record.fojas` (snapshot en el momento de creación)
    - `is_automatic`: True
@@ -169,10 +180,9 @@ El número y recorrido depende de la dependencia de origen (`dependence_id`).
 
 **Rama CM (dependence_id == CM):**
 
-1. `jurisdiction_dependence` fue auto-asignado a CM por `_onchange_dependence` o
-   por el backup en `create()` antes de llamar a `super()`.
-2. Crea Movimiento 1: CM → TMC (`jurisdiction_dependence = CM` como origen).
-3. Crea Movimiento 2: TMC → Mesa de Entradas.
+1. Crea Movimiento 1: CM → TMC (origen = `dependence_id` = CM; coincide con la jurisdicción
+   auto-asignada de CM).
+2. Crea Movimiento 2: TMC → Mesa de Entradas.
 
 En todos los casos, los movimientos son condicionales: si TMC o ME no existen en la
 base de datos, se omiten silenciosamente sin error.
@@ -181,7 +191,8 @@ base de datos, se omiten silenciosamente sin error.
 
 **Observed in code:**
 - Condicional `origin_is_tmc`: `me/models/document_exp.py`, método `create()`
-- Movimiento 1 omitido para TMC: `if not origin_is_tmc and record.jurisdiction_dependence`
+- Movimiento 1 omitido para TMC: `if not origin_is_tmc and tmc_dependence` (EPIC-004; antes
+  exigía `and record.jurisdiction_dependence`). Origen del Mov.1 = `record.dependence_id.id`.
 - Backup auto-asignación CM/TMC: pre-super() loop en `create()`
 - Campos `fojas` e `is_automatic` incluidos en cada movimiento automático
 

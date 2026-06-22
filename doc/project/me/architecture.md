@@ -12,13 +12,17 @@
 > de poseedor; `ir.model.access` definido para los modelos de `me`). Donde este doc
 > y `workflows.md` discrepen, **`workflows.md` es más reciente**.
 >
-> La **reconciliación definitiva contra el código actual** es trabajo de **EPIC-001
-> (baseline de mesa de entradas)**. No tratar las secciones marcadas como
-> *Uncertain* como reglas cerradas.
+> **Reconciliación EPIC-001/TASK-001 (2026-06-19).** §7 e §8 reconciliados (ver notas en
+> esas secciones). Las secciones **§1–6 quedan como snapshot histórico 2026-03-26**: para
+> el estado **vigente** de modelos/campos, reglas y workflows, la **fuente de verdad** son
+> los docs hermanos (`models.md`, `business_rules.md`, `workflows.md`, `security.md`,
+> `tests_plan.md`), actualizados con los deltas EPIC-003 (filtros + `current_location_dependence_id`)
+> y EPIC-004 (cesión de carga DEM a JUNCO, 1er movimiento por `dependence_id`, método
+> `action_set_origin_from_junco`). No tratar §1–6 como vigentes donde discrepen de esos docs.
 >
 > Docs hermanos: [`models.md`](models.md) · [`business_rules.md`](business_rules.md)
 > · [`workflows.md`](workflows.md) · [`security.md`](security.md) ·
-> [`tmc_base_reference.md`](tmc_base_reference.md).
+> [`tests_plan.md`](tests_plan.md) · [`tmc_base_reference.md`](tmc_base_reference.md).
 
 ---
 

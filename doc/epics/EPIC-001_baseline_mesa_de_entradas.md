@@ -1,6 +1,6 @@
 # EPIC-001 — Reverse-engineering + baseline de mesa de entradas
 
-Estado: Draft
+Estado: Done (sobre develop)
 Riesgo global: medio
 Módulo: `me`
 Owner: sin asignar
@@ -61,7 +61,7 @@ No incluye:
 
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
-| TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | `me` | Draft |
+| TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | `me` | Done |
 | TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | `me` | Done |
 | TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | `me` | Done |
 | TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | `me` | Done |
@@ -77,4 +77,8 @@ No incluye:
 
 ## Cierre de épica
 
-Pendiente.
+Cerrada (Done) el 2026-06-19 sobre `develop`. Las 4 tasks Done: TASK-001 (inventario +
+reconciliación §7/§8), TASK-002 (seguridad), TASK-003 (tests), TASK-004 (diagnóstico #033).
+La doc canónica de `me` (`architecture`/`workflows`/`models`/`business_rules`/`security`/
+`tests_plan`) quedó verificada y datada contra el código vigente. Dos follow-ups de código
+derivados del inventario → **EPIC-005** (deuda técnica). Deploy a prod: N/A (es doc).
