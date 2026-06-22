@@ -31,6 +31,9 @@ Entre sesiones no sobrevive contexto salvo lo que esté escrito:
 - **Verdad del proyecto** → `doc/project/me/*` y `doc/project/raa/*` (architecture,
   models, business_rules, security, tests_plan). Actualizalos cuando un cambio sea
   durable.
+- **Ideas sueltas / brainstorming** → `doc/project/me/brainstorming.md` (documento vivo,
+  **no canónico**: ideas, dudas y posibles tareas). No reemplaza épicas/specs/task cards;
+  cuando una idea se cierra, se mueve a épica/task y queda acá solo como referencia.
 
 ## Leé según la tarea
 

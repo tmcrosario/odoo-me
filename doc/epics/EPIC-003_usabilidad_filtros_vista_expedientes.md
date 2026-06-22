@@ -65,18 +65,8 @@ No incluye:
 Cerradas: UI = campo buscable + group-by (sin searchpanel); "oficina TMC" = `is_internal=True`;
 el filtro lista solo internas (campo internal-only).
 
-## Ideas / follow-ups abiertos (post-cierre, parkeados)
-
-> Registrados para revisar más adelante. **No reabren la épica.** Requieren decisión de
-> producto (vía `/product-spec`) antes de convertirse en task.
-
-- **Búsqueda DEM por jurisdicción/procedencia (idea, 2026-06-22).** Tras EPIC-004, en DEM
-  `jurisdiction_dependence` y `source_dependence_id` quedan ocultos/readonly en la carga (los
-  completa JUNCO). ¿Hay que poder **buscar** expedientes por esos 2 campos en ME aunque estén
-  ocultos? Preguntas abiertas (negocio): (a) ¿alguien busca así en ME? (b) ¿se agrega el
-  buscable/filtro aunque el campo esté oculto en el form? (c) ¿o esa búsqueda vive en JUNCO,
-  que ahora gestiona esos datos para DEM? Técnicamente sería S (campos stored, igual que los
-  filtros por poseedor/oficina ya hechos); lo bloqueante es la decisión, no el código.
+> Idea de follow-up (búsqueda DEM por jurisdicción/procedencia) registrada en
+> [`../project/me/brainstorming.md`](../project/me/brainstorming.md) — IDEA 1.
 
 ## Cierre de épica
 
