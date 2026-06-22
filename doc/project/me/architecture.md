@@ -421,6 +421,23 @@ El módulo `me` referencia directamente a `raa.registry_aa` en su lógica de `cr
 
 ## 7. Inconsistencias entre documentación y código
 
+> **Reconciliación EPIC-001/TASK-001 (2026-06-19).** Las 8 inconsistencias quedan
+> resueltas/obsoletas/reclasificadas (el código cambió desde el snapshot 2026-03-26):
+>
+> - **7.1 → obsoleta:** `me/ai-context.md` **ahora existe** (creado post-snapshot).
+> - **7.2 → resuelta:** integración RAA implementada (`create()` l.560, `unlink()` l.711)
+>   y documentada en `business_rules.md` ("Registro automático en RAA"). `docs/todo.md` migró.
+> - **7.3 → resuelta:** movimientos automáticos documentados en `business_rules.md`.
+> - **7.4 → reclasificada:** append-only sin enforcement absoluto, pero ACL (user sin
+>   `unlink`) + guard `write()` (#028) lo acotan para operadores; documentado como principio
+>   declarativo en `business_rules.md` + `security.md`.
+> - **7.5 / 7.6 → resueltas:** `_inherits` (delegación, dos tablas) explícito en `models.md`.
+> - **7.7 → obsoleta:** `document_topic_ids` ya no está en la vista (removido post-snapshot).
+> - **7.8 → documentada:** el tab sigue invisible (ahora "Related Documents",
+>   `document_exp_views.xml` l.115) → limitación conocida en `business_rules.md`.
+>
+> El texto original de cada ítem se conserva abajo como memoria del análisis.
+
 ### 7.1 `me/ai-context.md` — no existe
 
 **Observed in code:**
@@ -474,6 +491,26 @@ El tab está hardcodeado como siempre invisible. No hay documentación que expli
 ---
 
 ## 8. Aspectos inciertos
+
+> **Reconciliación EPIC-001/TASK-001 (2026-06-19).** Estado de los 8 inciertos:
+>
+> - **8.1 → reclasificado:** sigue sin campo `state`; es **limitación conocida**
+>   (`business_rules.md`), no incierto. Agregar estados es decisión de producto pendiente.
+> - **8.2 → reclasificado:** `N/A` mientras no haya estados (atado a 8.1).
+> - **8.3 → resuelto:** `dependence_id` = origen del expediente (DEM/TMC/CM); `jurisdiction_dependence`
+>   = jurisdicción/secretaría. Documentado en `business_rules.md` (regla multi-año, cesión DEM/EPIC-004).
+> - **8.4 → resuelto/documentado:** si no existe "Mesa de Entradas", el 2º movimiento se omite
+>   sin aviso → limitación conocida (`business_rules.md`) + gap de test (`tests_plan.md` #5).
+> - **8.5 → resuelto:** `ir.model.access.csv` **existe** (TASK-002, `security.md`).
+> - **8.6 → resuelto:** `allowed_dependence_ids` es **artefacto muerto** (computed pero sin
+>   referencia en vistas/código; la vista usa domain hardcodeado). Candidato a remoción (task aparte).
+> - **8.7 → reclasificado:** el "quién agrega/corrige movimientos" está resuelto (guards #027/#028,
+>   `security.md`); el routing/continuidad entre movimientos sigue sin reglas (limitación conocida).
+> - **8.8 → riesgo abierto:** `raa` es dependencia **implícita no declarada** en el manifest
+>   (acoplamiento deliberado, pero `create()` siempre crea `raa.registry_aa`). Misma clase que el
+>   `tmc_data` ya corregido → evaluar declararla (requiere aprobación de deps).
+>
+> El texto original de cada ítem se conserva abajo como memoria del análisis.
 
 Los siguientes aspectos no están claramente definidos en el código actual y no deben asumirse:
 
