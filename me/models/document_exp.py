@@ -526,9 +526,19 @@ class DocumentExp(models.Model):
         # bypass the guard on all subsequent operations on the returned objects).
         # _inherits maneja la creación de tmc.document automáticamente.
         # No crear tmc.document manualmente — rompe el mecanismo de delegación.
+        #
+        # EPIC-015 (opción 1): me.group_user ya NO tiene create/write sobre
+        # tmc.document (GD) — solo lectura. Como el _inherits crea el tmc.document
+        # padre DENTRO de este super().create(), se eleva con sudo() para que el
+        # operativo pueda dar de alta expedientes sin ACL de escritura en GD (la
+        # única escritura GD es esta creación del padre, elevada). No se crea el
+        # padre a mano (rompería la delegación). Inmediatamente se des-eleva al
+        # nivel su del llamador conservando me_create_in_progress, para que los
+        # movimientos y demás corran con los permisos normales del usuario.
         records = super(
-            DocumentExp, self.with_context(me_create_in_progress=True)
+            DocumentExp, self.with_context(me_create_in_progress=True).sudo()
         ).create(vals_list)
+        records = records.sudo(self.env.su)
 
         # env_create retains me_create_in_progress=True so write() calls
         # triggered by movement creation (e.g. has_reentry recompute) also pass.
