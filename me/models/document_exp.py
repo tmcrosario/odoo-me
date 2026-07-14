@@ -59,6 +59,10 @@ class DocumentExp(models.Model):
     _EXP_ROOT_TOPIC_XMLIDS = (
         'tmc_data.tmc_document_topic_licitacion',
         'tmc_data.tmc_document_topic_nota',
+        # EPIC-011: clasificar expedientes de compra directa / concurso de precios
+        # (habilita los process_type direct_purchase / price_contest en JUNCO).
+        'tmc_data.tmc_document_topic_contratacion_directa',
+        'tmc_data.tmc_document_topic_concurso_precios',
     )
 
     allowed_exp_topic_ids = fields.Many2many(

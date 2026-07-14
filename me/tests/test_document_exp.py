@@ -76,6 +76,17 @@ class TestDocumentExp(TransactionCase):
             'date': fields.Date.today(),
         }
 
+    def test_allowed_exp_root_topics(self):
+        # EPIC-011: los temas raíz de expediente incluyen licitación, nota, contratación
+        # directa y concurso de precios (para clasificar esos process_type en JUNCO).
+        allowed = self.env['me.document_exp'].create(self.valid_vals).allowed_exp_topic_ids
+        for xmlid in ('tmc_data.tmc_document_topic_licitacion',
+                      'tmc_data.tmc_document_topic_nota',
+                      'tmc_data.tmc_document_topic_contratacion_directa',
+                      'tmc_data.tmc_document_topic_concurso_precios'):
+            topic = self.env.ref(xmlid, raise_if_not_found=False)
+            self.assertTrue(topic and topic in allowed, '%s debe estar permitido' % xmlid)
+
     def test_create_expediente_basic(self):
         """
         Verifica que la creación de un expediente completo:
