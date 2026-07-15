@@ -539,6 +539,11 @@ class DocumentExp(models.Model):
         # padre a mano (rompería la delegación). Inmediatamente se des-eleva al
         # nivel su del llamador conservando me_create_in_progress, para que los
         # movimientos y demás corran con los permisos normales del usuario.
+        # El super() elevado saltea el chequeo de ACL del propio me.document_exp
+        # (ir.model.access.check corta por env.su), así que se valida explícitamente
+        # contra los permisos REALES del llamador ANTES de elevar. self es el recordset
+        # vacío del modelo y no está elevado → chequea el permiso a nivel modelo.
+        self.check_access('create')
         records = super(
             DocumentExp, self.with_context(me_create_in_progress=True).sudo()
         ).create(vals_list)

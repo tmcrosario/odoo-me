@@ -54,6 +54,30 @@ class TestMeSecurity(TransactionCase):
         self.assertTrue(exp.id)
         self.assertTrue(exp.document_id)   # el padre tmc.document quedó creado
 
+    # Un lector de ME NO puede crear expedientes: el ACL le da create=0 sobre
+    # me.document_exp (ir.model.access.csv). El create() se eleva con sudo() para que el
+    # _inherits cree el tmc.document padre, y esa elevación saltea el chequeo de ACL del
+    # propio me.document_exp (ir.model.access.check corta por env.su), así que create()
+    # valida explícitamente contra los permisos del llamador ANTES de elevar.
+    def test_me_read_only_cannot_create_expediente(self):
+        reader = self.env['res.users'].create({
+            'name': 'me_reader', 'login': 'me_reader',
+            'group_ids': [(6, 0, [self.env.ref('me.group_read_only').id])],
+        })
+        with self.assertRaises(AccessError) as cm:
+            self.env['me.document_exp'].with_user(reader).create({
+                'dependence_id': self.dem.id,
+                'document_type_id': self.exp_type.id,
+                'number': 900300, 'period': '2026', 'date': '2026-02-10',
+                'intake_date': '2026-02-12',
+                'document_object': 'Alta como lector ME (debe fallar)',
+            })
+        # DISCRIMINANTE: el corte debe venir del ACL del EXPEDIENTE (chequeado antes de
+        # elevar). Sin el check_access explícito, el create elevado bypassea ese ACL y el
+        # error termina llegando —enmascarado— desde me.document_movement, que es un
+        # bloqueo incidental de la matriz de ACL, no la frontera que queremos.
+        self.assertIn('me.document_exp', str(cm.exception))
+
     # el operativo LEE el tmc.document (GD) pero NO lo edita ni lo crea directamente
     def test_me_user_reads_gd_cannot_write_or_create(self):
         parent = self.exp.document_id
