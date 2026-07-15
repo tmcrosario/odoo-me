@@ -66,15 +66,26 @@ Entre sesiones no sobrevive contexto salvo lo que esté escrito:
 El stack Docker vive en la raíz `odoo-docker-stack/` (no usa archivo `.conf`: pasa
 flags directos en `develop.yml`). El servicio Odoo se llama `odoo`.
 
-Tests por módulo (correr desde la raíz del stack):
+Tests: **el comando canónico y sus trampas están en
+[`doc/project/me/tests_plan.md`](doc/project/me/tests_plan.md)** — leelo antes de correr la suite.
+Resumen de lo que NO se negocia:
+
+- **DB de test dedicada y NO servida** (`me_test`). Sobre una DB que la instancia ya sirve
+  (me1/me2) el runner recolecta **0 tests** → **verde falso**.
+- **`--addons-path` siempre explícito.** Sin él corre **0 tests en silencio**.
+- Verificar la **línea de resultado** (`... of N tests`) con **N > 0** y `0 failed, 0 error(s)`.
+  `0 tests of 0` **no es evidencia**.
 
 ```bash
-# Mesa de entradas
-docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u me --test-tags /me --stop-after-init --log-level=test
-
-# RAA
-docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u raa --test-tags /raa --stop-after-init --log-level=test
+# Mesa de entradas (desde la raíz del stack) — ver tests_plan.md para el comando completo
+docker compose -f develop.yml exec -T odoo odoo -d me_test -u me \
+  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco \
+  --db_host=db --db_user=odoo --db_password=odoo --test-tags /me --stop-after-init \
+  --http-port=8169 --gevent-port=8173 --max-cron-threads=0 --log-level=test
 ```
+
+Después de un `-u` sobre la DB donde prueba el usuario (`me2`), **reiniciar odoo**
+(`docker compose -f develop.yml restart odoo`) o los cambios de vista no se ven.
 
 - Commit: `[TYPE] resumen imperativo breve` (`[ADD]`/`[IMP]`/`[FIX]`/`[REF]`/
   `[REM]`/`[MIG]`/`[DOC]`/`[TEST]`/`[CHORE]`). Sin atribución AI. El mensaje de
