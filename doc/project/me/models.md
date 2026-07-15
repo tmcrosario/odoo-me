@@ -41,9 +41,10 @@ Modelos extendidos por `me` vía `_inherit` (no son `_name` propios): `tmc.depen
 - **No** es lo mismo que `tmc.document_exp` (modelo distinto del módulo base, con
   otra tabla y otro propósito).
 - Relación principal: `document_movement_ids` (One2many → `me.document_movement`).
-- Campos, computed (`computed_name`, `is_origin_complete`/`is_valid`,
-  `current_holder_id`, `current_location_dependence_id`, `has_reentry`…) y métodos: ver
-  [`architecture.md`](architecture.md) y [`workflows.md`](workflows.md).
+- Campos, computed (`computed_name`, `is_origin_complete`/`is_valid`, `is_licitacion`,
+  `current_holder_id`, `current_location_dependence_id`, `allowed_exp_topic_ids`,
+  `has_reentry`…) y métodos: ver [`architecture.md`](architecture.md) (snapshot histórico)
+  y [`workflows.md`](workflows.md) (vigente).
 - `current_location_dependence_id` (EPIC-003): Many2one stored computed = oficina
   **interna** de destino del último movimiento (`is_internal=True`); False sin movimientos
   o si el expediente salió del Tribunal. Espejo de `current_holder_id`. Alimenta el filtro
@@ -54,6 +55,20 @@ Modelos extendidos por `me` vía `_inherit` (no son `_name` propios): `tmc.depen
   `action_set_origin_from_junco(jurisdiction_id, source_id=False)` (valida DEM-only +
   nomenclador `tmc.dependence_order`, `sudo()` acotado, idempotente). Ver
   [`security.md`](security.md) (canal de escritura) y [`business_rules.md`](business_rules.md).
+- **Temas raíz del expediente (junco:EPIC-011)**: `_EXP_ROOT_TOPIC_XMLIDS` fija **por código**
+  los 4 temas raíz admitidos para EXP, resueltos **por XML ID** contra `tmc_data` (licitación,
+  nota, contratación directa, concurso de precios). El computed `allowed_exp_topic_ids` los
+  resuelve (`raise_if_not_found=False`: un xmlid ausente se omite en silencio) y alimenta el
+  `domain` de `main_topic_id`. `main_topic_id` / `secondary_topic_id` son **proxies**
+  (compute+inverse) sobre los Many2many `main_topic_ids` / `secondary_topic_ids` de
+  `tmc.document`, para selección única en UI sin tocar el modelo base. `is_licitacion` (stored
+  computed) es el único consumo funcional del tema dentro de ME. **El acote es solo el `domain`
+  de la vista** (sin `@api.constrains`) — ver `business_rules.md` → Limitaciones conocidas.
+- **`create()` — semántica de permisos (junco:EPIC-015)**: el `super()` corre **elevado**
+  (`.with_context(me_create_in_progress=True).sudo()`) porque el `_inherits` crea el
+  `tmc.document` padre y el operativo de ME ya **solo lee GD**; se des-eleva de inmediato
+  (`records.sudo(self.env.su)`). Como la elevación saltearía el ACL de `me.document_exp`, el
+  método valida antes con `self.check_access('create')`. Detalle en [`security.md`](security.md).
 
 ## `me.document_movement`
 

@@ -3,8 +3,9 @@
 > Consolida `docs/rules_business.md` (invariantes conceptuales) y la sección "Reglas
 > de negocio activas" de `docs/system_narrative.md` (v1.0, 2026-03-31, la más
 > reciente). Las reglas marcadas como **principio sin enforcement** o **limitación**
-> NO deben asumirse como cerradas: su estado real se reconcilia contra código en
-> EPIC-001. El comportamiento operativo detallado vive en [`workflows.md`](workflows.md).
+> NO deben asumirse como cerradas por su enunciado: el estado real se verificó contra
+> código en EPIC-001 (Done, 2026-06-19) y se revalida en cada cambio. El comportamiento
+> operativo detallado vive en [`workflows.md`](workflows.md).
 
 ## Invariantes del sistema (deben cumplirse siempre)
 
@@ -27,6 +28,8 @@ explícitamente las reglas.
 | Movimientos iniciales automáticos | Al crear: DEM → 2 movimientos (**DEM→TMC**, TMC→ME); TMC → 1 (TMC→ME, omite TMC→TMC); CM → 2 (CM→TMC, TMC→ME). El 1er movimiento usa `dependence_id` como origen (EPIC-004), no la jurisdicción, así existe aunque la jurisdicción esté vacía. |
 | Carga de jurisdicción/origen en DEM (EPIC-004) | En **DEM**, `jurisdiction_dependence` y `source_dependence_id` ya **no se cargan en ME** (campo no required): quedan vacíos al ingresar y los completa **JUNCO** al vincular el expediente a un proceso, vía `action_set_origin_from_junco()`. En la UI de carga DEM se ocultan si vacíos y readonly si tienen valor. **CM** (jurisdicción auto = origen) y **TMC** (jurisdicción auto, source manual) **no cambian**. |
 | Jurisdicción DEM — multi-año (intencional) | El dropdown de `jurisdiction_dependence` ofrece **todas** las jurisdicciones de **todos** los nomencladores cargados (hijos de `tmc_dependence_adm` en `tmc.dependence_order`), **sin filtrar por año/`institutional_classifier`**, **a propósito**: un documento puede llegar hoy pero haberse generado en una estructura anterior con una secretaría que ya no existe o cambió de nombre, y el expediente debe poder referenciar la jurisdicción vigente en su momento. Por eso `_compute_allowed_jurisdictions` no filtra por año — **no es un bug** (#033). |
+| Temas raíz del expediente (junco:EPIC-011) | El asunto (`main_topic_id`) se ofrece acotado a **4 temas raíz** resueltos por XML ID contra `tmc_data` (`_EXP_ROOT_TOPIC_XMLIDS`): licitación, nota, contratación directa, concurso de precios. Los 2 últimos se sumaron para que JUNCO pueda derivar su `process_type`. **Hoy el acote es solo el `domain` de la vista** (no hay `@api.constrains`): una escritura por ORM/API puede fijar otro tema — ver Limitaciones conocidas. |
+| Permisos cross-sistema (ME ↔ GD) | **Ver [`security.md`](security.md)** (postura, grupos y elevaciones). La regla del **stack** es **BR-016, gobernada en `odoo-junco`**; acá no se duplica. |
 | Registro automático en RAA | Todo expediente queda registrado en `raa.registry_aa` al crearse. |
 | Fojas — bloqueo post-creación | El número de fojas no se modifica una vez guardado, excepto por un Responsable de Mesa de Entradas; las variaciones se registran vía movimientos. |
 | Aviso de duplicado | Si existe un expediente con igual origen+número+período, el sistema **avisa pero no bloquea** el guardado. |
@@ -40,7 +43,9 @@ explícitamente las reglas.
 El diseño establece que los movimientos son **append-only** (no modificables ni
 eliminables retroactivamente). **Es un principio declarativo**: a la fecha del
 análisis no hay constraint/override que lo enforce más allá de los permisos de grupo.
-Formalizarlo es un ítem de backlog. (Verificar estado actual en EPIC-001.)
+Verificado en EPIC-001 (Done): sigue sin enforcement técnico; el ACL (el operativo no
+tiene `unlink`) y el guard de `write()` lo acotan en la práctica, pero un manager no está
+limitado. Formalizarlo sigue siendo un ítem de backlog.
 
 ## Limitaciones conocidas (no implementado)
 
@@ -62,6 +67,12 @@ Formalizarlo es un ítem de backlog. (Verificar estado actual en EPIC-001.)
 - Higiene de datos: el catálogo `tmc.dependence` tiene **duplicados por variante de
   mayúsculas/acentos** (MAYÚSCULAS vs Tipo-Oración); no afectan el dropdown (los
   Tipo-Oración no cuelgan de `adm`), pero conviene tenerlos en cuenta al cargar el 2025.
+- **Temas raíz sin enforcement backend** (junco:EPIC-011): el acote a los 4 temas raíz es
+  **solo el `domain` de la vista** — no hay `@api.constrains`. Una escritura por ORM/API
+  puede fijar un tema fuera de lista. **Hoy es ayuda de carga, no regla dura**, y no rompe
+  a JUNCO (si el tema no está en lista, `process_type` simplemente no deriva).
+  **Pregunta abierta** (decisión del usuario, no se asume): ¿endurecerlo con un constrains?
+  Un constrains podría bloquear cargas legítimas (importaciones, datos viejos).
 
 > Nota: la **ubicación interna actual** ya está implementada (EPIC-003): campo
 > `current_location_dependence_id` (oficina interna de destino del último movimiento).

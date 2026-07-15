@@ -10,3 +10,19 @@ Las épicas agrupan capacidades o líneas funcionales. Las tasks viven bajo
 | EPIC-003 | Usabilidad y filtros de la vista de expedientes | `me` | Done (develop) | Filtros por usuario (S) y por oficina interna de destino (L). Ambas tasks Done; suite 201/0/0; UI verificada. Deploy a prod diferido |
 | EPIC-004 | Reacotamiento de la carga de ME: traspaso de clasificación a JUNCO | `me` (+ `junco`) | Done (develop) | DEM cede jurisdiction/source a JUNCO vía `action_set_origin_from_junco`; 1er movimiento DEM→TMC desacoplado. Validada end-to-end en me2 (`-u me,junco`); deploy a prod diferido. Contraparte junco EPIC-010 Done |
 | EPIC-005 | Deuda técnica (limpieza post-baseline) | `me` | Done (develop) | TASK-001 removió `allowed_dependence_ids`; TASK-002 decidió no declarar `raa` (circular `raa→me`), documentado |
+
+## Épicas de otros repos que aterrizaron código en `me`
+
+> **Filas-puntero, no cards espejo.** El **repo dueño es `odoo-junco`**: las cards viven allá y
+> **no se editan desde ME**. Acá se registra qué tocaron en `me` y dónde quedó la verdad durable
+> (las canónicas de `doc/project/me/`). La numeración `EPIC-0XX` es **de junco** — se namespacea
+> con `junco:` para no chocar con la numeración local de ME (EPIC-001..005).
+
+| Épica (repo dueño) | Título | Qué tocó en `me` | Verdad durable en ME |
+| --- | --- | --- | --- |
+| **`junco:EPIC-011`** (`odoo-junco`) | Clasificar expedientes de compra directa / concurso de precios | `_EXP_ROOT_TOPIC_XMLIDS` +2 temas raíz (contratación directa, concurso de precios) y su test — commit `f0af6ac` | [`business_rules.md`](../project/me/business_rules.md) (regla "Temas raíz del expediente") · [`models.md`](../project/me/models.md) |
+| **`junco:EPIC-015`** (`odoo-junco`) | Permisos cross-sistema: ME edita ME y solo lee GD (opción 1) | `me_groups.xml` (`implied_ids` de `group_user`/`group_read_only`), `create()` elevado + `check_access` previo, suite `test_security.py` — commits `bfb1926` + `181d2e6` | [`security.md`](../project/me/security.md) (postura, grupos, elevaciones, regla durable) |
+
+**Abierto (gobernado en junco):** `junco:EPIC-015/TASK-004` — el dropdown del privilegio ME no
+ofrece «User» a usuarios con grupos de JUNCO. Workaround y detalle en
+[`security.md`](../project/me/security.md). **No implementar el fix desde ME**: espera decisión.

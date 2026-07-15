@@ -23,3 +23,8 @@ Nomenclatura:
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).
+>
+> **`junco:EPIC-011` y `junco:EPIC-015`** también están gobernadas en `odoo-junco` (repo dueño) y
+> aterrizaron **código** en `me` sin card local — es correcto: no se abren cards espejo. Ver las
+> filas-puntero en [`../epics/_index.md`](../epics/_index.md) y la verdad durable en las canónicas
+> (`security.md`, `business_rules.md`, `models.md`, `tests_plan.md`).

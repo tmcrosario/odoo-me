@@ -45,9 +45,10 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 6. El usuario completa `intake_date` (obligatorio).
    Según la dependencia de origen elegida en Fase 1:
-   - **DEM**: el usuario selecciona `jurisdiction_dependence` (obligatorio, filtrado a las
-     ~21 jurisdicciones madre del nomenclador) y opcionalmente `source_dependence_id`
-     (filtrado a hijos de la jurisdicción según `tmc.dependence_order`).
+   - **DEM** (EPIC-004): el operador **NO carga** `jurisdiction_dependence` ni
+     `source_dependence_id`. En la vista están **readonly** y **ocultos si vacíos**
+     (`document_exp_views.xml`): quedan vacíos al ingresar y los completa **JUNCO** al
+     vincular el expediente a un proceso, vía `action_set_origin_from_junco()`.
    - **TMC**: `jurisdiction_dependence` se auto-asigna a TMC y es readonly.
      `source_dependence_id` no es requerido.
    - **CM**: `jurisdiction_dependence` y `source_dependence_id` no se muestran.
@@ -87,7 +88,13 @@ No es un workflow independiente — forma parte del Workflow 1.
 
 ### Pasos
 
-1. `super().create(vals_list)` es invocado con los campos del expediente en `vals`.
+0. **(junco:EPIC-015)** Antes de elevar, `create()` valida el ACL del llamador con
+   `self.check_access('create')` — la elevación del paso siguiente saltearía el ACL de
+   `me.document_exp` (`ir.model.access.check` corta por `env.su`).
+1. `super().create(vals_list)` es invocado **elevado** (`.with_context(me_create_in_progress=True).sudo()`)
+   con los campos del expediente en `vals`: el operativo de ME **solo lee GD**, y el padre
+   `tmc.document` se crea dentro de este `super()`. Se **des-eleva de inmediato** después
+   (`records.sudo(self.env.su)`) para que movimientos y demás corran con los permisos del usuario.
 2. El mecanismo `_inherits` de Odoo detecta los campos del padre
    (`dependence_id`, `document_type_id`, `number`, `period`, `date`, `document_object`)
    y crea automáticamente el registro `tmc.document`.
@@ -97,8 +104,10 @@ No es un workflow independiente — forma parte del Workflow 1.
 ### Evidence
 
 **Observed in code:**
-- Llamada a `super().create()`: `me/models/document_exp.py:135`
+- `check_access('create')` + `super().create()` elevado + des-elevación:
+  `me/models/document_exp.py`, `create()` (~l.546-550)
 - Mecanismo `_inherits`: `me/models/document_exp.py:6`
+- Postura de permisos y elevaciones: [`security.md`](security.md)
 
 **Inferred:**
 - Si la creación de `tmc.document` falla (ej. constraint de unicidad de nombre),
@@ -127,14 +136,15 @@ el registro ME. No es un workflow independiente.
 ### Evidence
 
 **Observed in code:**
-- Creación de `raa.registry_aa`: `me/models/document_exp.py:137–140`
-- Campo `document_id` pasado al registro RAA: `me/models/document_exp.py:139`
+- Creación de `raa.registry_aa` con `sudo()` (efecto interno; el operador no necesita ACL
+  en `raa`): `me/models/document_exp.py`, `create()` (~l.563)
 - Constraint UNIQUE en `raa.registry_aa.document_id`: `raa/models/registry_aa.py:52–55`
 
 **Inferred:**
 - Si `raa` no está instalado, la llamada `self.env["raa.registry_aa"]` falla en runtime.
-  `raa` no está declarado como dependencia en `me/__manifest__.py`.
-  Ver también: [`architecture.md`](architecture.md) — sección 11 (boundaries / acoplamiento).
+  `raa` **no** está declarado en `me/__manifest__.py` y **no puede estarlo**: `raa` depende de
+  `me`, así que declararlo crearía un ciclo `me ↔ raa`. Acoplamiento implícito **deliberado**
+  (decisión EPIC-005/TASK-002) — ver [`models.md`](models.md) → "Modelo externo: `raa.registry_aa`".
 
 **Uncertain / pending definition:**
 - No está definido qué ocurre si `raa.registry_aa` ya existe para ese `document_id`
@@ -292,7 +302,7 @@ desde la pestaña "Movimientos" en el formulario.
 Cada `tmc.dependence` tiene un campo `is_internal` (Boolean, default=False)
 agregado por el módulo `me` vía `_inherit`. Las dependencias del Tribunal
 están marcadas como `is_internal=True` en `me/data/dependence_data.xml`:
-TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC.
+TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC, **ARCH** y **LEG** (12 en total).
 Todo lo demás (DEM, CM, jurisdicciones municipales) queda como externo.
 
 Esta clasificación alimenta `has_reentry` en `me.document_exp`:

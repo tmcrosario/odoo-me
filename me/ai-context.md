@@ -78,7 +78,7 @@ Own fields (defined in `me.document_exp`):
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `document_id` | Many2one(tmc.document) | Yes | delegation link, ondelete=cascade |
-| `jurisdiction_dependence` | Many2one(tmc.dependence) | Yes | origin of first automatic movement |
+| `jurisdiction_dependence` | Many2one(tmc.dependence) | No | jurisdiction (secretaria) of the expediente. NOT required (EPIC-004) and NOT the origin of movement 1. For DEM it is left empty at intake and written by JUNCO via action_set_origin_from_junco(); auto-assigned for TMC/CM in create() |
 | `intake_date` | Date | Yes | date of physical receipt at Mesa de Entradas; no default; future dates rejected |
 | `external_key` | Char | No | identifier used by the Municipality |
 | `fojas` | Yes (view) | Integer; number of pages; default=0; 0 is valid; required="1" in view only — Integer required=True at model level would reject 0 |
@@ -95,7 +95,7 @@ Own fields (defined in `me.document_exp`):
 | `current_holder_id` | Many2one(res.users) | No | stored computed: user_id of the movement with the highest id; False when no movements exist; depends on `document_movement_ids.user_id`; used by search filter "En mi poder" (#029) |
 | `main_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `main_topic_ids`; domain: root topics only, filtered to `allowed_exp_topic_ids`; cleared via `_onchange_main_topic_id` when changed |
 | `secondary_topic_id` | Many2one(tmc.document_topic) | No | proxy compute+inverse over `secondary_topic_ids`; domain: children of `main_topic_id`; cleared via `_onchange_main_topic_id` when `main_topic_id` changes |
-| `allowed_exp_topic_ids` | Many2many(tmc.document_topic) | No | computed; resolves Licitación and Nota by XML ID from tmc_data; independent of `dependence_id`; declared `invisible="1"` in view; provides domain for `main_topic_id` |
+| `allowed_exp_topic_ids` | Many2many(tmc.document_topic) | No | computed; resolves the 4 root topics of `_EXP_ROOT_TOPIC_XMLIDS` by XML ID from tmc_data (licitacion, nota, contratacion_directa, concurso_precios — junco:EPIC-011); independent of `dependence_id`; declared `invisible="1"` in view; provides domain for `main_topic_id` |
 
 Fields inherited from `tmc.document` (via delegation):
 
@@ -154,7 +154,9 @@ IMPORTANT: when a `me.document_exp` is created, the system automatically:
 3. Creates automatic movements depending on `dependence_id`:
 
    **DEM (and any non-TMC origin):**
-   - Movement 1: jurisdiction_dependence → TMC  (snapshot fojas, is_automatic=True)
+   - Movement 1: dependence_id → TMC            (snapshot fojas, is_automatic=True)
+     (EPIC-004: origin is dependence_id, NOT jurisdiction_dependence, so the pass
+      exists even when the jurisdiction is empty)
    - Movement 2: TMC → Mesa de Entradas         (snapshot fojas, is_automatic=True)
 
    **TMC origin:**
@@ -252,9 +254,10 @@ field `allowed_sub_dependence_ids` as the source of truth.
 
 **Topic filtering for EXP documents**
 
-`main_topic_id` shows only root topics allowed for EXP documents: Licitación and Nota.
-These are resolved by XML external ID from the tmc_data module
-(`tmc_data.tmc_document_topic_licitacion`, `tmc_data.tmc_document_topic_nota`),
+`main_topic_id` shows only root topics allowed for EXP documents: Licitación, Nota,
+Contratación Directa and Concurso de Precios (junco:EPIC-011 added the last two so
+JUNCO can derive its process_type). These are resolved by XML external ID from the
+tmc_data module (`_EXP_ROOT_TOPIC_XMLIDS`, document_exp.py),
 NOT filtered by `dependence_id`. The allowed set is the same regardless of which
 origin dependence (DEM, TMC, CM) the expediente has.
 
@@ -422,11 +425,12 @@ The ME module:
 Related Documentation
 --------------------------------------------------
 
-docs/models.md
-docs/model_registry.md
-docs/rules_business.md
-domain-rules/me/me_architecture.md
-docs/me_architecture_analysis_report.md  ← full architectural analysis
+doc/project/me/architecture.md   ← analisis arquitectonico (snapshot 2026-03-26, historico)
+doc/project/me/models.md         ← registro autoritativo de modelos
+doc/project/me/business_rules.md ← reglas activas observadas en codigo
+doc/project/me/workflows.md      ← comportamiento vigente (manda sobre architecture.md)
+doc/project/me/security.md       ← grupos, ACL, guards, sudo (canonico de seguridad)
+doc/project/me/tests_plan.md     ← inventario de tests, cobertura y gaps
 
 AI agents should consult these files before proposing
 structural changes to the module.
@@ -456,38 +460,70 @@ Los grupos de ME usan `res.groups.privilege` (patrón Odoo 19), definidos en
 `me/security/me_groups.xml`. Las reglas de acceso están en
 `me/security/ir.model.access.csv`.
 
+POSTURA (junco:EPIC-015, opción 1): ME edita ME y solo LEE GD (tmc).
+Detalle canónico: doc/project/me/security.md.
+
 Grupos:
 
-  me.group_user (operador): R_C_ en document_exp y document_movement.
-    Registra ingresos y pases. No puede editar ni eliminar registros existentes.
+  me.group_user (operador): ACL = RWC_ en document_exp y document_movement
+    (read+write+create, sin unlink). OJO: el ACL es permisivo; lo que impide
+    editar registros existentes NO es el ACL sino el guard de write() (ver abajo).
+    Registra ingresos y pases.
     Para agregar un nuevo pase desde la UI: solo el "poseedor actual" puede hacerlo.
     Poseedor actual = user_id del movimiento con mayor id del expediente (#027).
     Puede corregir el último movimiento manual si es el responsable de ese movimiento.
     Campos corregibles: fojas, user_id, legajo_number (este último solo si destino=LEG).
     Campos bloqueados: origin_dependence_id, destination_dependence_id, date (#028).
-    implied_ids: tmc.group_user (necesario para crear tmc.document via _inherits).
+    implied_ids (6,0): base.group_user + tmc.group_read_only  → SOLO LEE GD.
+      NO implica tmc.group_user (junco:EPIC-015 se lo quitó a propósito).
 
-  me.group_manager (gestor): RWCU en document_exp y document_movement.
+  me.group_manager (gestor): ACL = RWCU en document_exp y document_movement.
     Supervisa y corrige. Puede modificar fojas post-creación (excepción operativa).
-    implied_ids: me.group_user + tmc.group_manager (necesario para write en tmc.document).
+    implied_ids (4,): me.group_user + tmc.group_manager (full-stack, sin cambios).
+    implied_by_ids: base.group_erp_manager.
 
-  me.group_read_only: R___ en ambos modelos.
+  me.group_read_only: ACL = R___ en ambos modelos.
+    implied_ids (6,0): base.group_user + tmc.group_read_only. NO es standalone.
+    CONTRATO CROSS-REPO: junco.group_user cuelga de este grupo
+    (odoo-junco/junco/security/junco_groups.xml:27) → cambiarlo impacta a JUNCO.
 
-Cadena de implicación:
-  me.group_manager → me.group_user → tmc.group_user → base.group_user
-  me.group_manager → tmc.group_manager → tmc.group_user
+Cadena de implicación (real):
+  me.group_manager → me.group_user → [base.group_user, tmc.group_read_only]
+  me.group_manager → tmc.group_manager → tmc.group_user → base.group_user
 
-Dependencia con TMC:
-  me.document_exp usa _inherits sobre tmc.document. Cualquier write() sobre
-  campos delegados (dependence_id, number, period, document_object, etc.)
-  requiere perm_write=1 en tmc.document. Solo tmc.group_manager lo tiene.
-  Por eso me.group_manager implica tmc.group_manager vía implied_ids.
-  me.group_user implica tmc.group_user, que tiene perm_create=1 en tmc.document
-  (necesario para que el operador pueda crear expedientes via _inherits).
+Por qué (6,0) y no (4,):
+  (6,0) REEMPLAZA el set de herencias — es lo que remueve tmc.group_user de
+  me.group_user al correr -u me. (4,) es aditivo y dejaría el grant viejo pegado.
+  me.group_manager sigue en (4,) porque no se le quita nada (inocuo, no es defecto).
+
+Dependencia con TMC (GD):
+  me.document_exp usa _inherits sobre tmc.document. El operativo hereda
+  tmc.group_read_only → sobre tmc.document tiene 1,0,0,0 (SOLO LECTURA).
+  Por eso TODA escritura de ME sobre tmc.document va por sudo() acotado:
+    - alta del padre: el super().create() corre elevado (document_exp.py, create(), ~l.547).
+    - campos delegados: document_id.sudo().write() (~l.257 / 268 / 697).
+  NO agregar tmc.group_user a me.group_user "para que pueda crear": eso es
+  exactamente lo que junco:EPIC-015 eliminó — el alta ya funciona por el create
+  elevado, y hay tests que lo protegen (me/tests/test_security.py).
+
+REGLA DURABLE (junco:EPIC-015/TASK-003): la elevación NO exime del ACL del propio
+  sistema. Al elevar, chequear primero el ACL del modelo propio contra el llamador:
+  create() hace self.check_access('create') ANTES de elevar, porque
+  ir.model.access.check corta con `if self.env.su: return True` y la elevación
+  saltearía el ACL de me.document_exp por completo.
 
 Restricción de fojas:
   write() en me.document_exp verifica has_group('me.group_manager').
-  me.group_user no tiene perm_write en me.document_exp → recibe AccessError
-  antes de llegar al check. El check protege contra me.group_manager que
-  intente modificar fojas accidentalmente vía API; el gestor puede corregirlo
-  cuando es un error operativo real.
+  me.group_user SÍ tiene perm_write en el ACL (1,1,1,0): no lo frena el ACL, lo
+  frena el guard de write(), que a un no-manager solo le permite comandos de
+  document_movement_ids (y el canal acotado me_origin_from_junco de EPIC-004).
+
+Defecto conocido — junco:EPIC-015/TASK-004 (repo dueño: odoo-junco):
+  si el usuario tiene grupos de JUNCO, el dropdown del privilegio ME no ofrece
+  "User" (solo Read Only y Manager). Workaround: asignar me.group_user desde
+  Configuración → Grupos o por ORM. La escalera actual NO es correcta: no tomarla
+  como referencia ni "arreglarla" sin leer la card.
+
+Caveat de UI (verificado): tmc_menu está gateado a tmc.group_user/tmc.group_manager/
+  base.group_system (odoo-tmc/tmc/views/tmc_menus.xml:7) → un operativo de ME lee GD
+  por ACL pero NO ve la app GD. Fix vive en odoo-tmc (fuera de este repo), diferido.

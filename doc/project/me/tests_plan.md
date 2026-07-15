@@ -1,7 +1,17 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
-Baseline de tests relevado en EPIC-001/TASK-003. Estado al 2026-06-19: **23 clases,
-201 métodos de test**, suite verde (`0 failed, 0 error(s)`).
+Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011` y
+`junco:EPIC-015`. **Estado al 2026-07-15: 24 clases, 206 métodos de test**, suite verde.
+
+**Convención de métrica (importante — hay dos números y ambos son correctos):**
+
+| Métrica | Valor | De dónde sale |
+| --- | ---: | --- |
+| **Línea de resultado** (la que usamos) | **206** | `odoo.tests.result: 0 failed, 0 error(s) of 206 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 254 | `odoo.tests.stats: me: 254 tests` — cuenta distinto |
+
+Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
+en la doc de junco se bajaron a esta convención.
 
 ## Comando canónico
 
@@ -23,21 +33,22 @@ docker compose -f develop.yml exec -T odoo odoo -d me_test -u me \
   --http-port=8169 --gevent-port=8173 --max-cron-threads=0 --log-level=test
 ```
 
-Verificar `... of N tests` con **N > 0** y `0 failed, 0 error(s)`. `--addons-path` siempre
-explícito (sin él corre 0 tests). Fallback de evidencia: `docker compose run --rm` (también
-recolecta > 0). Framework de test: `odoo.tests.common.TransactionCase`, tags
+Verificar la **línea de resultado**: `... of N tests` con **N > 0** y `0 failed, 0 error(s)`.
+`--addons-path` siempre explícito (sin él corre 0 tests = **verde falso**). Para una clase
+puntual: `--test-tags "/me:TestMeSecurity"`. Fallback de evidencia: `docker compose run --rm`
+(también recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 `('post_install', '-at_install')`.
 
 ## Inventario de tests (`me/tests/`)
 
-### `test_document_exp.py` — 177 métodos
+### `test_document_exp.py` — 178 métodos
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestDocumentExp` | 30 | create básico, movimientos automáticos (DEM/TMC/CM), RAA, unlink/cascade, `is_valid`, **EPIC-004** (create DEM sin jurisdicción + `action_set_origin_from_junco`: happy/UserError/idempotencia/no-manager) | varias |
+| `TestDocumentExp` | 31 | create básico, movimientos automáticos (DEM/TMC/CM), RAA, unlink/cascade, `is_valid`, **EPIC-004** (create DEM sin jurisdicción + `action_set_origin_from_junco`: happy/UserError/idempotencia/no-manager), **junco:EPIC-011** (`test_allowed_exp_root_topics`: los 4 temas raíz) | varias |
 | `TestSourceDependence` | 4 | `source_dependence_id` / `allowed_sub_dependence_ids` | #012 |
 | `TestSecondaryTopics` | 5 | `secondary_topic_id` (subtema) | — |
-| `TestTopicProxyFields` | 8 | proxies `main_topic_id` / `secondary_topic_id` sobre `tmc.document` | — |
+| `TestTopicProxyFields` | 8 | proxies `main_topic_id` / `secondary_topic_id` sobre `tmc.document`; 2 de los 8 cubren `allowed_exp_topic_ids` | — |
 | `TestRequiredFields017` | 8 | campos obligatorios Fase 2; fecha required; jurisdicción DEM; `computed_name` | #017 |
 | `TestDocumentTopicsTMC` | 5 | topics/clasificación TMC | — |
 | `TestFojasLock` | 21 | matriz de permisos + bloqueo de `fojas` post-creación | #018 |
@@ -63,6 +74,19 @@ recolecta > 0). Framework de test: `odoo.tests.common.TransactionCase`, tags
 | `TestResponsibleUser011` | 4 | `user_id` como responsable operativo en destino | #011 |
 | `TestAutoOriginPreload020` | 5 | pre-carga de `origin_dependence_id` en `default_get()` | #020 |
 
+### `test_security.py` — 4 métodos (junco:EPIC-015)
+
+| Clase | # | Qué prueba | Semilla |
+| --- | ---: | --- | --- |
+| `TestMeSecurity` | 4 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; y un **lector no puede crear expedientes** | junco:EPIC-015 |
+
+> ⚠️ **`test_me_read_only_cannot_create_expediente` asserta el modelo citado en el mensaje del
+> `AccessError` A PROPÓSITO — no simplificar a un `assertRaises(AccessError)` pelado.** Un
+> `assertRaises` pelado **pasa igual sin el fix**: el error llega enmascarado desde
+> `me.document_movement` (el ACL de movimientos bloquea de rebote) en vez de venir del ACL de
+> `me.document_exp`. Ese falso positivo ya ocurrió: el test pasaba antes **y** después del fix,
+> y no probaba nada. Si se simplifica, la regresión vuelve y **ninguna suite la ve**.
+
 ## Cobertura de las reglas activas (`business_rules.md`)
 
 | Regla activa | Tests | Estado |
@@ -70,6 +94,8 @@ recolecta > 0). Framework de test: `odoo.tests.common.TransactionCase`, tags
 | Tipo de documento automático | `TestJurisdictionConditional012` (onchange) | ✅ (indirecto) |
 | Origen permitido DEM/TMC/CM | `TestJurisdictionConditional012`, `TestDocumentExp` | ✅ |
 | Nombre generado (`computed_name`) | `TestRequiredFields017` (`test_computed_name_*`) | ✅ |
+| **Temas raíz del expediente** (junco:EPIC-011) | `TestDocumentExp.test_allowed_exp_root_topics`; `TestTopicProxyFields` (2 tests de `allowed_exp_topic_ids`) | ✅ (el `domain`; el gating no tiene enforcement backend — ver `business_rules.md`) |
+| **Permisos cross-sistema (ME ↔ GD)** → `security.md` | `TestMeSecurity` (4) | ✅ |
 | Movimientos iniciales automáticos | `TestDocumentExp` (two/tmc/cm), `TestAutoOriginPreload020` | ✅ |
 | Carga jurisdicción/origen DEM (EPIC-004) | `TestDocumentExp` (bloque EPIC-004) | ✅ |
 | **Jurisdicción multi-año (intencional)** | — | ❌ **gap (bajo)** |

@@ -20,6 +20,13 @@
 > y EPIC-004 (cesión de carga DEM a JUNCO, 1er movimiento por `dependence_id`, método
 > `action_set_origin_from_junco`). No tratar §1–6 como vigentes donde discrepen de esos docs.
 >
+> **Revalidado 2026-07-15** con dos cambios **gobernados en `odoo-junco`** que aterrizaron código
+> en ME: **`junco:EPIC-015`** (permisos cross-sistema — el operativo de ME solo LEE GD; el `create()`
+> corre elevado con `check_access` previo → [`security.md`](security.md)) y **`junco:EPIC-011`**
+> (4 temas raíz del expediente → [`business_rules.md`](business_rules.md)). ⚠️ Ojo: §2 lista campos
+> que **ya no existen** (`allowed_dependence_ids`, removido en EPIC-005/TASK-001) y marca
+> `jurisdiction_dependence` como required (dejó de serlo en EPIC-004).
+>
 > Docs hermanos: [`models.md`](models.md) · [`business_rules.md`](business_rules.md)
 > · [`workflows.md`](workflows.md) · [`security.md`](security.md) ·
 > [`tests_plan.md`](tests_plan.md) · [`tmc_base_reference.md`](tmc_base_reference.md).
@@ -136,14 +143,19 @@ Hay un campo comentado en el código: `asunto` (Char, "Asunto"), `document_exp.p
   - No incluye `jurisdiction_dependence` en la búsqueda de duplicados
   - Retorna un `warning`, no lanza error — el guardado no se bloquea desde la UI
 
-- **`create(vals)`** (línea 129–161)
-  - Extrae campos base: `dependence_id, document_type_id, number, period, date, document_object`
-  - Crea `tmc.document` manualmente con esos campos
-  - Llama a `super().create(vals)` con `document_id` ya asignado
-  - Crea `raa.registry_aa` vinculado al `tmc.document` creado
-  - Crea movimiento 1: `jurisdiction_dependence → TMC` (si existe TMC por abreviatura)
-  - Crea movimiento 2: `TMC → Mesa de Entradas` (búsqueda por `name ilike 'Mesa de Entradas'`)
-  - Los movimientos solo se crean si ambas dependencias existen; no hay error ni aviso si no se encuentran
+- **`create(vals)`** — ⚠️ **descripción histórica con 3 afirmaciones FALSAS hoy** (ver `workflows.md`
+  Workflows 1–4 y `security.md`, que son la fuente vigente):
+  - ~~Crea `tmc.document` manualmente~~ → **FALSO**: nunca lo creó a mano; el `_inherits` lo crea
+    dentro del `super()`. El código lo dice explícitamente ("No crear tmc.document manualmente —
+    rompe el mecanismo de delegación").
+  - ~~Movimiento 1: `jurisdiction_dependence → TMC`~~ → **FALSO desde EPIC-004**: el origen es
+    `dependence_id` (así el 1er pase existe aunque la jurisdicción esté vacía).
+  - ~~Búsqueda de ME por `name ilike 'Mesa de Entradas'`~~ → **FALSO**: es por
+    `abbreviation = 'ME'` (ver §9.5, obsoleto).
+  - Vigente: crea `raa.registry_aa` (con `sudo()`); los movimientos solo se crean si las
+    dependencias existen, sin error ni aviso si no.
+  - **junco:EPIC-015**: el `super()` corre **elevado** y se valida `check_access('create')` antes
+    de elevar → ver [`security.md`](security.md).
 
 - **`write(vals)`** (línea 182–200)
   - Extrae `date` de `vals` antes de procesarlo
@@ -157,9 +169,12 @@ Hay un campo comentado en el código: `asunto` (Char, "Asunto"), `document_exp.p
   - Evita las validaciones del ORM de `tmc.document` sobre la fecha
   - El comentario en el código confirma que es intencional: "evitando la validación problemática"
 
-- **`unlink()`** (línea 202–205)
-  - Llama `record.document_id.unlink()` explícitamente antes de `super().unlink()`
-  - El `ondelete="cascade"` de `document_id` ya propagaría la eliminación automáticamente; la llamada es redundante
+- **`unlink()`** — ⚠️ **descripción histórica desactualizada** (ver código vigente):
+  - ~~la llamada explícita a `document_id.unlink()` es redundante por el `ondelete="cascade"`~~ →
+    **FALSO hoy**: el `unlink()` actual borra **primero** el `raa.registry_aa` (su FK a
+    `tmc.document` es RESTRICT, así que el cascade solo no alcanza) y recién después elimina el
+    documento, chequeando `document.exists()` porque el unlink de RAA pudo haberlo borrado ya.
+    **No es redundante.**
 
 #### Constraints
 
@@ -296,11 +311,12 @@ Usuario crea me.document_exp con campos mínimos
     │
     ├─ [Observed] Se crea raa.registry_aa vinculado al tmc.document
     │
-    ├─ [Observed] Movimiento automático 1: jurisdiction_dependence → TMC
+    ├─ [Observed] Movimiento automático 1: dependence_id → TMC
+    │             (EPIC-004: el origen es dependence_id, NO jurisdiction_dependence)
     │             (solo si TMC existe en tmc.dependence por abbreviation='TMC')
     │
     └─ [Observed] Movimiento automático 2: TMC → Mesa de Entradas
-                  (solo si existe en tmc.dependence por name ilike 'Mesa de Entradas')
+                  (solo si existe en tmc.dependence por abbreviation='ME')
 ```
 
 ### 4.2 Visibilidad progresiva en la interfaz
@@ -373,9 +389,13 @@ Los movimientos automáticos son condicionales: solo se crean si las dependencia
 
 ### 5.6 Eliminación en cascada
 
-**Observed in code** (`me/models/document_exp.py`, `unlink()`, líneas 202–205):
+**Observed in code** (`me/models/document_exp.py`, `unlink()`):
 
-Al eliminar un `me.document_exp`, se llama explícitamente a `record.document_id.unlink()`. Dado que `document_id` tiene `ondelete="cascade"`, esta eliminación ya ocurriría automáticamente; la llamada explícita es redundante pero no incorrecta.
+> ⚠️ **Corregido 2026-07-15.** El texto histórico decía que la llamada explícita a
+> `document_id.unlink()` era "redundante" por el `ondelete="cascade"`. **No lo es**: el `unlink()`
+> actual elimina **primero** el `raa.registry_aa` asociado (su FK a `tmc.document` es RESTRICT, y
+> sin eso el borrado falla) y después el documento, con un `document.exists()` de por medio porque
+> el unlink de RAA puede haberlo eliminado antes.
 
 **Inferred from implementation:**
 La eliminación del `tmc.document` puede disparar la lógica condicional de `raa.registry_aa.unlink()`, que elimina el registro RAA solo si el documento base está "vacío". No hay garantía de que el registro RAA se elimine siempre junto con el expediente.
@@ -503,16 +523,17 @@ El tab está hardcodeado como siempre invisible. No hay documentación que expli
 > - **8.2 → reclasificado:** `N/A` mientras no haya estados (atado a 8.1).
 > - **8.3 → resuelto:** `dependence_id` = origen del expediente (DEM/TMC/CM); `jurisdiction_dependence`
 >   = jurisdicción/secretaría. Documentado en `business_rules.md` (regla multi-año, cesión DEM/EPIC-004).
-> - **8.4 → resuelto/documentado:** si no existe "Mesa de Entradas", el 2º movimiento se omite
->   sin aviso → limitación conocida (`business_rules.md`) + gap de test (`tests_plan.md` #5).
+> - **8.4 → resuelto/documentado:** la búsqueda es por **`abbreviation = 'ME'`** (no por
+>   `name ilike`, como decía el texto histórico). Si la dependencia no existe, el 2º movimiento se
+>   omite **sin aviso** → limitación conocida (`business_rules.md`) + gap de test (`tests_plan.md` #5).
 > - **8.5 → resuelto:** `ir.model.access.csv` **existe** (TASK-002, `security.md`).
-> - **8.6 → resuelto:** `allowed_dependence_ids` es **artefacto muerto** (computed pero sin
->   referencia en vistas/código; la vista usa domain hardcodeado). Candidato a remoción (task aparte).
+> - **8.6 → CERRADO:** `allowed_dependence_ids` era artefacto muerto y **ya fue removido**
+>   (EPIC-005/TASK-001, commit `ac74cdd`). El filtro real es el `domain` hardcodeado de la vista.
 > - **8.7 → reclasificado:** el "quién agrega/corrige movimientos" está resuelto (guards #027/#028,
 >   `security.md`); el routing/continuidad entre movimientos sigue sin reglas (limitación conocida).
-> - **8.8 → riesgo abierto:** `raa` es dependencia **implícita no declarada** en el manifest
->   (acoplamiento deliberado, pero `create()` siempre crea `raa.registry_aa`). Misma clase que el
->   `tmc_data` ya corregido → evaluar declararla (requiere aprobación de deps).
+> - **8.8 → CERRADO:** `raa` **no es declarable**: `raa` depende de `me`, así que declararlo cerraría
+>   un ciclo `me ↔ raa`. **No** es la misma clase que `tmc_data` (ahí la dirección era hacia abajo).
+>   Decisión EPIC-005/TASK-002: acoplamiento implícito **documentado** en [`models.md`](models.md).
 >
 > El texto original de cada ítem se conserva abajo como memoria del análisis.
 
@@ -602,9 +623,14 @@ El SQL directo puede:
 - Omitir hooks del framework (computed stores, tracking, audit log)
 - Comportarse de forma impredecible si la tabla `tmc_document` cambia de nombre o estructura
 
-### 9.5 [RIESGO] Búsqueda por nombre literal en `create()`
+### 9.5 [OBSOLETO] Búsqueda por nombre literal en `create()`
 
-**Observed in code** (`me/models/document_exp.py`, línea 143):
+> **Obsoleto (verificado 2026-07-15).** La búsqueda ya **no** es por `name ilike`: es por
+> `abbreviation = 'ME'` (`document_exp.py`, `create()`). El riesgo de este apartado no aplica.
+> Lo que **sí** sigue vigente es que, si la dependencia no existe, el movimiento se omite **sin
+> aviso** → registrado en `business_rules.md` → Limitaciones conocidas ("Fragilidad").
+
+**Texto histórico** (`me/models/document_exp.py`, línea 143):
 
 ```python
 mesa_entrada_dependence = self.env['tmc.dependence'].search(
@@ -719,10 +745,12 @@ cambios de código ni refactors. Fuente primaria: código del módulo `me`.*
   `tmc.document_type`. Define `_check_date_not_future`, que `me.document_exp` evita
   vía SQL directo. Solo lectura. Ver [`tmc_base_reference.md`](tmc_base_reference.md).
 
-> **Acoplamiento implícito (riesgo):** `me.document_exp.create()` llama a
-> `self.env["raa.registry_aa"].create(...)` pero `raa` no figura en las dependencias
-> del manifest de `me`. Si `raa` no está instalado, `create()` falla en runtime.
-> (`me/models/document_exp.py:138`).
+> **Acoplamiento implícito (deliberado, decidido):** `me.document_exp.create()` llama a
+> `self.env["raa.registry_aa"].sudo().create(...)` (`document_exp.py`, `create()`, ~l.563) y `raa`
+> **no** figura en el manifest de `me` — **y no puede figurar**: `raa` depende de `me`, así que
+> declararlo cerraría un ciclo `me ↔ raa`. Decisión **EPIC-005/TASK-002**: se documenta el
+> acoplamiento en vez de declararlo. Riesgo residual: si se instalara `me` sin `raa`, `create()`
+> falla en runtime (no aplica en este stack, se co-instalan). Ver [`models.md`](models.md).
 
 ## 12. Principios de arquitectura
 
