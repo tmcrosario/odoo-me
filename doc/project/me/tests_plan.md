@@ -1,14 +1,14 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011` y
-`junco:EPIC-015`. **Estado al 2026-07-15: 24 clases, 206 métodos de test**, suite verde.
+`junco:EPIC-015`. **Estado al 2026-07-15: 24 clases, 207 métodos de test**, suite verde.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **206** | `odoo.tests.result: 0 failed, 0 error(s) of 206 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 254 | `odoo.tests.stats: me: 254 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **207** | `odoo.tests.result: 0 failed, 0 error(s) of 207 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 255 | `odoo.tests.stats: me: 255 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -74,11 +74,19 @@ puntual: `--test-tags "/me:TestMeSecurity"`. Fallback de evidencia: `docker comp
 | `TestResponsibleUser011` | 4 | `user_id` como responsable operativo en destino | #011 |
 | `TestAutoOriginPreload020` | 5 | pre-carga de `origin_dependence_id` en `default_get()` | #020 |
 
-### `test_security.py` — 4 métodos (junco:EPIC-015)
+### `test_security.py` — 5 métodos (junco:EPIC-015)
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestMeSecurity` | 4 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; y un **lector no puede crear expedientes** | junco:EPIC-015 |
+| `TestMeSecurity` | 5 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; un **lector no puede crear expedientes**; y el **orden de la escalera del privilegio ME** (`test_me_privilege_ladder_order`) | junco:EPIC-015 (+ /TASK-004) |
+
+> ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
+> ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que
+> exige que el orden venga de la **cadena real** (`user` implica `read_only`): sin él, el test pasa
+> con la opción descartada (`sequence`), que deja los ranks empatados y el orden sostenido por el
+> desempate por `id`. **No relajarlo a "están los 3 grupos"**: eso pasa siempre y no prueba nada.
+> Este test existe porque el defecto **no lo detectó ninguna suite** — lo encontró un humano
+> mirando un dropdown (junco:EPIC-015/TASK-004).
 
 > ⚠️ **`test_me_read_only_cannot_create_expediente` asserta el modelo citado en el mensaje del
 > `AccessError` A PROPÓSITO — no simplificar a un `assertRaises(AccessError)` pelado.** Un
