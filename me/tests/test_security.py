@@ -72,10 +72,13 @@ class TestMeSecurity(TransactionCase):
                 'intake_date': '2026-02-12',
                 'document_object': 'Alta como lector ME (debe fallar)',
             })
-        # DISCRIMINANTE: el corte debe venir del ACL del EXPEDIENTE (chequeado antes de
-        # elevar). Sin el check_access explícito, el create elevado bypassea ese ACL y el
-        # error termina llegando —enmascarado— desde me.document_movement, que es un
-        # bloqueo incidental de la matriz de ACL, no la frontera que queremos.
+        # NO SIMPLIFICAR a un assertRaises(AccessError) pelado: pasaría igual SIN el fix.
+        # El create elevado saltea el ACL de me.document_exp (ir.model.access.check corta por
+        # env.su) y el AccessError llega enmascarado desde me.document_movement, que bloquea
+        # de rebote por una coincidencia de la matriz de ACL (ningún grupo tiene create en
+        # movimientos sin tenerlo en expedientes), no por la frontera que queremos probar.
+        # Assertar el MODELO citado en el mensaje es lo único que discrimina el origen del
+        # corte; sin este assert, la regresión vuelve y ninguna suite la ve.
         self.assertIn('me.document_exp', str(cm.exception))
 
     # el operativo LEE el tmc.document (GD) pero NO lo edita ni lo crea directamente
