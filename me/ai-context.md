@@ -518,11 +518,19 @@ Restricción de fojas:
   frena el guard de write(), que a un no-manager solo le permite comandos de
   document_movement_ids (y el canal acotado me_origin_from_junco de EPIC-004).
 
-Defecto conocido — junco:EPIC-015/TASK-004 (repo dueño: odoo-junco):
-  si el usuario tiene grupos de JUNCO, el dropdown del privilegio ME no ofrece
-  "User" (solo Read Only y Manager). Workaround: asignar me.group_user desde
-  Configuración → Grupos o por ORM. La escalera actual NO es correcta: no tomarla
-  como referencia ni "arreglarla" sin leer la card.
+Escalera del privilegio ME (junco:EPIC-015/TASK-004, opción b — cadena real):
+  Read Only < User < Manager, con ranks 1 < 2 < 3. El orden es ESTRUCTURAL: lo da la
+  cadena (user implica read_only; manager implica user), no el desempate por id.
+  NO sacar la cadena ni reordenar: el widget trunca las opciones de menor nivel cuando
+  una está implicada desde OTRO privilegio, y junco.group_user implica me.group_read_only
+  → si Read Only vuelve a quedar arriba de User, "ME: User" desaparece del dropdown de
+  todo usuario con grupos de JUNCO. Lo fija test_me_privilege_ladder_order.
+  Los records de me_groups.xml se definen de menor a mayor privilegio porque cada uno
+  hace ref() al anterior (ref() no resuelve hacia adelante).
+
+NO es defecto (BR-016): en la ficha de un operativo de JUNCO, el dropdown de ME no
+  ofrece "No" (sin acceso) — hereda me.group_read_only, así que "sin acceso a ME" es
+  imposible. No reportarlo como bug.
 
 Caveat de UI (verificado): tmc_menu está gateado a tmc.group_user/tmc.group_manager/
   base.group_system (odoo-tmc/tmc/views/tmc_menus.xml:7) → un operativo de ME lee GD

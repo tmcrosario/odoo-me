@@ -23,6 +23,8 @@ Las épicas agrupan capacidades o líneas funcionales. Las tasks viven bajo
 | **`junco:EPIC-011`** (`odoo-junco`) | Clasificar expedientes de compra directa / concurso de precios | `_EXP_ROOT_TOPIC_XMLIDS` +2 temas raíz (contratación directa, concurso de precios) y su test — commit `f0af6ac` | [`business_rules.md`](../project/me/business_rules.md) (regla "Temas raíz del expediente") · [`models.md`](../project/me/models.md) |
 | **`junco:EPIC-015`** (`odoo-junco`) | Permisos cross-sistema: ME edita ME y solo lee GD (opción 1) | `me_groups.xml` (`implied_ids` de `group_user`/`group_read_only`), `create()` elevado + `check_access` previo, suite `test_security.py` — commits `bfb1926` + `181d2e6` | [`security.md`](../project/me/security.md) (postura, grupos, elevaciones, regla durable) |
 
-**Abierto (gobernado en junco):** `junco:EPIC-015/TASK-004` — el dropdown del privilegio ME no
-ofrece «User» a usuarios con grupos de JUNCO. Workaround y detalle en
-[`security.md`](../project/me/security.md). **No implementar el fix desde ME**: espera decisión.
+**Cerrado (gobernado en junco):** `junco:EPIC-015/TASK-004` — el dropdown del privilegio ME no
+ofrecía «User» a usuarios con grupos de JUNCO. Resuelto con la **cadena real** (opción b):
+`me.group_user` implica `me.group_read_only` → la escalera es estructural (ranks 1<2<3) y no
+depende del desempate por `id`. Fijado por `TestMeSecurity.test_me_privilege_ladder_order`.
+Detalle en [`security.md`](../project/me/security.md).

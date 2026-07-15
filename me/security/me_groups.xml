@@ -15,6 +15,25 @@
             ref="module_category_me" />
     </record>
 
+    <!-- ORDEN DE DEFINICIÓN = ORDEN DE LA ESCALERA: Read Only < User < Manager.
+         Los records se definen de menor a mayor privilegio porque cada uno referencia
+         (ref) al anterior: group_user implica group_read_only, y group_manager implica
+         group_user. Un ref() a un record aún no creado falla al cargar el módulo. -->
+
+    <record id="group_read_only"
+        model="res.groups">
+        <field name="name">Read Only</field>
+        <field name="privilege_id"
+            ref="res_groups_privilege_me" />
+        <!-- EPIC-015 (opción 1): un lector de ME es usuario interno y lee GD (tmc).
+             Es también la base de lectura que hereda junco.group_user (editar JUNCO,
+             leer ME/GD): es CONTRATO CROSS-REPO, cambiarlo impacta a odoo-junco.
+             base.group_user se preserva explícito para no perder el flag de usuario
+             interno al no encadenar por tmc.group_user. -->
+        <field name="implied_ids"
+            eval="[(6, 0, [ref('base.group_user'), ref('tmc.group_read_only')])]" />
+    </record>
+
     <record id="group_user"
         model="res.groups">
         <field name="name">User</field>
@@ -25,9 +44,21 @@
              creaba tmc.document). El alta de expediente crea el tmc.document padre
              vía _inherits con create elevado (sudo) en document_exp.create().
              (6,0) reemplaza el set (quita tmc.group_user en el update). base.group_user
-             explícito para no perder el usuario interno. -->
+             y tmc.group_read_only van explícitos aunque group_read_only ya los
+             encadene: el XML debe decir qué concede sin obligar a seguir la cadena.
+
+             EPIC-015/TASK-004 (cadena real): implica group_read_only para que la
+             escalera del privilegio ME sea ESTRUCTURAL. El orden del dropdown lo fija
+             res_groups.py con la clave (rank, sequence, id), donde
+             rank = |all_implied_ids ∩ grupos del privilegio|. Con la cadena:
+             Read Only=0 < User=1 < Manager=2, sin depender del desempate por id.
+             Antes User y Read Only empataban en rank 0 y sequence 0, y el id decidía:
+             Read Only quedaba arriba y el widget (res_user_group_ids_field.js) borraba
+             las opciones de menor nivel → "ME: User" desaparecía del dropdown para
+             cualquier usuario con grupos de JUNCO (junco.group_user implica
+             me.group_read_only). Sin escalada: el ACL de read_only ⊂ el de user. -->
         <field name="implied_ids"
-            eval="[(6, 0, [ref('base.group_user'), ref('tmc.group_read_only')])]" />
+            eval="[(6, 0, [ref('base.group_user'), ref('tmc.group_read_only'), ref('group_read_only')])]" />
     </record>
 
     <record id="group_manager"
@@ -35,23 +66,12 @@
         <field name="name">Manager</field>
         <field name="privilege_id"
             ref="res_groups_privilege_me" />
+        <!-- Full-stack, sin cambios (EPIC-015 D-1). Sigue en (4,) a propósito: el
+             aditivo es inocuo acá porque a manager no se le quita ningún grant. -->
         <field name="implied_ids"
             eval="[(4, ref('group_user')), (4, ref('tmc.group_manager'))]" />
         <field name="implied_by_ids"
             eval="[(4,ref('base.group_erp_manager'))]" />
-    </record>
-
-    <record id="group_read_only"
-        model="res.groups">
-        <field name="name">Read Only</field>
-        <field name="privilege_id"
-            ref="res_groups_privilege_me" />
-        <!-- EPIC-015 (opción 1): un lector de ME es usuario interno y lee GD (tmc).
-             Es también la base de lectura que hereda junco.group_user (editar JUNCO,
-             leer ME/GD). base.group_user se preserva explícito para no perder el flag
-             de usuario interno al no encadenar por tmc.group_user. -->
-        <field name="implied_ids"
-            eval="[(6, 0, [ref('base.group_user'), ref('tmc.group_read_only')])]" />
     </record>
 
 </odoo>

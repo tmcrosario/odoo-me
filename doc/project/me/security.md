@@ -34,13 +34,24 @@ el grant viejo pegado (Odoo no revoca grupos ya materializados). `me.group_manag
 porque **no se le quita nada** (es inocuo, no es un defecto). `base.group_user` va explícito porque
 los grupos read-only no encadenan a él.
 
-> ⚠️ **Defecto conocido — `junco:EPIC-015/TASK-004`** (repo dueño: `odoo-junco`): si el usuario
-> tiene cualquier grupo de JUNCO, el dropdown del privilegio **ME no ofrece «User»** (solo Read
-> Only y Manager), porque `junco.group_user` implica `me.group_read_only` y el widget borra las
-> opciones de menor nivel (`res_user_group_ids_field.js:154`); *Read Only* quedó por encima de
-> *User* por un desempate por `id` (ambos rank 1, `sequence` 0).
-> **Workaround**: asignar `me.group_user` desde Configuración → Grupos (o por ORM) hasta el fix.
-> **La escalera actual NO es correcta** — no tomarla como referencia.
+**La escalera es estructural (`junco:EPIC-015/TASK-004`, opción b — cadena real).** El orden del
+dropdown lo fija `res_groups.py` con la clave `(rank, sequence, id)`, donde
+`rank = |all_implied_ids ∩ grupos del privilegio|`. Como `group_user` implica `group_read_only` y
+`group_manager` implica `group_user`, los ranks son **1 < 2 < 3** y el orden
+(**Read Only < User < Manager**) **no depende del desempate por `id`**.
+
+> **Por qué importa (defecto que esto cerró):** antes `User` y `Read Only` empataban en rank y en
+> `sequence`, y desempataba el `id` → *Read Only* quedaba arriba. El widget
+> (`res_user_group_ids_field.js`) **trunca las opciones de menor nivel cuando una está implicada
+> desde OTRO privilegio** (`options.slice(i)`), y `junco.group_user` implica `me.group_read_only`
+> ⇒ «ME: User» **desaparecía** del dropdown de cualquier usuario con grupos de JUNCO. Lo detectó un
+> humano mirando la ficha: **ninguna suite lo veía**. Ahora lo fija
+> `TestMeSecurity.test_me_privilege_ladder_order` — **no reordenar los grupos ni sacar la cadena**.
+
+> **NO es un defecto (consecuencia de BR-016):** en la ficha de un operativo de **JUNCO**, el
+> dropdown de ME **no ofrece «No»** (sin acceso). Es correcto: `junco.group_user` hereda
+> `me.group_read_only`, así que "sin acceso a ME" es imposible para ese usuario. El widget omite la
+> opción "false" del truncado (`i > 0`) y el `slice` la borra. No reportarlo como bug.
 
 ### Acoplamiento cross-sistema (entrante y saliente)
 

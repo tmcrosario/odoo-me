@@ -34,6 +34,37 @@ class TestMeSecurity(TransactionCase):
             'document_object': 'base seguridad',
         })
 
+    # EPIC-015/TASK-004 — la escalera del privilegio ME debe ser ESTRUCTURAL:
+    # Read Only < User < Manager. El orden lo fija res_groups.py con la clave
+    # (rank, sequence, id), rank = |all_implied_ids ∩ grupos del privilegio|; la cadena
+    # real (user implica read_only, manager implica user) da rank 0 < 1 < 2.
+    # Este test existe porque el defecto NO lo detectó ninguna suite: lo encontró un
+    # humano mirando un dropdown. Si User vuelve a quedar arriba de Read Only, el widget
+    # (res_user_group_ids_field.js) borra las opciones de menor nivel y "ME: User"
+    # desaparece de la ficha de cualquier usuario con grupos de JUNCO.
+    def test_me_privilege_ladder_order(self):
+        read_only = self.env.ref('me.group_read_only')
+        user = self.env.ref('me.group_user')
+        manager = self.env.ref('me.group_manager')
+        privilege = user.privilege_id
+        self.assertTrue(privilege, "los grupos de ME deben colgar del privilege ME")
+        hierarchy = self.env['res.groups']._get_view_group_hierarchy()
+        ladder = hierarchy['privileges'][privilege.id]['group_ids']
+        self.assertEqual(
+            ladder, [read_only.id, user.id, manager.id],
+            "la escalera del privilegio ME debe ordenarse Read Only < User < Manager; "
+            "si no, el widget borra las opciones de menor nivel y 'ME: User' desaparece "
+            "del dropdown (EPIC-015/TASK-004)",
+        )
+        # el orden debe ser estructural (rank), no sostenido por el desempate por id
+        ranks = [
+            len(g.all_implied_ids & privilege.group_ids)
+            for g in (read_only, user, manager)
+        ]
+        self.assertEqual(ranks, sorted(set(ranks)),
+                         "los ranks deben ser estrictamente crecientes (cadena real), "
+                         "no empatados y desempatados por sequence/id")
+
     # el operativo de ME hereda lectura de GD y es usuario interno, NO editor de GD
     def test_me_user_implies_read_only_gd(self):
         u = self.me_user
