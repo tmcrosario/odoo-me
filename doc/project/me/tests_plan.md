@@ -113,7 +113,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | Origen permitido DEM/TMC/CM | `TestJurisdictionConditional012`, `TestDocumentExp` | ✅ |
 | Nombre generado (`computed_name`) | `TestRequiredFields017` (`test_computed_name_*`) | ✅ |
 | **Temas raíz del expediente** (junco:EPIC-011) | `TestDocumentExp.test_allowed_exp_root_topics`; `TestTopicProxyFields` (2 tests de `allowed_exp_topic_ids`) | ✅ (el `domain`; el gating no tiene enforcement backend — ver `business_rules.md`) |
-| **Permisos cross-sistema (ME ↔ GD)** → `security.md` | `TestMeSecurity` (4) | ✅ |
+| **Permisos cross-sistema (ME ↔ GD)** → `security.md` | `TestMeSecurity` (5, incluye el orden de la escalera de grupos) | ✅ |
 | Movimientos iniciales automáticos | `TestDocumentExp` (two/tmc/cm), `TestAutoOriginPreload020` | ✅ |
 | Carga jurisdicción/origen DEM (EPIC-004) | `TestDocumentExp` (bloque EPIC-004) | ✅ |
 | **Jurisdicción multi-año (intencional)** | — | ❌ **gap (bajo)** |

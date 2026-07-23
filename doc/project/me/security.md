@@ -1,7 +1,9 @@
 # Seguridad — módulo `me` (Mesa de Entradas)
 
 Baseline verificado contra `me/security/*` y el código (EPIC-001/TASK-002, 2026-06-19);
-**revalidado tras `junco:EPIC-015` (commits `bfb1926` + `181d2e6`), 2026-07-15.**
+**revalidado tras `junco:EPIC-015`** — permisos cross-sistema (`bfb1926` + `181d2e6`),
+escalera estructural TASK-004 (`372fdd0`) y apertura del menú GD a lectores TASK-005
+(externo, `odoo-tmc`) — **2026-07-23.**
 
 **Insight central — la seguridad de `me` NO se lee del CSV.** Hay dos ejes distintos:
 
@@ -24,7 +26,7 @@ Categoría `module_category_me` ("ME") + privilege `res_groups_privilege_me` (pa
 
 | Grupo (xmlid) | Nombre | Hereda (`implied_ids`) | Cmd | Notas |
 | --- | --- | --- | --- | --- |
-| `me.group_user` | User | `base.group_user` + `tmc.group_read_only` | `(6,0)` | Edita ME; **solo lee GD**. Antes heredaba `tmc.group_user` (escribía GD) |
+| `me.group_user` | User | `base.group_user` + `tmc.group_read_only` + **`me.group_read_only`** | `(6,0)` | Edita ME; **solo lee GD**. Antes heredaba `tmc.group_user` (escribía GD). Implica `me.group_read_only` (cadena estructural, TASK-004) |
 | `me.group_manager` | Manager | `me.group_user` + `tmc.group_manager` | `(4,)` | Full-stack, sin cambios. `implied_by_ids = base.group_erp_manager` |
 | `me.group_read_only` | Read Only | `base.group_user` + `tmc.group_read_only` | `(6,0)` | **No es standalone.** Es la base de lectura de la que cuelga `junco.group_user` |
 
@@ -64,10 +66,10 @@ dropdown lo fija `res_groups.py` con la clave `(rank, sequence, id)`, donde
   es **BR-016, gobernada en `odoo-junco`** (`odoo-junco/doc/project/security.md`). Acá se documenta
   **el lado ME**, no la regla entera.
 
-> **Caveat de UI (verificado):** `tmc_menu` está gateado a `tmc.group_user,tmc.group_manager,
-> base.group_system` (`odoo-tmc/tmc/views/tmc_menus.xml:7`) — **`tmc.group_read_only` no está**.
-> ⇒ un operativo de ME tiene ACL de lectura sobre GD pero **no ve la app GD**. El fix vive en
-> `odoo-tmc` (repo que ME no gobierna); decidido y **diferido** del lado junco.
+> **Menú GD para lectores (resuelto, `junco:EPIC-015/TASK-005`):** `tmc_menu` ahora incluye
+> `tmc.group_read_only` en su gating (`odoo-tmc/tmc/views/tmc_menus.xml`) ⇒ un operativo de ME
+> (que hereda `tmc.group_read_only`, BR-016) **ve la app GD** en modo lectura. El fix vive en
+> `odoo-tmc` (repo que ME no gobierna); antes estaba diferido, se aplicó el 2026-07-20.
 
 ## ACL — `me/security/ir.model.access.csv` (matriz CRUD)
 

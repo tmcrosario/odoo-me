@@ -209,7 +209,8 @@ This filter is enforced by the **hardcoded view domain** on `dependence_id`
 
 Do not propose changes to this list without explicit requirement.
 
-Implementation: `document_exp.py:66`, `document_exp_views.xml:41`
+Implementation: domain hardcodeado en `document_exp_views.xml` (campo `dependence_id`) +
+backend `_ALLOWED_DEPENDENCE_ABBREVIATIONS` en `document_exp.py`.
 
 
 **Jurisdiction domain (jurisdiction_dependence)**
@@ -312,7 +313,7 @@ to bypass the `_check_date_not_future` constraint in `tmc.document`.
 Do not propose using the ORM to update the date field directly —
 it will fail due to base model constraints.
 
-Implementation: `document_exp.py`, `_update_document_date()`, lines 163–180.
+Implementation: `document_exp.py`, `_update_document_date()` (SQL directo `UPDATE tmc_document`).
 
 
 **Progressive visibility in UI**
@@ -474,8 +475,9 @@ Grupos:
     Puede corregir el último movimiento manual si es el responsable de ese movimiento.
     Campos corregibles: fojas, user_id, legajo_number (este último solo si destino=LEG).
     Campos bloqueados: origin_dependence_id, destination_dependence_id, date (#028).
-    implied_ids (6,0): base.group_user + tmc.group_read_only  → SOLO LEE GD.
+    implied_ids (6,0): base.group_user + tmc.group_read_only + me.group_read_only → SOLO LEE GD.
       NO implica tmc.group_user (junco:EPIC-015 se lo quitó a propósito).
+      Implica me.group_read_only para que la escalera sea estructural (TASK-004).
 
   me.group_manager (gestor): ACL = RWCU en document_exp y document_movement.
     Supervisa y corrige. Puede modificar fojas post-creación (excepción operativa).
@@ -488,8 +490,9 @@ Grupos:
     (odoo-junco/junco/security/junco_groups.xml:27) → cambiarlo impacta a JUNCO.
 
 Cadena de implicación (real):
-  me.group_manager → me.group_user → [base.group_user, tmc.group_read_only]
+  me.group_manager → me.group_user → me.group_read_only → [base.group_user, tmc.group_read_only]
   me.group_manager → tmc.group_manager → tmc.group_user → base.group_user
+  (me.group_user → me.group_read_only es el eslabón estructural de TASK-004)
 
 Por qué (6,0) y no (4,):
   (6,0) REEMPLAZA el set de herencias — es lo que remueve tmc.group_user de
@@ -532,6 +535,7 @@ NO es defecto (BR-016): en la ficha de un operativo de JUNCO, el dropdown de ME 
   ofrece "No" (sin acceso) — hereda me.group_read_only, así que "sin acceso a ME" es
   imposible. No reportarlo como bug.
 
-Caveat de UI (verificado): tmc_menu está gateado a tmc.group_user/tmc.group_manager/
-  base.group_system (odoo-tmc/tmc/views/tmc_menus.xml:7) → un operativo de ME lee GD
-  por ACL pero NO ve la app GD. Fix vive en odoo-tmc (fuera de este repo), diferido.
+Menú GD para lectores (resuelto, junco:EPIC-015/TASK-005): tmc_menu ahora incluye
+  tmc.group_read_only en su gating (odoo-tmc/tmc/views/tmc_menus.xml) → un operativo de
+  ME (hereda tmc.group_read_only) VE la app GD en modo lectura. Fix en odoo-tmc, aplicado
+  2026-07-20 (antes diferido).

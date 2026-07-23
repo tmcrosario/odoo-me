@@ -62,14 +62,13 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 ### Evidence
 
-**Observed in code:**
-- Auto-asignación de `document_type_id`: `me/models/document_exp.py:93–108` (`_onchange_dependence`)
-- Filtro de `dependence_id` restringido a `['DEM', 'TMC', 'CM']`: `me/views/document_exp_views.xml:41`
-- Warning de duplicado en tiempo real: `me/models/document_exp.py:110–127` (`_onchange_document_data`)
-- Warning no bloquea — retorna `warning` dict, no `raise`: `me/models/document_exp.py:122–127`
-- `computed_name` visible desde el primer campo: `me/views/document_exp_views.xml:30–36`
-- `source_dependence_id` opcional, domain dinámico vía `allowed_sub_dependence_ids`: `me/views/document_exp_views.xml:53–55`
-- Limpieza de `source_dependence_id` al cambiar jurisdicción: `me/models/document_exp.py:155–158` (`_onchange_jurisdiction_dependence`)
+**Observed in code** (`me/models/document_exp.py` salvo indicación):
+- Auto-asignación de `document_type_id`: `_onchange_dependence()` (~l.444)
+- Filtro de `dependence_id` restringido a `['DEM','TMC','CM']`: domain en `me/views/document_exp_views.xml`; backend `_ALLOWED_DEPENDENCE_ABBREVIATIONS`
+- Warning de duplicado en tiempo real, no bloquea (retorna `warning` dict, no `raise`): `_onchange_document_data()` (~l.480)
+- `computed_name` visible desde el primer campo: `_compute_name()` (~l.364) + `me/views/document_exp_views.xml`
+- `source_dependence_id` opcional, domain dinámico vía `allowed_sub_dependence_ids`: `me/views/document_exp_views.xml`
+- Limpieza de `source_dependence_id` al cambiar jurisdicción: `_onchange_jurisdiction_dependence()` (~l.374)
 
 **Inferred:**
 - El formulario se muestra progresivamente: ver Workflow 6.
@@ -226,7 +225,8 @@ desde la pestaña "Movimientos" en el formulario.
 
 1. El usuario abre el expediente existente.
 2. Navega a la pestaña "Movimientos" (visible solo cuando el registro está guardado).
-3. Agrega un nuevo movimiento en la lista editable:
+3. Agrega un nuevo movimiento por el **popup de formulario** del One2many (la `<list>` no
+   es `editable` inline; `mode="list,form"`):
    - `date` (requerido, default: ahora)
    - `origin_dependence_id` (requerido, pre-cargado automáticamente con el
      `destination_dependence_id` del último movimiento del expediente por `id`;
@@ -239,8 +239,9 @@ desde la pestaña "Movimientos" en el formulario.
 ### Evidence
 
 **Observed in code:**
-- Lista editable de movimientos: `me/views/document_exp_views.xml:73–87`
-- Pestaña visible solo si el registro tiene id: `me/views/document_exp_views.xml:70`
+- One2many `document_movement_ids` con `<list>` + `<form>` popup (`mode="list,form"`, no `editable`):
+  `me/views/document_exp_views.xml` (pestaña "Movimientos")
+- Pestaña visible solo si el registro tiene id (`invisible="not id"`): `me/views/document_exp_views.xml`
 - `origin_dependence_id` y `destination_dependence_id` required=True: `me/models/document_movement.py`
 - Constraint UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date):
   impide duplicados exactos — `me/models/document_movement.py` `_sql_constraints`
@@ -387,17 +388,17 @@ el sistema no usa el ORM estándar para actualizar `tmc.document`.
 
 1. El usuario edita el campo `date` en el formulario.
 2. Al guardar, `write()` detecta el campo `date` en `vals` y lo extrae.
-3. El resto de los campos del documento base se actualizan normalmente vía ORM (`self.document_id.write(document_vals)`).
+3. El resto de los campos delegados del documento base se actualizan vía `self.document_id.sudo().write(document_vals)` (con `sudo()` porque el operativo solo lee GD — ver `security.md`).
 4. La fecha se actualiza directamente en la tabla `tmc_document` via SQL:
    `UPDATE tmc_document SET date = %s WHERE id = %s`
 5. Luego `super().write(vals)` se ejecuta sin el campo `date`.
 
 ### Evidence
 
-**Observed in code:**
-- Intercepción del campo `date` en `write()`: `me/models/document_exp.py:184`
-- Actualización vía SQL directo: `me/models/document_exp.py:177–180`
-- Separación de flujos (ORM vs SQL): `me/models/document_exp.py:182–200`
+**Observed in code** (`me/models/document_exp.py`):
+- Intercepción/extracción del campo `date` en `write()` (`date_in_vals` / `vals.pop('date')`, ~l.679)
+- Actualización vía SQL directo: `_update_document_date()` (~l.603; `cr.execute("UPDATE tmc_document…")` ~l.617)
+- Separación de flujos: campos delegados por `document_id.sudo().write()` (~l.697), fecha por SQL, resto por `super().write()`
 
 **Inferred:**
 - El bypass existe para evitar la constraint `_check_date_not_future` definida en `tmc.document`.

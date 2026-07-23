@@ -13,8 +13,9 @@ rediseñar la lógica de movimientos automáticos en consecuencia. ME queda acot
 **sistema de ingreso y trazabilidad**; JUNCO pasa a completar parte de la información
 funcional/clasificatoria.
 
-> **Definición funcional, no implementación.** Esta épica no se implementa hasta cerrar
-> el spec y el reparto ME↔JUNCO. Próximo paso: `/product-spec`.
+> **Épica cerrada (Done, 2026-06-17).** Este documento arrancó como definición funcional;
+> la implementación se hizo en TASK-001 y se validó end-to-end con JUNCO. Se conserva el
+> texto de definición abajo como memoria de las decisiones. Ver "Cierre de épica".
 
 ## Contexto
 
@@ -208,22 +209,21 @@ No incluye:
 **Cerradas** (ver Decisiones joint): momento de completado y fuente de verdad → JUNCO al
 vincular (D-1/D-2); alcance → solo DEM, CM no cede (D-3).
 
-**Abiertas — ME-interno** (no requieren JUNCO; se resuelven en el `/product-spec` de ME):
+**ME-interno — todas RESUELTAS en TASK-001 (Done):**
 
-1. Tratamiento de los 2 campos cedidos en DEM: ¿ocultar / quitar de la fase de carga /
-   dejar de ser required / readonly alimentado por JUNCO? **Obligatorio:**
-   quitar/condicionar el `required=True` de `jurisdiction_dependence` (Verificación D-2).
+1. ~~Tratamiento de los 2 campos cedidos en DEM~~ **RESUELTA:** `required=True` quitado; en
+   la UI de carga DEM quedan **ocultos si vacíos / readonly si tienen valor**.
 2. ~~Origen del 1er pase en DEM~~ **RESUELTA (opción A):** el 1er movimiento DEM→TMC se
-   crea al ingresar con origen = `dependence_id` y se ve en ME, sin esperar a JUNCO.
-3. ¿ME muestra los 2 campos en readonly (provenientes de JUNCO) o desaparecen de la UI de
-   carga DEM?
-4. Migración: expedientes DEM existentes ya tienen jurisdiction/source cargados —
-   ¿se respetan / conviven? (JUNCO trata su lado igual).
+   crea al ingresar con origen = `dependence_id`, sin esperar a JUNCO.
+3. ~~¿ME muestra los 2 campos en readonly u ocultos?~~ **RESUELTA:** ocultos si vacíos,
+   readonly si con valor (ídem #1).
+4. ~~Migración de DEM existentes~~ **RESUELTA:** se respetan (sin migración masiva).
 
-**Abierta — cross con JUNCO:**
+**Cross con JUNCO (parkeada, no bloqueante):**
 
 5. `document_object` como objeto compartido: JUNCO evalúa reutilizarlo como objeto de la
-   compra/contratación (JUNCO lector, ME fuente) — definir cómo se enlaza.
+   compra/contratación (JUNCO lector, ME fuente). TASK-001 la excluyó explícitamente del
+   alcance; sigue parkeada del lado JUNCO.
 
 ## Cierre de épica
 

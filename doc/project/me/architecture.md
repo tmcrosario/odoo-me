@@ -27,6 +27,11 @@
 > que **ya no existen** (`allowed_dependence_ids`, removido en EPIC-005/TASK-001) y marca
 > `jurisdiction_dependence` como required (dejó de serlo en EPIC-004).
 >
+> ⚠️ **Refs de línea absolutas (`document_exp.py:NNN`, "líneas NNN–MMM") de §1–9 son del snapshot
+> 2026-03-26** (el archivo tenía ~200 líneas; hoy tiene ~720): **NO son confiables**, apuntan a
+> otros símbolos. Para ubicar código, buscá por **nombre de método/campo**, no por número. Las
+> notas de reconciliación fechadas (§7/§8/§9.x) sí usan refs vigentes con `~l.`.
+>
 > Docs hermanos: [`models.md`](models.md) · [`business_rules.md`](business_rules.md)
 > · [`workflows.md`](workflows.md) · [`security.md`](security.md) ·
 > [`tests_plan.md`](tests_plan.md) · [`tmc_base_reference.md`](tmc_base_reference.md).
@@ -276,9 +281,8 @@ tmc.dependence
 |---|---|---|---|---|
 | `me.document_exp` | Many2one (delegación) | `tmc.document` | `document_id` | `document_exp.py:9` |
 | `me.document_exp` | One2many | `me.document_movement` | `document_movement_ids` | `document_exp.py:57` |
-| `me.document_exp` | Many2one | `tmc.dependence` | `jurisdiction_dependence` | `document_exp.py:28` |
-| `me.document_exp` | Many2many (computed) | `tmc.dependence` | `allowed_dependence_ids` | `document_exp.py:17` |
-| `me.document_movement` | Many2one | `me.document_exp` | `expediente_id` | `document_movement.py:7` |
+| `me.document_exp` | Many2one | `tmc.dependence` | `jurisdiction_dependence` | `document_exp.py`, `jurisdiction_dependence` |
+| `me.document_movement` | Many2one | `me.document_exp` | `expediente_id` | `document_movement.py`, `expediente_id` |
 | `me.document_movement` | Many2one | `tmc.dependence` | `origin_dependence_id` | `document_movement.py:13` |
 | `me.document_movement` | Many2one | `tmc.dependence` | `destination_dependence_id` | `document_movement.py:16` |
 | `me.document_movement` | Many2one | `res.users` | `user_id` | `document_movement.py:20` |
@@ -640,16 +644,17 @@ mesa_entrada_dependence = self.env['tmc.dependence'].search(
 
 Esta búsqueda depende del nombre exacto de una dependencia en la base de datos. Si el nombre cambia, el movimiento automático no se crea sin ningún error. Es un punto de fragilidad operativa, no relacionado con la versión de Odoo.
 
-### 9.6 [PENDIENTE DE VERIFICAR] Ausencia de `ir.model.access.csv`
+### 9.6 [RESUELTO] Ausencia de `ir.model.access.csv`
 
-**Observed in code:**
-El módulo `me` no tiene archivo de acceso. En Odoo 19 el framework puede ser más estricto en el chequeo de permisos. Verificar si el módulo `tmc` define accesos para los modelos de `me`, o si el archivo debe crearse.
+> **Resuelto (obsoleto).** El CSV **existe** (`me/security/ir.model.access.csv`, 6 ACL para los
+> 2 modelos × 3 grupos) — ver §8.5 y `security.md`. El "pendiente de verificar" es histórico.
 
-### 9.7 [RIESGO] Dependencia de `raa` no declarada en manifest
+### 9.7 [CERRADO] Dependencia de `raa` no declarada en manifest
 
-**Observed in code** (`me/__manifest__.py`, `me/models/document_exp.py`):
-
-`raa` no está en las dependencias del manifest de `me`, pero se referencia directamente en `create()`. En Odoo 19, si `raa` no está instalado, la carga del módulo puede fallar o producir errores en tiempo de ejecución.
+> **Cerrado (EPIC-005/TASK-002).** `raa` **no se declara — y no puede**: `raa` depende de `me`,
+> así que declararlo cerraría un ciclo `me ↔ raa`. El acoplamiento implícito es la decisión
+> correcta; riesgo residual (instalar `me` sin `raa`) documentado en `models.md` → "Modelo
+> externo: `raa.registry_aa`". No aplica en este stack (se co-instalan).
 
 ---
 
