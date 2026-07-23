@@ -72,14 +72,17 @@ Resumen de lo que NO se negocia:
 
 - **DB de test dedicada y NO servida** (`me_test`). Sobre una DB que la instancia ya sirve
   (me1/me2) el runner recolecta **0 tests** → **verde falso**.
-- **`--addons-path` siempre explícito.** Sin él corre **0 tests en silencio**.
+- **`--addons-path` siempre explícito Y COMPLETO** (incluidas las **5 rutas OCA**,
+  `/mnt/addons/oca/*`). Sin el flag corre **0 tests en silencio**; sin las rutas OCA
+  (desde la **tmc 19.0**, que depende de módulos OCA) **tmc no carga** y todo el grafo
+  (`me`/`junco`/`raa`) se saltea. Copiar el path del `command:` de `develop.yml`.
 - Verificar la **línea de resultado** (`... of N tests`) con **N > 0** y `0 failed, 0 error(s)`.
   `0 tests of 0` **no es evidencia**.
 
 ```bash
 # Mesa de entradas (desde la raíz del stack) — ver tests_plan.md para el comando completo
 docker compose -f develop.yml exec -T odoo odoo -d me_test -u me \
-  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco \
+  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco,/mnt/addons/oca/server-tools,/mnt/addons/oca/web,/mnt/addons/oca/server-brand,/mnt/addons/oca/server-ux,/mnt/addons/oca/partner-contact \
   --db_host=db --db_user=odoo --db_password=odoo --test-tags /me --stop-after-init \
   --http-port=8169 --gevent-port=8173 --max-cron-threads=0 --log-level=test
 ```

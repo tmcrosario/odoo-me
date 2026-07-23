@@ -22,21 +22,31 @@ Desde la raíz del stack `odoo-docker-stack/`:
 ```bash
 # Crear me_test una vez (me arrastra tmc_data por dependencia)
 docker compose -f develop.yml exec -T odoo odoo -d me_test -i me,raa \
-  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco \
+  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco,/mnt/addons/oca/server-tools,/mnt/addons/oca/web,/mnt/addons/oca/server-brand,/mnt/addons/oca/server-ux,/mnt/addons/oca/partner-contact \
   --db_host=db --db_user=odoo --db_password=odoo --stop-after-init \
   --http-port=8169 --gevent-port=8173 --max-cron-threads=0 --log-level=warn
 
 # Correr la suite
 docker compose -f develop.yml exec -T odoo odoo -d me_test -u me \
-  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco \
+  --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco,/mnt/addons/oca/server-tools,/mnt/addons/oca/web,/mnt/addons/oca/server-brand,/mnt/addons/oca/server-ux,/mnt/addons/oca/partner-contact \
   --db_host=db --db_user=odoo --db_password=odoo --test-tags /me --stop-after-init \
   --http-port=8169 --gevent-port=8173 --max-cron-threads=0 --log-level=test
 ```
 
 Verificar la **línea de resultado**: `... of N tests` con **N > 0** y `0 failed, 0 error(s)`.
-`--addons-path` siempre explícito (sin él corre 0 tests = **verde falso**). Para una clase
-puntual: `--test-tags "/me:TestMeSecurity"`. Fallback de evidencia: `docker compose run --rm`
-(también recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
+`--addons-path` siempre explícito (sin él corre 0 tests = **verde falso**) **y completo**:
+desde la **tmc 19.0 (2026-07-23)** `tmc` depende de módulos OCA
+(`web_tree_many2one_clickable` de OCA/web, `remove_odoo_enterprise` de OCA/server-brand) →
+**sin las rutas `/mnt/addons/oca/*` tmc no carga y todo el grafo (`me`/`junco`/`raa`) se
+saltea**. Síntomas: `KeyError: 'tmc.dependence_order'` en `odoo shell`; "Some modules are not
+loaded ['junco','me','raa','tmc','tmc_data']" en el server. Si el módulo OCA falta en la
+**imagen**: `docker compose -f develop.yml build --no-cache --pull` (re-clona los repos OCA).
+Si la **DB de test es anterior al salto** (p.ej. `me_test`), correr **una vez** `-u tmc,me`:
+actualizar `tmc` instala sus deps OCA nuevas — `-u me` solo **no** lo hace (carga el grafo sin
+instalar deps ajenas) y el síntoma es el mismo `0 tests of 0` **aun con el path completo**.
+Copiar el path del `command:` de `develop.yml`. Para una clase puntual:
+`--test-tags "/me:TestMeSecurity"`. Fallback de evidencia: `docker compose run --rm` (también
+recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 `('post_install', '-at_install')`.
 
 ## Inventario de tests (`me/tests/`)
