@@ -29,6 +29,7 @@ explícitamente las reglas.
 | Carga de jurisdicción/origen en DEM (EPIC-004) | En **DEM**, `jurisdiction_dependence` y `source_dependence_id` ya **no se cargan en ME** (campo no required): quedan vacíos al ingresar y los completa **JUNCO** al vincular el expediente a un proceso, vía `action_set_origin_from_junco()`. En la UI de carga DEM se ocultan si vacíos y readonly si tienen valor. **CM** (jurisdicción auto = origen) y **TMC** (jurisdicción auto, source manual) **no cambian**. |
 | Jurisdicción DEM — multi-año (intencional) | El dropdown de `jurisdiction_dependence` ofrece **todas** las jurisdicciones de **todos** los nomencladores cargados (hijos de `tmc_dependence_adm` en `tmc.dependence_order`), **sin filtrar por año/`institutional_classifier`**, **a propósito**: un documento puede llegar hoy pero haberse generado en una estructura anterior con una secretaría que ya no existe o cambió de nombre, y el expediente debe poder referenciar la jurisdicción vigente en su momento. Por eso `_compute_allowed_jurisdictions` no filtra por año — **no es un bug** (#033). |
 | Temas raíz del expediente (junco:EPIC-011) | El asunto (`main_topic_id`) se ofrece acotado a **4 temas raíz** resueltos por XML ID contra `tmc_data` (`_EXP_ROOT_TOPIC_XMLIDS`): licitación, nota, contratación directa, concurso de precios. Los 2 últimos se sumaron para que JUNCO pueda derivar su `process_type`. **Hoy el acote es solo el `domain` de la vista** (no hay `@api.constrains`): una escritura por ORM/API puede fijar otro tema — ver Limitaciones conocidas. |
+| Subtema acotado al tema | `secondary_topic_id` ("Specification") se ofrece **filtrado a los hijos directos del tema elegido** (`domain=[('parent_id','=',main_topic_id)]`, `document_exp.py`), **oculto hasta elegir un tema** (`invisible="not main_topic_id"`) y se **limpia al cambiar el tema** (`_onchange_main_topic_id`). Como los temas raíz: **solo `domain` de vista, sin `@api.constrains`**. Que ofrezca "los correctos" depende de que el nomenclador modele bien los hijos del tema — ver Limitaciones conocidas (caso Licitación). |
 | Permisos cross-sistema (ME ↔ GD) | **Ver [`security.md`](security.md)** (postura, grupos y elevaciones). La regla del **stack** es **BR-016, gobernada en `odoo-junco`**; acá no se duplica. |
 | Registro automático en RAA | Todo expediente queda registrado en `raa.registry_aa` al crearse. |
 | Fojas — bloqueo post-creación | El número de fojas no se modifica una vez guardado, excepto por un Responsable de Mesa de Entradas; las variaciones se registran vía movimientos. |
@@ -73,6 +74,15 @@ limitado. Formalizarlo sigue siendo un ítem de backlog.
   a JUNCO (si el tema no está en lista, `process_type` simplemente no deriva).
   **Pregunta abierta** (decisión del usuario, no se asume): ¿endurecerlo con un constrains?
   Un constrains podría bloquear cargas legítimas (importaciones, datos viejos).
+- **Árbol de subtemas mal modelado bajo Licitación** (dato del nomenclador, `tmc_data`
+  externo; #033-adjacente): al elegir tema `Licitación`, el subtema ofrece **25 hijos** que
+  **mezclan el subtipo real** (`Privada`, `Pública`) con **23 etapas/actos del proceso**
+  (`Adjudicación`, `Apertura de Sobres`, `Desierta`, `Deja Sin Efecto`, `Desestima Oferta`,
+  `Llamado`, `Impugnación`, `Prórroga…`, `Rescisión…`, …) — que conceptualmente son eventos
+  del proceso licitatorio (territorio de JUNCO), no subtipos del expediente. **El código
+  filtra bien** (hijos del tema); el problema es que el dato le cuelga 25 hijos a Licitación.
+  Además `Concurso de Precios` **no tiene hijos** → subtema vacío. El fix vive en `tmc_data`
+  (repo externo) o requiere un discriminador subtipo/etapa. Ver `brainstorming.md` → IDEA 2.
 
 > Nota: la **ubicación interna actual** ya está implementada (EPIC-003): campo
 > `current_location_dependence_id` (oficina interna de destino del último movimiento).
