@@ -84,3 +84,56 @@ pregunta "¿ocultar subtema si el tema no tiene hijos?").
 - `business_rules.md` → "Subtema acotado al tema" + Limitaciones conocidas (caso Licitación).
 - Siguiente paso cuando se retome: `/product-spec` (define subtipo vs etapa antes de cualquier
   cambio de datos o código).
+
+## IDEA 3 - Botón "Save" textual visible solo cuando el form está dirty (portable de junco)
+
+Viene de **junco:EPIC-008/TASK-004** (commit `f4f7aae`, repo `odoo-junco`). Patrón **100%
+cosmético/UX, portable**. Es decisión de `me` si se adopta y en qué forms; **no se implementa
+todavía**.
+
+### Resumen
+
+En Odoo 19 el guardado del form es la nube/check del breadcrumb, que a algunos operativos les
+cuesta encontrar. La idea es un botón **"Save" explícito en el `<header>`** que aparece **solo
+cuando el registro está "dirty"** (modificado sin persistir) y desaparece al guardar.
+**Cero JS**: es un botón nativo `special="save"` + una regla **SCSS** que lo muestra/oculta según
+la clase `o_form_dirty` que el renderer de Odoo ya pone. Es el **mismo guardado nativo**, solo
+hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuario).
+
+### Qué haría falta en `me` (si se adopta) — 3 piezas
+
+1. **Botón** en el `<header>` del form (antes del statusbar): `<button string="Save"
+   special="save" class="btn-outline-primary o_me_form_save_button" data-hotkey="s"/>`
+   (clase renombrada `o_me_form_save_button` para no depender de assets de junco).
+2. **SCSS nuevo** (`me/static/src/scss/…`): oculto por defecto (`display:none`), visible con
+   `.o_form_view:has(.o_form_renderer.o_form_dirty) … { display:inline-flex }`, estilo outline
+   (fondo blanco en reposo, como el botón "New").
+3. **Registrar el SCSS** en `__manifest__.py` → `"assets": {"web.assets_backend": [...]}`.
+
+### Grounding en `me` (verificado 2026-07-24)
+
+- ✅ **`me` NO usa `boolean_toggle`** en sus forms → la trampa que avisaron (los toggles
+  autoguardan en Odoo 19 y rompen el "dirty + Save") **no aplica hoy**. Si se agrega un toggle a
+  esos forms, pasarle `options="{'autosave': false}"`.
+- ⚠️ **`me` no tiene sección `assets` ni carpeta `me/static/`** → sería su **primer asset de
+  frontend** (net-new: crear `static/src/scss/` + la sección `assets` del manifest).
+
+### Puntos a explorar
+
+- [ ] ¿En qué form(s)? Criterio de junco: SÍ en forms de carga/edición operativa donde se tipean
+      varios campos antes de guardar; **arrancar por el form principal de `document_exp`** y ver
+      con el usuario si suma antes de esparcirlo. NO en wizards, solo-lectura, o forms con toggles
+      de acción inmediata.
+- [ ] ¿Conviene un asset backend global o acotarlo? (define la superficie del SCSS).
+
+### Preguntas abiertas
+
+- [ ] ¿Lo adopta `me`? Es decisión de UX del usuario/dueño, no se asume.
+- [ ] Si sí: ¿solo `document_exp` o también otros forms (movimiento, raa)?
+
+### Relación con otras ideas / reglas
+
+- Fuente: `junco:EPIC-008/TASK-004` (`odoo-junco`, commit `f4f7aae`; suite junco 100/100 + UI OK
+  en me2 al commit). **No se toca junco desde acá**; esto es solo para replicar en `me` si se ve útil.
+- Riesgo bajo: sin modelo, sin ACL, sin JS. Regla Odoo 19 de `me`: `<list>` no `<tree>`, sin `attrs`.
+- Siguiente paso si se retoma: `/new-idea`→`/new-task` (XS/S, UI) con el/los form(s) elegido(s).
