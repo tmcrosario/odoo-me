@@ -20,6 +20,7 @@ Nomenclatura:
 | EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |
 | EPIC-005/TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Done | Removido; sin referencias; suite 201/0/0 |
 | EPIC-005/TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | Done | No declarable (circular `raa→me`); acoplamiento implícito documentado |
+| EPIC-006/TASK-001 | Botón "Save" textual visible solo en dirty (form de expediente) | Ale Gallo | S | Done | Portado de `junco:EPIC-008/TASK-004`; primer asset frontend de `me`; suite 209/0/0; UI verificada en me2 |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

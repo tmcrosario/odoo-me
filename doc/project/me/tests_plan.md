@@ -1,14 +1,15 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
-Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011` y
-`junco:EPIC-015`. **Estado al 2026-07-15: 24 clases, 207 métodos de test**, suite verde.
+Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
+`junco:EPIC-015` y `EPIC-006`. **Estado al 2026-07-27: 25 clases, 209 métodos de test**,
+suite verde.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **207** | `odoo.tests.result: 0 failed, 0 error(s) of 207 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 255 | `odoo.tests.stats: me: 255 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **209** | `odoo.tests.result: 0 failed, 0 error(s) of 209 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 259 | `odoo.tests.stats: me: 259 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -89,6 +90,17 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
 | `TestMeSecurity` | 5 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; un **lector no puede crear expedientes**; y el **orden de la escalera del privilegio ME** (`test_me_privilege_ladder_order`) | junco:EPIC-015 (+ /TASK-004) |
+
+### `test_save_button.py` — 2 métodos (EPIC-006)
+
+| Clase | # | Qué prueba | Semilla |
+| --- | ---: | --- | --- |
+| `TestSaveButton` | 2 | Botón "Save" dirty-only del form de expediente: (1) el arch tiene `special="save"` con la clase outline `o_me_form_save_button` (nunca la variante `btn-primary`); (2) el SCSS está registrado en `web.assets_backend` del manifest (guard del acople botón↔asset). La **visibilidad** por dirty vive en el SCSS y necesita navegador → es USER-RUN | EPIC-006 |
+
+> Nota: `test_save_button.py` no prueba la visibilidad real (dirty→muestra, limpio→oculta):
+> eso es CSS y requiere un tour/browser. El guard del asset evita el falso verde de borrar el
+> bloque `assets` del manifest dejando el arch intacto. Evidencia de comportamiento: USER-RUN
+> en me2 (EPIC-006/TASK-001).
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que

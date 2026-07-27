@@ -87,9 +87,11 @@ pregunta "¿ocultar subtema si el tema no tiene hijos?").
 
 ## IDEA 3 - Botón "Save" textual visible solo cuando el form está dirty (portable de junco)
 
+> **IMPLEMENTADO** en `me` → ver **EPIC-006/TASK-001** (Done, 2026-07-27). Se deja acá solo como
+> referencia (convención: idea cerrada → épica/task). Lo de abajo es el registro original.
+
 Viene de **junco:EPIC-008/TASK-004** (commit `f4f7aae`, repo `odoo-junco`). Patrón **100%
-cosmético/UX, portable**. Es decisión de `me` si se adopta y en qué forms; **no se implementa
-todavía**.
+cosmético/UX, portable**.
 
 ### Resumen
 
@@ -115,8 +117,9 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
 - ✅ **`me` NO usa `boolean_toggle`** en sus forms → la trampa que avisaron (los toggles
   autoguardan en Odoo 19 y rompen el "dirty + Save") **no aplica hoy**. Si se agrega un toggle a
   esos forms, pasarle `options="{'autosave': false}"`.
-- ⚠️ **`me` no tiene sección `assets` ni carpeta `me/static/`** → sería su **primer asset de
-  frontend** (net-new: crear `static/src/scss/` + la sección `assets` del manifest).
+- ✅ **(al implementar)** `me` **ahora sí** tiene `me/static/src/scss/` + sección `assets` en el
+  manifest — fue su **primer asset de frontend**. El grounding original decía "no tiene assets":
+  cierto al 2026-07-24, ya no tras EPIC-006/TASK-001.
 
 ### Puntos a explorar
 
@@ -128,12 +131,12 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
 
 ### Preguntas abiertas
 
-- [ ] ¿Lo adopta `me`? Es decisión de UX del usuario/dueño, no se asume.
-- [ ] Si sí: ¿solo `document_exp` o también otros forms (movimiento, raa)?
+- [x] ¿Lo adopta `me`? **Sí** — EPIC-006/TASK-001, solo `document_exp` por ahora.
+- [ ] ¿Esparcir a otros forms (movimiento, raa)? Diferido; se evalúa caso por caso (nueva task en EPIC-006).
 
 ### Relación con otras ideas / reglas
 
 - Fuente: `junco:EPIC-008/TASK-004` (`odoo-junco`, commit `f4f7aae`; suite junco 100/100 + UI OK
   en me2 al commit). **No se toca junco desde acá**; esto es solo para replicar en `me` si se ve útil.
 - Riesgo bajo: sin modelo, sin ACL, sin JS. Regla Odoo 19 de `me`: `<list>` no `<tree>`, sin `attrs`.
-- Siguiente paso si se retoma: `/new-idea`→`/new-task` (XS/S, UI) con el/los form(s) elegido(s).
+- Estado: **cerrada** (EPIC-006/TASK-001, Done). Para esparcir a otros forms, abrir nueva task en EPIC-006.

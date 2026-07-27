@@ -10,6 +10,7 @@ Las épicas agrupan capacidades o líneas funcionales. Las tasks viven bajo
 | EPIC-003 | Usabilidad y filtros de la vista de expedientes | `me` | Done (develop) | Filtros por usuario (S) y por oficina interna de destino (L). Ambas tasks Done; suite 201/0/0; UI verificada. Deploy a prod diferido |
 | EPIC-004 | Reacotamiento de la carga de ME: traspaso de clasificación a JUNCO | `me` (+ `junco`) | Done (develop) | DEM cede jurisdiction/source a JUNCO vía `action_set_origin_from_junco`; 1er movimiento DEM→TMC desacoplado. Validada end-to-end en me2 (`-u me,junco`); deploy a prod diferido. Contraparte junco EPIC-010 Done |
 | EPIC-005 | Deuda técnica (limpieza post-baseline) | `me` | Done (develop) | TASK-001 removió `allowed_dependence_ids`; TASK-002 decidió no declarar `raa` (circular `raa→me`), documentado |
+| EPIC-006 | Usabilidad del formulario de expedientes | `me` | En progreso (develop) | TASK-001 Done: botón "Save" dirty-only (portado de `junco:EPIC-008/TASK-004`); **primer asset frontend de `me`**; suite 209/0/0; UI verificada. Épica abierta para más mejoras de form |
 
 ## Épicas de otros repos que aterrizaron código en `me`
 
