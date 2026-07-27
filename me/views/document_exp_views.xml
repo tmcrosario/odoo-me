@@ -20,6 +20,14 @@
         <field name="model">me.document_exp</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <!-- Textual Save, visible only when the form is dirty. No state
+                         widget here: this header exists only to host the button, and
+                         me_form_save_button.scss collapses the empty bar while clean. -->
+                    <button string="Save" special="save"
+                            class="btn-outline-primary o_me_form_save_button"
+                            title="Save changes" data-hotkey="s"/>
+                </header>
                 <sheet>
                     <div class="oe_title">
                         <label for="computed_name"

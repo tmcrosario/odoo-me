@@ -15,6 +15,11 @@
         "views/document_exp_views.xml",
         "views/me_menus.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "me/static/src/scss/me_form_save_button.scss",
+        ],
+    },
     "demo": [],
     "installable": True,
     "application": True,

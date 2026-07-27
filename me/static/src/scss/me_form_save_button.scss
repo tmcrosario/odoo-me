@@ -1,0 +1,35 @@
+// Textual "Save" button, visible only when the form has unsaved changes.
+// Ported verbatim from junco:EPIC-008/TASK-004 (proven in Odoo 19). Style:
+// outline-primary (white bg at rest, brand border/text, matching the "New" button).
+// No JS: relies on the o_form_dirty class the Odoo renderer already sets on
+// .o_form_renderer. Every rule is scoped by the .o_me_form_save_button class, so no
+// other backend form is affected.
+//
+// NOTE (me vs junco): junco's <header> also hosted a state statusbar widget, so its bar
+// was always populated. The me.document_exp <header> hosts ONLY this button, so while the
+// record is clean the bar is empty. We deliberately do NOT collapse it: an empty
+// .o_form_statusbar is just ~py-2 of $body-bg with no border/min-height (see Odoo
+// form_controller.scss) — visually indistinguishable from the form's normal top spacing —
+// whereas collapsing it would make the whole sheet jump down when the record turns dirty.
+
+.o_form_statusbar .o_me_form_save_button {
+    font-weight: 600;
+    min-width: 0;
+    width: auto;
+    padding-inline: 0.75rem;
+    margin-right: 0.75rem !important;
+    display: none !important; // hidden by default (clean record)
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+// White background at rest (matching the "New" button).
+.o_form_statusbar .o_me_form_save_button.btn-outline-primary:not(:hover):not(:focus):not(:active) {
+    background-color: #fff !important;
+}
+
+// Visible only when the Odoo renderer marks the record dirty.
+.o_form_view:has(.o_form_renderer.o_form_dirty) .o_form_statusbar .o_me_form_save_button {
+    display: inline-flex !important;
+}
