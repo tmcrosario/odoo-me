@@ -1,83 +1,178 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
+    <!-- Self-contained styles: wkhtmltopdf can't fetch the asset bundle here -->
+    <template id="report_tmc_styles">
+        <style>
+            .tmc-report { font-family: Helvetica, Arial, sans-serif; color: #000;
+            font-size: 12px; }
+            .tmc-box { border: 1px solid #666; padding: 8px 10px; text-align: center;
+            font-weight: bold; font-size: 13px; margin: 0 0 22px 0; }
+            .tmc-kv { width: 72%; border-collapse: collapse;
+            margin: 0 auto 22px auto; }
+            .tmc-kv td { padding: 2px 0; vertical-align: top; }
+            .tmc-kv td.label { width: 48%; font-weight: bold; text-align: right;
+            padding-right: 10px; white-space: nowrap; }
+            .tmc-data { width: 100%; border-collapse: collapse; margin: 0 0 20px 0; }
+            .tmc-data th, .tmc-data td { border: 1px solid #999; padding: 4px 6px;
+            vertical-align: top; }
+            .tmc-data th { background: #eee; font-weight: bold; text-align: center; }
+            .tmc-data tr { page-break-inside: avoid; }
+            .tmc-nums { table-layout: fixed; }
+            .tmc-nums td { text-align: center; }
+            .tmc-muted { color: #444; font-style: italic; }
+            .tmc-center { text-align: center; }
+        </style>
+    </template>
+
+    <!-- Header/footer are rendered as standalone documents by wkhtmltopdf,
+         so they cannot reuse the body styles above -->
+    <template id="report_tmc_chrome_styles">
+        <style>
+            .tmc-chrome { font-family: Helvetica, Arial, sans-serif; color: #000;
+            font-size: 10px; }
+            .tmc-chrome table { width: 100%; border-collapse: collapse; }
+            .tmc-chrome td { vertical-align: top; }
+            .tmc-chrome img.logo { width: 78mm; }
+            .tmc-chrome .meta { text-align: right; line-height: 1.6; }
+            .tmc-chrome .meta .rtitle { font-weight: bold; }
+            /* Odoo never passes --footer-spacing, and a margin would collapse */
+            div.footer { padding-top: 9mm; }
+            .tmc-chrome .foot { border-top: 1px solid #999; padding-top: 5px;
+            text-align: center; color: #333; font-size: 9px; line-height: 1.4; }
+        </style>
+    </template>
+
+    <template id="report_tmc_header">
+        <div class="header tmc-chrome">
+            <t t-call="raa.report_tmc_chrome_styles" />
+            <table>
+                <tr>
+                    <td>
+                        <img
+                            class="logo"
+                            t-att-src="env['raa.report_logo'].data_uri()"
+                            alt=""
+                        />
+                    </td>
+                    <td class="meta">
+                        <div class="rtitle">Reporte de Mesa de Entradas</div>
+                        <div>
+                            <b>Fecha:</b>
+                            <t
+                                t-out="datetime.date.today()"
+                                t-options='{"widget": "date"}'
+                            />
+                        </div>
+                        <div>
+                            <b>Página:</b>
+                            <span class="page" />
+                            de
+                            <span class="topage" />
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+
+    <template id="report_tmc_footer">
+        <div class="footer tmc-chrome">
+            <t t-call="raa.report_tmc_chrome_styles" />
+            <div class="foot">
+                <div>
+                    Reporte generado por RAA – Sistema de Registro de Actos
+                    Administrativos
+                </div>
+                <div>Tribunal Municipal de Cuentas – Municipalidad de Rosario</div>
+            </div>
+        </div>
+    </template>
+
     <template id="missing_raa_report">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
-                <t t-call="web.external_layout">
-                    <div class="page">
-                        <!-- Print header subtitle -->
-                        <h4 class="text-center">Reporte de Mesa de Entradas</h4>
+                <t t-call="raa.report_tmc_header" />
+                <div
+                    class="article tmc-report"
+                    t-att-data-oe-model="o._name"
+                    t-att-data-oe-id="o.id"
+                >
+                    <t t-call="raa.report_tmc_styles" />
 
-                        <!-- Dynamic title -->
-                        <h2 class="text-center" t-if="data.get('maximum')">
+                    <div class="tmc-box">
+                        <t t-if="data.get('maximum')">
                             Listado de Actos Administrativos faltantes hasta el Nº
                             <t t-out="data['maximum']" />
-                        </h2>
-                        <h2 class="text-center" t-else="">
-                            Listado de Actos Administrativos faltantes
-                        </h2>
-
-                        <!-- Parameters -->
-                        <table class="table table-sm table-borderless">
-                            <tr>
-                                <td>
-                                    <strong>Período:</strong>
-                                </td>
-                                <td>
-                                    <t t-out="o.period" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <strong>Dependencia:</strong>
-                                </td>
-                                <td>
-                                    <t t-out="o.dependence_id.name" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <strong>Tipo de Documento:</strong>
-                                </td>
-                                <td>
-                                    <t t-out="o.document_type_id.name" />
-                                </td>
-                            </tr>
-                        </table>
-
-                        <hr />
-
-                        <!-- Último ingresado -->
-                        <t t-if="data.get('last')">
-                            <p>
-                                <strong>Último Ingresado:</strong>
-                                <t t-out="data['last']" />
-                            </p>
                         </t>
-
-                        <!-- Missing numbers loop -->
-                        <t t-if="data.get('missing')">
-                            <t t-foreach="data['missing']" t-as="number">
-                                <p>
-                                    <t t-out="number" />
-                                </p>
-                            </t>
-                        </t>
-                        <t t-elif="data.get('last')">
-                            <p>No existen actos administrativos faltantes.</p>
-                        </t>
-                        <t t-else="">
-                            <p>No se registran ingresos con este criterio.</p>
-                        </t>
-
-                        <!-- Footer -->
-                        <br />
-                        <p class="text-muted small">
-                            Reporte generado por RAA – Sistema de Registro de Actos Administrativos.
-                            Tribunal Municipal de Cuentas – Municipalidad de Rosario.
-                        </p>
+                        <t t-else="">Listado de Actos Administrativos faltantes</t>
                     </div>
-                </t>
+
+                    <table class="tmc-kv">
+                        <tr>
+                            <td class="label">Período</td>
+                            <td>
+                                <t t-out="o.period" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">Dependencia</td>
+                            <td>
+                                <t t-out="o.dependence_id.name" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="label">Tipo de Documento</td>
+                            <td>
+                                <t t-out="o.document_type_id.name" />
+                            </td>
+                        </tr>
+                        <tr t-if="data.get('last')">
+                            <td class="label">Último Ingresado</td>
+                            <td>
+                                <t t-out="data['last']" />
+                            </td>
+                        </tr>
+                    </table>
+
+                    <t t-if="data.get('missing')">
+                        <!-- Grid layout: a single column wastes most of the page -->
+                        <t t-set="numbers" t-value="data['missing']" />
+                        <t t-set="cols" t-value="6" />
+                        <table class="tmc-data tmc-nums">
+                            <thead>
+                                <tr>
+                                    <th t-att-colspan="cols">
+                                        Faltantes (<t t-out="len(numbers)" />)
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    t-foreach="range(0, len(numbers), cols)"
+                                    t-as="start"
+                                >
+                                    <td
+                                        t-foreach="numbers[start:start + cols]"
+                                        t-as="number"
+                                    >
+                                        <t t-out="number" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </t>
+                    <t t-elif="data.get('last')">
+                        <p class="tmc-muted tmc-center">
+                            No existen actos administrativos faltantes.
+                        </p>
+                    </t>
+                    <t t-else="">
+                        <p class="tmc-muted tmc-center">
+                            No se registran ingresos con este criterio.
+                        </p>
+                    </t>
+                </div>
+                <t t-call="raa.report_tmc_footer" />
             </t>
         </t>
     </template>
