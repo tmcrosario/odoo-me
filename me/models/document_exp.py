@@ -155,6 +155,17 @@ class DocumentExp(models.Model):
         help="True when the expediente's main topic is Licitación.",
     )
 
+    is_nota = fields.Boolean(
+        string="Nota",
+        compute="_compute_is_nota",
+        store=True,
+        help=(
+            "True when the expediente's main topic is Nota. Notas never reach JUNCO "
+            "(it only offers purchase topics), so for DEM origin ME loads the "
+            "jurisdiction/source itself at intake instead of ceding them (EPIC-004/TASK-002)."
+        ),
+    )
+
     current_holder_id = fields.Many2one(
         comodel_name='res.users',
         string="Current Holder",
@@ -215,6 +226,20 @@ class DocumentExp(models.Model):
         for record in self:
             record.is_licitacion = bool(licitacion and licitacion in record.main_topic_ids)
 
+    # Depends on BOTH the stored source of truth (main_topic_ids, on the parent) and the
+    # form proxy (main_topic_id): the proxy only writes through to the parent on save, so
+    # without it is_nota stays False while loading and the view never reveals the
+    # jurisdiction fields for a Nota (the backend would then reject the save).
+    @api.depends('main_topic_ids', 'main_topic_id')
+    def _compute_is_nota(self):
+        nota = self.env.ref(
+            'tmc_data.tmc_document_topic_nota', raise_if_not_found=False
+        )
+        for record in self:
+            record.is_nota = bool(nota and (
+                nota in record.main_topic_ids or record.main_topic_id == nota
+            ))
+
     @api.depends('document_movement_ids.destination_dependence_id.is_internal')
     def _compute_has_reentry(self):
         for record in self:
@@ -272,6 +297,17 @@ class DocumentExp(models.Model):
     @api.onchange('main_topic_id')
     def _onchange_main_topic_id(self):
         self.secondary_topic_id = False
+        # EPIC-004/TASK-002: only DEM + Nota loads its origin here. If the topic is
+        # switched away from Nota while loading, drop what was typed: on a purchase topic
+        # the origin belongs to JUNCO and must start empty (EPIC-004), otherwise a stale
+        # value would be saved behind a field that is readonly/invisible by then.
+        nota = self.env.ref(
+            'tmc_data.tmc_document_topic_nota', raise_if_not_found=False
+        )
+        if (self.dependence_id.abbreviation == 'DEM'
+                and (not nota or self.main_topic_id != nota)):
+            self.jurisdiction_dependence = False
+            self.source_dependence_id = False
 
     @api.model
     def default_get(self, fields_list):
@@ -336,6 +372,50 @@ class DocumentExp(models.Model):
                     _("Intake date cannot be in the future.")
                 )
 
+    def _validate_intake_not_before_document_date(self, doc_date=None):
+        """El ingreso a Mesa no puede ser anterior a la fecha del documento: no puede
+        entrar antes de existir.
+
+        Se valida por DOS caminos a propósito: este método lo llama la constrains de
+        `intake_date` (cuando cambia el ingreso) y `_update_document_date` (cuando cambia
+        la fecha del documento). Una constrains sobre `date` NO alcanzaría: esa fecha se
+        escribe con SQL directo y el ORM nunca dispara sus validaciones."""
+        for record in self:
+            doc = doc_date if doc_date is not None else record.date
+            if record.intake_date and doc and record.intake_date < doc:
+                raise exceptions.ValidationError(
+                    _("The intake date (%(intake)s) cannot be earlier than the document "
+                      "date (%(doc)s): the expediente cannot be received before it exists.",
+                      intake=record.intake_date, doc=doc)
+                )
+
+    @api.constrains('intake_date')
+    def _check_intake_date_not_before_document_date(self):
+        self._validate_intake_not_before_document_date()
+
+    @api.constrains('intake_date', 'period')
+    def _check_intake_date_not_before_period(self):
+        """El ingreso no puede ser anterior al período del expediente: el expediente no
+        pudo entrar antes de existir su período.
+
+        Asimétrico a propósito: un ingreso POSTERIOR al período sí es válido (un
+        expediente del período anterior puede llegar a Mesa después) — lo fija
+        `test_intake_date_accepts_later_year_than_period`. Solo se bloquea el caso hacia
+        atrás."""
+        for record in self:
+            if not record.intake_date or not record.period:
+                continue
+            try:
+                period_year = int(record.period)
+            except (TypeError, ValueError):
+                continue  # período inválido: lo rechaza _check_period de tmc.document
+            if record.intake_date.year < period_year:
+                raise exceptions.ValidationError(
+                    _("The intake date (%(intake)s) cannot be earlier than the "
+                      "expediente period (%(period)s).",
+                      intake=record.intake_date, period=record.period)
+                )
+
     @api.depends('dependence_id', 'number', 'period')
     def _compute_is_origin_complete(self):
         for record in self:
@@ -375,6 +455,31 @@ class DocumentExp(models.Model):
         """Limpiar repartición al cambiar jurisdicción para evitar datos inconsistentes"""
         self.source_dependence_id = False
 
+    def _validate_nota_jurisdiction(self):
+        """DEM + Nota: ME loads the jurisdiction itself, so it is mandatory here
+        (EPIC-004/TASK-002). Backend counterpart of the view's `required`: the UI does
+        not replace backend validation. Other topics keep ceding it to JUNCO, so they
+        are legitimately empty at intake and must NOT be checked."""
+        for record in self:
+            if (record.dependence_id.abbreviation == 'DEM'
+                    and record.is_nota
+                    and not record.jurisdiction_dependence):
+                raise exceptions.ValidationError(
+                    _("The jurisdiction is required for DEM expedientes with topic Nota; "
+                      "it must be loaded at intake.")
+                )
+
+    # Deliberately NOT @api.constrains('is_nota'): is_nota is a stored computed field, and
+    # recomputing a stored field runs the constraints that list it (orm/models.py,
+    # _compute_field_value). On module update is_nota is recomputed for EVERY existing
+    # record, so listing it would abort the update on pre-existing DEM Notas loaded before
+    # this rule (they were legitimately empty under EPIC-004). New records are covered by
+    # the explicit call in create() instead: on create the ORM only runs the constraints
+    # whose fields are in vals, and the whole point here is that jurisdiction is missing.
+    @api.constrains('jurisdiction_dependence')
+    def _check_nota_jurisdiction_required(self):
+        self._validate_nota_jurisdiction()
+
     @api.constrains('source_dependence_id', 'jurisdiction_dependence')
     def _check_source_dependence_required(self):
         for record in self:
@@ -403,6 +508,16 @@ class DocumentExp(models.Model):
                 "The origin can only be set from JUNCO on DEM expedientes "
                 "(this expediente's origin is %s).",
                 self.dependence_id.abbreviation or _("undefined"),
+            ))
+        # Defense in depth (EPIC-004/TASK-002): on a Nota, ME owns the origin (loaded at
+        # intake), so JUNCO must never overwrite it. In practice JUNCO cannot reach this
+        # (its eligible-expediente domain lists only the purchase topics, confirmed with
+        # the junco chat), but that domain is view-level only: a link made by
+        # ORM/import/API would silently overwrite what the intake desk loaded.
+        if self.is_nota:
+            raise exceptions.UserError(_(
+                "The origin cannot be set from JUNCO on an expediente with topic Nota: "
+                "its jurisdiction and source are loaded in ME at intake."
             ))
         jurisdiction = self.env['tmc.dependence'].browse(jurisdiction_id)
         if jurisdiction not in self.allowed_jurisdiction_ids:
@@ -481,12 +596,19 @@ class DocumentExp(models.Model):
         """Validar que el expediente no exista cuando se completan los campos básicos"""
         if self.dependence_id and self.document_type_id and self.number and self.period and self.jurisdiction_dependence:
             # Verificar si ya existe un documento con estos datos
-            existing_doc = self.env["tmc.document"].search([
+            domain = [
                 ("dependence_id", "=", self.dependence_id.id),
                 ("document_type_id", "=", self.document_type_id.id),
                 ("number", "=", self.number),
-                ("period", "=", self.period)
-            ])
+                ("period", "=", self.period),
+            ]
+            # Excluirse a sí mismo: en un expediente YA guardado este onchange se
+            # encontraba a sí mismo y avisaba "ya existe" sobre el propio registro.
+            # Antes no se notaba porque estos campos no eran editables después del alta.
+            own_document = self._origin.document_id
+            if own_document:
+                domain.append(("id", "!=", own_document.id))
+            existing_doc = self.env["tmc.document"].search(domain)
             if existing_doc:
                 return {
                     'warning': {
@@ -549,6 +671,11 @@ class DocumentExp(models.Model):
         ).create(vals_list)
         records = records.sudo(self.env.su)
 
+        # EPIC-004/TASK-002: enforced here, not via @api.constrains('is_nota') — see
+        # _validate_nota_jurisdiction for why. Runs before the movements/RAA below so a
+        # rejected expediente does not leave side effects behind.
+        records._validate_nota_jurisdiction()
+
         # env_create retains me_create_in_progress=True so write() calls
         # triggered by movement creation (e.g. has_reentry recompute) also pass.
         env_create = records.env
@@ -604,7 +731,7 @@ class DocumentExp(models.Model):
         """Actualizar la fecha del documento padre evitando la validación problemática"""
         if date_val is None:
             return
-            
+
         # Convertir a string si es necesario
         if hasattr(date_val, 'strftime'):
             date_str = date_val.strftime('%Y-%m-%d')
@@ -612,13 +739,35 @@ class DocumentExp(models.Model):
             date_str = f"{date_val.year}-{date_val.month:02d}-{date_val.day:02d}"
         else:
             date_str = str(date_val)
-        
+
+        # tmc.document protege la fecha por DOS lados: el create() exige que el año
+        # coincida con el período, y _check_date_not_future prohíbe fechas futuras. El SQL
+        # de abajo elude el ORM para escapar del PRIMERO (regla de negocio: un documento
+        # viejo puede archivarse en un expediente del período actual), pero de paso también
+        # eludía el SEGUNDO, que nadie quiso desactivar: quedaban pasando fechas de
+        # documento futuras. Se revalida acá, que es el único embudo de escritura de la
+        # fecha (create() y write() pasan por este método; un @api.constrains NO serviría:
+        # el UPDATE directo no dispara validaciones del ORM).
+        new_date = fields.Date.to_date(date_str)
+        if new_date > fields.Date.context_today(self):
+            raise exceptions.ValidationError(
+                _("The document date cannot be in the future.")
+            )
+        # Mismo embudo, misma razón: el SQL de abajo no dispara constrains, así que la
+        # coherencia ingreso >= fecha del documento se valida acá contra el valor NUEVO.
+        self._validate_intake_not_before_document_date(doc_date=new_date)
+
         # Actualizar directamente en la base de datos para evitar la validación
         self.env.cr.execute(
             "UPDATE tmc_document SET date = %s WHERE id = %s",
             (date_str, self.document_id.id)
         )
+        # Invalidar el caché en AMBOS lados. `date` es un campo delegado (_inherits): el
+        # expediente lo cachea aparte del documento padre, así que invalidar solo el padre
+        # dejaba pegado el valor viejo (típicamente False, leído antes de este UPDATE) y
+        # `expediente.date` devolvía False aunque la DB tuviera el valor correcto.
         self.document_id.invalidate_recordset(['date'])
+        self.invalidate_recordset(['date'])
 
     def write(self, vals):
         if 'number' in vals:
@@ -701,7 +850,18 @@ class DocumentExp(models.Model):
             self._update_document_date(date_val)
 
         # Llamar al super().write() solo con campos propios de me_document_exp
-        return super().write(vals)
+        res = super().write(vals)
+
+        # EPIC-004/TASK-002: el tema puede cambiar DESPUÉS del alta (un expediente
+        # guardado sin tema al que luego se le pone "Nota"). Sin esto quedaba is_nota=True
+        # sin jurisdicción, un estado que ninguna validación cubría. Se valida solo si el
+        # write toca el tema: hacerlo siempre rompería los expedientes anteriores a esta
+        # regla (quedaron legítimamente vacíos) ante cualquier edición, p.ej. agregar un
+        # movimiento. Tampoco sirve @api.constrains('is_nota'): al ser stored, recomputarlo
+        # dispara la constraint sobre TODOS los registros en cada `-u me`.
+        if {'main_topic_id', 'main_topic_ids'} & set(vals):
+            self._validate_nota_jurisdiction()
+        return res
 
     def unlink(self):
         for record in self:

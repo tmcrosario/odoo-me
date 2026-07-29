@@ -219,8 +219,17 @@ msgstr "Referencia"
 
 #. module: me
 #: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
-msgid "Document Date"
-msgstr "Fecha del Documento"
+msgid "Procedure Start Date"
+msgstr "Fecha de inicio del trámite"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid ""
+"Expediente creation date (from the cover sheet). May differ from the intake "
+"date."
+msgstr ""
+"Fecha de creación del expediente (la de la carátula). Puede diferir de la "
+"fecha de ingreso a Mesa."
 
 #. module: me
 #: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
@@ -375,7 +384,7 @@ msgstr "Usuario Odoo que queda a cargo del expediente en la dependencia destino 
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "The document date is required."
-msgstr "La fecha del documento es obligatoria."
+msgstr "La fecha de inicio del trámite es obligatoria."
 
 #. module: me
 #: code:addons/me/models/document_exp.py:0
@@ -513,3 +522,49 @@ msgstr "En mi poder"
 #: model:ir.model.fields,field_description:me.field_me_document_exp__current_holder_id
 msgid "Current Holder"
 msgstr "Responsable Actual"
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The jurisdiction is required for DEM expedientes with topic Nota; it must be "
+"loaded at intake."
+msgstr ""
+"La jurisdicción es obligatoria para expedientes DEM con tema Nota; se debe "
+"cargar al ingreso."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The origin cannot be set from JUNCO on an expediente with topic Nota: its "
+"jurisdiction and source are loaded in ME at intake."
+msgstr ""
+"El origen no puede completarse desde JUNCO en un expediente con tema Nota: su "
+"jurisdicción y repartición se cargan en Mesa al ingreso."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid "The document date cannot be in the future."
+msgstr "La fecha de inicio del trámite no puede ser futura."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The intake date (%(intake)s) cannot be earlier than the expediente period "
+"(%(period)s)."
+msgstr ""
+"La fecha de ingreso (%(intake)s) no puede ser anterior al período del "
+"expediente (%(period)s)."
+
+#. module: me
+#: code:addons/me/models/document_exp.py:0
+#, python-format
+msgid ""
+"The intake date (%(intake)s) cannot be earlier than the document date "
+"(%(doc)s): the expediente cannot be received before it exists."
+msgstr ""
+"La fecha de ingreso (%(intake)s) no puede ser anterior a la fecha de inicio "
+"del trámite (%(doc)s): el expediente no puede ingresar antes de existir."

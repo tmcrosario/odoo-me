@@ -365,12 +365,96 @@ class TestDocumentExp(TransactionCase):
         with self.assertRaises(ValidationError):
             self.env['me.document_exp'].create(vals)
 
-    def test_intake_date_accepts_different_year_than_period(self):
-        """intake_date no se valida contra period — año distinto debe aceptarse."""
-        past_year_date = date(2024, 1, 15)
-        vals = dict(self.valid_vals, number=99993, period='2023', intake_date=past_year_date)
+    def test_intake_date_accepts_later_year_than_period(self):
+        """Un ingreso POSTERIOR al período es válido: un expediente del período anterior
+        puede llegar a Mesa después. Solo se bloquea el ingreso anterior al período
+        (ver test_intake_date_before_period_raises) — la regla es asimétrica a propósito."""
+        later_year_date = date(2024, 1, 15)
+        # date acompaña al ingreso: si quedara en "hoy" chocaría con la regla
+        # ingreso >= fecha del documento, que este test no está probando.
+        vals = dict(self.valid_vals, number=99993, period='2023',
+                    intake_date=later_year_date, date=later_year_date)
         expediente = self.env['me.document_exp'].create(vals)
-        self.assertEqual(expediente.intake_date, past_year_date)
+        self.assertEqual(expediente.intake_date, later_year_date)
+
+    def test_intake_date_before_period_raises(self):
+        """El ingreso no puede ser anterior al período: el expediente no pudo entrar
+        antes de existir su período."""
+        vals = dict(self.valid_vals, number=99986,
+                    period=str(date.today().year), intake_date=date(2024, 3, 10))
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_intake_date_before_period_raises_on_write(self):
+        """Mismo bloqueo al corregir la fecha de ingreso después de creado."""
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99985, period=str(date.today().year))
+        )
+        with self.assertRaises(ValidationError):
+            expediente.write({'intake_date': date(2024, 3, 10)})
+
+    def test_document_date_future_raises(self):
+        """La fecha del documento no puede ser futura.
+
+        `tmc.document` ya lo prohíbe (`_check_date_not_future`), pero ME escribe la fecha
+        por SQL directo para escapar del chequeo año==período de `tmc.document.create()`
+        (regla de negocio: un documento viejo puede archivarse en un expediente actual).
+        Ese SQL se llevaba puesta también la validación de fecha futura. Se revalida en
+        `_update_document_date`; NO alcanza un @api.constrains (el UPDATE directo no
+        dispara validaciones del ORM)."""
+        future_date = fields.Date.today() + timedelta(days=30)
+        vals = dict(self.valid_vals, number=99987, date=future_date)
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_document_date_future_raises_on_write(self):
+        """Mismo bloqueo al corregir la fecha después (write() usa el mismo embudo)."""
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99988)
+        )
+        with self.assertRaises(ValidationError):
+            expediente.write({'date': fields.Date.today() + timedelta(days=30)})
+
+    def test_document_date_accepts_past_year_different_from_period(self):
+        """NO endurecer de más: la fecha del documento SÍ puede ser pasada y de un año
+        distinto al período — es el motivo por el que existe el bypass SQL. Este test
+        protege esa regla de negocio de un 'arreglo' que restaure el chequeo de tmc."""
+        old_date = date(2023, 5, 4)
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99989, date=old_date)
+        )
+        self.assertEqual(expediente.date, old_date)
+
+    def test_intake_date_before_document_date_raises(self):
+        """El ingreso no puede ser anterior a la fecha del documento: no puede entrar a
+        Mesa antes de existir."""
+        today = fields.Date.today()
+        vals = dict(self.valid_vals, number=99984,
+                    date=today, intake_date=today - timedelta(days=5))
+        with self.assertRaises(ValidationError):
+            self.env['me.document_exp'].create(vals)
+
+    def test_intake_date_equal_to_document_date_ok(self):
+        """Mismo día es válido (se carga el día que se emite)."""
+        today = fields.Date.today()
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99983, date=today, intake_date=today)
+        )
+        self.assertEqual(expediente.intake_date, today)
+
+    def test_document_date_after_intake_raises_on_write(self):
+        """Mover la FECHA DEL DOCUMENTO por delante del ingreso también se bloquea.
+
+        NO simplificar a un solo test sobre intake_date: la fecha del documento se escribe
+        con SQL directo, que no dispara constrains. Este caso solo lo cubre la validación
+        dentro de `_update_document_date`."""
+        today = fields.Date.today()
+        expediente = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99982,
+                 date=today - timedelta(days=10), intake_date=today - timedelta(days=10))
+        )
+        with self.assertRaises(ValidationError):
+            expediente.write({'date': today})
 
     def test_intake_date_stored_correctly(self):
         """intake_date se persiste correctamente en el registro."""

@@ -40,6 +40,7 @@
                     </div>
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
+                    <field name="is_nota" invisible="1"/>
                     <field name="dependence_abbreviation" invisible="1"/>
                     <field name="allowed_sub_dependence_ids" invisible="1"/>
                     <field name="allowed_exp_topic_ids" invisible="1"/>
@@ -60,36 +61,42 @@
 
                     <!-- Fase 2 — visible cuando is_origin_complete (para todos los orígenes) -->
                     <!-- Para CM: jurisdiction y source ocultos individualmente; intake_date siempre visible -->
-                    <group invisible="not is_origin_complete">
-                        <group>
-                            <field name="jurisdiction_dependence"
-                                   domain="[('id', 'in', allowed_jurisdiction_ids)]"
-                                   readonly="dependence_abbreviation in ('TMC', 'DEM')"
-                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not jurisdiction_dependence)"/>
-                            <field name="source_dependence_id"
-                                   domain="[('id', 'in', allowed_sub_dependence_ids)]"
-                                   required="allowed_sub_dependence_ids"
-                                   readonly="dependence_abbreviation == 'DEM'"
-                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not source_dependence_id)"/>
-                        </group>
-                        <group>
-                            <field name="intake_date"/>
-                        </group>
-                    </group>
-
-                    <!-- Campos adicionales — visibles cuando is_origin_complete -->
+                    <!-- El asunto va ARRIBA de la jurisdicción porque la gobierna: en DEM + Nota
+                         habilita su carga (EPIC-004/TASK-002). Elegir el tema primero evita que
+                         los campos aparezcan por encima de donde está mirando el usuario.
+                         OJO con el readonly de jurisdiction/source: NO condicionarlo al valor
+                         actual del campo (p.ej. `id and jurisdiction_dependence`). El cliente
+                         evalúa la expresión contra el valor EN EDICIÓN, así que el campo se
+                         bloquea apenas se lo completa y, peor, Odoo NO envía los campos readonly
+                         al guardar: el valor se pierde y salta "jurisdiction is required".
+                         El "solo al ingreso" lo hace cumplir el guard de write() (el operativo no
+                         puede escribir estos campos en un expediente ya guardado; el Responsable
+                         sí), no la vista. -->
                     <group invisible="not is_origin_complete">
                         <group>
                             <field name="main_topic_id"/>
                             <field name="secondary_topic_id" invisible="not main_topic_id"/>
                             <field name="document_object" string="Reference"/>
+                            <field name="jurisdiction_dependence"
+                                   domain="[('id', 'in', allowed_jurisdiction_ids)]"
+                                   required="dependence_abbreviation == 'DEM' and is_nota and not id"
+                                   readonly="dependence_abbreviation == 'TMC' or (dependence_abbreviation == 'DEM' and not is_nota)"
+                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not jurisdiction_dependence and not is_nota)"/>
+                            <field name="source_dependence_id"
+                                   domain="[('id', 'in', allowed_sub_dependence_ids)]"
+                                   required="allowed_sub_dependence_ids"
+                                   readonly="dependence_abbreviation == 'DEM' and not is_nota"
+                                   invisible="dependence_abbreviation == 'CM' or (dependence_abbreviation == 'DEM' and not source_dependence_id and not is_nota)"/>
                         </group>
+                        <!-- Columna derecha: cuándo y cuánto. Las dos fechas van juntas
+                             (antes document_date quedaba en otro bloque, lejos de intake_date). -->
                         <group>
-                            <field name="date" string="Document Date" help="Date of the document or procedure" required="1"/>
-                        </group>
-                        <group>
-                            <field name="external_key"/>
+                            <field name="intake_date"/>
+                            <field name="date" string="Procedure Start Date"
+                                   help="Expediente creation date (from the cover sheet). May differ from the intake date."
+                                   required="1"/>
                             <field name="fojas" required="1" readonly="id"/>
+                            <field name="external_key"/>
                         </group>
                     </group>
                     <notebook invisible="not id">
