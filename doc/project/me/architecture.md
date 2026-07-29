@@ -376,9 +376,11 @@ Las dependencias habilitadas para `dependence_id` están filtradas por las abrev
 
 ### 5.4 Bypass de validación de fecha via SQL directo
 
-**Observed in code** (`me/models/document_exp.py`, `_update_document_date`, líneas 163–180):
+**Observed in code** (`me/models/document_exp.py`, `_update_document_date`):
 
-La actualización de `date` en `write()` se realiza con una query SQL directa sobre `tmc_document`, evitando el ORM y por ende la constraint `_check_date_not_future` de `tmc.document`. El comentario en el código confirma que es intencional.
+La actualización de `date` (create y write) se hace con un `UPDATE` SQL directo sobre `tmc_document`, evitando el ORM. El motivo **real y único** es escapar del chequeo `año(date) == period` de `tmc.document.create()` ("Date does not match with period"): en ME, `date` puede ser de un año distinto al período (regla de negocio, ver `business_rules.md`).
+
+**Ojo (EPIC-004/TASK-002):** el `UPDATE` directo **no dispara `@api.constrains`**, así que de paso eludía también `_check_date_not_future` (fecha futura) — que **nadie quiso desactivar** y dejaba pasar fechas de documento futuras. Desde EPIC-004/TASK-002, `_update_document_date` **revalida en ese embudo**: (a) `date` no futura, y (b) `intake_date >= date`. Es el único punto de escritura de esa fecha, por eso la validación va acá y no en una constraint (que el SQL no dispararía).
 
 ### 5.5 Creación en cadena al guardar un expediente
 

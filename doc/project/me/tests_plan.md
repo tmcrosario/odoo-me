@@ -1,15 +1,15 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015` y `EPIC-006`. **Estado al 2026-07-27: 25 clases, 209 métodos de test**,
-suite verde.
+`junco:EPIC-015`, `EPIC-006` y `EPIC-004/TASK-002`. **Estado al 2026-07-29: 26 clases,
+233 métodos de test**, suite verde.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **209** | `odoo.tests.result: 0 failed, 0 error(s) of 209 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 259 | `odoo.tests.stats: me: 259 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **233** | `odoo.tests.result: 0 failed, 0 error(s) of 233 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 285 | `odoo.tests.stats: me: 285 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -52,11 +52,11 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 
 ## Inventario de tests (`me/tests/`)
 
-### `test_document_exp.py` — 178 métodos
+### `test_document_exp.py` — 186 métodos
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestDocumentExp` | 31 | create básico, movimientos automáticos (DEM/TMC/CM), RAA, unlink/cascade, `is_valid`, **EPIC-004** (create DEM sin jurisdicción + `action_set_origin_from_junco`: happy/UserError/idempotencia/no-manager), **junco:EPIC-011** (`test_allowed_exp_root_topics`: los 4 temas raíz) | varias |
+| `TestDocumentExp` | 39 | create básico, movimientos automáticos (DEM/TMC/CM), RAA, unlink/cascade, `is_valid`, **EPIC-004** (create DEM sin jurisdicción + `action_set_origin_from_junco`: happy/UserError/idempotencia/no-manager), **junco:EPIC-011** (`test_allowed_exp_root_topics`: los 4 temas raíz), **EPIC-004/TASK-002 fechas** (8: `date`/`intake_date` no futuras, `intake >= period` asimétrica, `intake >= date`, incl. en `write` y por el SQL directo) | varias |
 | `TestSourceDependence` | 4 | `source_dependence_id` / `allowed_sub_dependence_ids` | #012 |
 | `TestSecondaryTopics` | 5 | `secondary_topic_id` (subtema) | — |
 | `TestTopicProxyFields` | 8 | proxies `main_topic_id` / `secondary_topic_id` sobre `tmc.document`; 2 de los 8 cubren `allowed_exp_topic_ids` | — |
@@ -101,6 +101,17 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 > eso es CSS y requiere un tour/browser. El guard del asset evita el falso verde de borrar el
 > bloque `assets` del manifest dejando el arch intacto. Evidencia de comportamiento: USER-RUN
 > en me2 (EPIC-006/TASK-001).
+
+### `test_nota_origin.py` — 16 métodos (EPIC-004/TASK-002)
+
+| Clase | # | Qué prueba | Semilla |
+| --- | ---: | --- | --- |
+| `TestNotaOrigin` | 16 | DEM + tema Nota carga jurisdicción/origen en ME: `is_nota` (m2m del padre **y** el proxy `main_topic_id`, para que reaccione antes de guardar); carga y obligatoriedad backend; **no-regresión de EPIC-004** (temas de compra siguen cediendo a JUNCO, `action_set_origin_from_junco` sigue OK para compras); **guarda defensiva** (rechaza Nota, no pisa lo cargado); **tema cambiado post-alta** (poner Nota exige jurisdicción; sacarla la libera; editar algo ajeno al tema no bloquea); aviso de duplicado no se autodetecta; el operativo **no** puede tocar el origen post-alta; dato viejo (Nota sin jurisdicción) **sobrevive al recompute** de `-u` | EPIC-004/TASK-002 |
+
+> ⚠️ Varios de estos tests documentan **por qué NO** cierta forma más simple: la validación
+> vive en `create()`/`write()` y **no** en `@api.constrains('is_nota')` (al ser stored,
+> recomputarlo dispararía la constraint sobre TODOS los registros en cada `-u me` y abortaría
+> el update sobre las Notas viejas legítimamente vacías). No relajar.
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que
