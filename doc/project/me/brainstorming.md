@@ -140,3 +140,75 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
   en me2 al commit). **No se toca junco desde acá**; esto es solo para replicar en `me` si se ve útil.
 - Riesgo bajo: sin modelo, sin ACL, sin JS. Regla Odoo 19 de `me`: `<list>` no `<tree>`, sin `attrs`.
 - Estado: **cerrada** (EPIC-006/TASK-001, Done). Para esparcir a otros forms, abrir nueva task en EPIC-006.
+
+## IDEA 4 - 1er movimiento de una Nota: origen = jurisdicción (no "Departamento Ejecutivo")
+
+### Resumen
+
+Hoy el **1er movimiento automático** de un DEM usa `dependence_id` (DEM / "Departamento
+Ejecutivo") como origen → `DEM → TMC`. Fue **decisión de EPIC-004** (opción A): usar
+`dependence_id` y **no** la jurisdicción, para que el movimiento exista **aunque la
+jurisdicción esté vacía** (caso compras, donde JUNCO la completa después).
+
+Para **Notas** ese bloqueo **no aplica**: la jurisdicción es **obligatoria y siempre está**
+al ingreso (EPIC-004/TASK-002). Entonces el 1er movimiento podría reflejar la **secretaría
+real** que originó el expediente: `jurisdicción → TMC` en vez del genérico `DEM → TMC`.
+
+### Viabilidad (verificada en código, 2026-07-29)
+
+- ✅ **Ningún constraint del movimiento** restringe el origen (solo valida fecha no futura,
+  fecha ≥ ingreso, y legajo). Una jurisdicción es un origen válido.
+- ✅ **Nada computa sobre `origin.is_internal`**: `has_reentry` / `is_currently_internal`
+  miran el **destino**. Cambiar el origen del 1er movimiento **no** afecta el rastreo interno.
+- El cambio sería acotado en `create()` (bloque de movimientos automáticos): para Notas con
+  jurisdicción, usar `jurisdiction_dependence` como origen del 1er movimiento.
+
+### Puntos a explorar
+
+- [ ] **¿Jurisdicción o repartición?** `source_dependence_id` (la repartición) es **más
+      específica** que la jurisdicción. ¿El origen del movimiento debería ser la repartición
+      cuando existe, y la jurisdicción si no? (el usuario pidió "jurisdicción").
+- [ ] **Consistencia con compras:** las compras seguirían con `DEM → TMC` (jurisdicción vacía
+      al ingreso). ¿Está bien que Notas y compras difieran en el 1er origen? (parece sí:
+      Notas tienen el dato, compras no).
+- [ ] **`is_internal` de las jurisdicciones** está inconsistente en el dato (en me2: 3 con
+      `true`, 31 con `NULL`) — no bloquea (nada computa sobre origin.is_internal), pero conviene
+      entender qué significa antes de mostrarla como origen.
+- [ ] Defensivo: si una Nota no tuviera jurisdicción (no debería, es obligatoria), caer a
+      `dependence_id`.
+
+### Preguntas abiertas
+
+- [ ] ¿El origen del 1er movimiento de una Nota debe ser la **jurisdicción** o la
+      **repartición** (source)? Decisión de negocio/usuario.
+- [ ] ¿Solo Notas, o esto también aplicaría a compras el día que JUNCO complete la jurisdicción?
+
+### Relación con otras ideas / reglas
+
+- Habilitado por **EPIC-004/TASK-002** (Notas cargan jurisdicción obligatoria al ingreso).
+- Toca la regla "Movimientos iniciales automáticos" de `business_rules.md` (workflow) →
+  cambio de regla de negocio, requiere AC antes de implementar. Modo estimado: **S**.
+- Siguiente paso si se retoma: cerrar jurisdicción-vs-repartición y `/new-task` en EPIC-004.
+
+### Cómo funciona HOY (verificado en dato real, 2026-07-29)
+
+El origen del 1er movimiento es un **snapshot al crear**; **no** sigue cambios posteriores de
+la jurisdicción. Corte temporal limpio en me2:
+
+- **Antes de EPIC-004** (creados 2026-06-10/11, 12 exps): origen = **jurisdicción** de ese
+  momento (todos "SECRETARÍA DE HACIENDA Y ECONOMÍA", el valor de entonces).
+- **Desde EPIC-004** (2026-06-17+, 25 exps): origen = **`dependence_id`** ("DEPARTAMENTO
+  EJECUTIVO"), fijo.
+
+**El caso que reportó el usuario (EXP-039310):** licitación pre-EPIC-004; su movimiento congeló
+origen="Hacienda", y **JUNCO después le cambió la jurisdicción a "Planeamiento"** vía
+`action_set_origin_from_junco` — que actualiza `jurisdiction_dependence` pero **no toca el
+movimiento ya creado**. Por eso jurisdicción≠origen-del-movimiento. Es **dato legacy**, no un bug
+del código actual, y **JUNCO no escribe movimientos de ME** (verificado por grep).
+
+**Implicación para esta idea (buena):** poner origen = jurisdicción para **Notas** es seguro
+justo porque el desfase que se ve arriba es un fenómeno de **compras+JUNCO** (jurisdicción
+seteada DESPUÉS del alta). En Notas la jurisdicción se carga **al ingreso**, es obligatoria y
+**JUNCO nunca las toca** → el snapshot queda siempre consistente con la jurisdicción. La idea es,
+en esencia, **recuperar el origen=jurisdicción de pre-EPIC-004, pero solo para Notas** (donde es
+estable). Compras siguen con "Departamento Ejecutivo".
