@@ -25,11 +25,10 @@
         <field name="name">Read Only</field>
         <field name="privilege_id"
             ref="res_groups_privilege_me" />
-        <!-- EPIC-015 (opción 1): un lector de ME es usuario interno y lee GD (tmc).
-             Es también la base de lectura que hereda junco.group_user (editar JUNCO,
-             leer ME/GD): es CONTRATO CROSS-REPO, cambiarlo impacta a odoo-junco.
-             base.group_user se preserva explícito para no perder el flag de usuario
-             interno al no encadenar por tmc.group_user. -->
+        <!-- base.group_user va explícito para no perder el flag de usuario interno (no se
+             encadena por tmc.group_user). ⚠️ group_read_only es CONTRATO CROSS-REPO:
+             junco.group_user cuelga de él, cambiarlo impacta a odoo-junco. Postura y
+             contrato → security.md (junco:EPIC-015, opción 1). -->
         <field name="implied_ids"
             eval="[(6, 0, [ref('base.group_user'), ref('tmc.group_read_only')])]" />
     </record>

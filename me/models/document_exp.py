@@ -63,8 +63,8 @@ class DocumentExp(models.Model):
     _EXP_ROOT_TOPIC_XMLIDS = (
         'tmc_data.tmc_document_topic_licitacion',
         'tmc_data.tmc_document_topic_nota',
-        # EPIC-011: clasificar expedientes de compra directa / concurso de precios
-        # (habilita los process_type direct_purchase / price_contest en JUNCO).
+        # contratación directa y concurso de precios (junco:EPIC-011) — el porqué
+        # (derivación de process_type en JUNCO) en business_rules.md (Temas raíz).
         'tmc_data.tmc_document_topic_contratacion_directa',
         'tmc_data.tmc_document_topic_concurso_precios',
     )
@@ -301,10 +301,10 @@ class DocumentExp(models.Model):
     @api.onchange('main_topic_id')
     def _onchange_main_topic_id(self):
         self.secondary_topic_id = False
-        # EPIC-004/TASK-002: only DEM + Nota loads its origin here. If the topic is
-        # switched away from Nota while loading, drop what was typed: on a purchase topic
-        # the origin belongs to JUNCO and must start empty (EPIC-004), otherwise a stale
-        # value would be saved behind a field that is readonly/invisible by then.
+        # EPIC-004/TASK-002: al cambiar el tema DESDE Nota mientras se carga, limpiar lo
+        # tipeado — si no, queda un valor colgado detrás de un campo que para entonces ya
+        # es readonly/invisible (y no se envía al guardar). Qué origen carga cada tema →
+        # business_rules.md (excepción Nota).
         nota = self.env.ref(
             'tmc_data.tmc_document_topic_nota', raise_if_not_found=False
         )
@@ -513,11 +513,10 @@ class DocumentExp(models.Model):
                 "(this expediente's origin is %s).",
                 self.dependence_id.abbreviation or _("undefined"),
             ))
-        # Defense in depth (EPIC-004/TASK-002): on a Nota, ME owns the origin (loaded at
-        # intake), so JUNCO must never overwrite it. In practice JUNCO cannot reach this
-        # (its eligible-expediente domain lists only the purchase topics, confirmed with
-        # the junco chat), but that domain is view-level only: a link made by
-        # ORM/import/API would silently overwrite what the intake desk loaded.
+        # Defensa en profundidad (EPIC-004/TASK-002): lo que impide llegar acá desde JUNCO
+        # es solo un domain de VISTA; una escritura por ORM/import/API lo sortearía y
+        # pisaría el origen cargado en Mesa. La regla (JUNCO no toca Notas) y la
+        # coordinación con junco → business_rules.md (excepción Nota) / task card.
         if self.is_nota:
             raise exceptions.UserError(_(
                 "The origin cannot be set from JUNCO on an expediente with topic Nota: "
