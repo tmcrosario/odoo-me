@@ -143,6 +143,9 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
 
 ## IDEA 4 - 1er movimiento de una Nota: origen = jurisdicción (no "Departamento Ejecutivo")
 
+> **IMPLEMENTADO** → ver **EPIC-004/TASK-003** (Done, 2026-07-30). Se deja acá como referencia
+> (convención: idea cerrada → épica/task). El análisis de abajo es el registro original.
+
 ### Resumen
 
 Hoy el **1er movimiento automático** de un DEM usa `dependence_id` (DEM / "Departamento

@@ -19,6 +19,8 @@ Nomenclatura:
 | EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Done | Campo `current_location_dependence_id` (internal-only) + filtro/group-by "Destination Office". Suite 201/0/0 |
 | EPIC-004/TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | Done (develop) | Validada end-to-end en me2; deploy a prod diferido (usuario). JUNCO EPIC-010 Done |
 | EPIC-004/TASK-002 | Carga de jurisdicción/origen en DEM con tema Nota | Ale Gallo | L | Done (develop) | Excepción a TASK-001: las Notas no van a JUNCO → ME carga al ingreso. + validaciones de fecha + label i18n. Suite 233/0/0; UI verificada en me2 |
+| EPIC-004/TASK-003 | 1er movimiento de una Nota: origen = jurisdicción | Ale Gallo | S | Done (develop) | Habilitada por TASK-002. Compras intactas; el origen es snapshot al crear. Suite 236/0/0; UI verificada |
+| EPIC-003/TASK-003 | Orden de la lista por fecha de ingreso (más reciente primero) | Ale Gallo | XS | Done (develop) | `_order = "intake_date desc, id desc"`. Suite 236/0/0; UI verificada |
 | EPIC-005/TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Done | Removido; sin referencias; suite 201/0/0 |
 | EPIC-005/TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | Done | No declarable (circular `raa→me`); acoplamiento implícito documentado |
 | EPIC-006/TASK-001 | Botón "Save" textual visible solo en dirty (form de expediente) | Ale Gallo | S | Done | Portado de `junco:EPIC-008/TASK-004`; primer asset frontend de `me`; suite 209/0/0; UI verificada en me2 |
