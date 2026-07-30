@@ -53,13 +53,56 @@ del tema (`[('parent_id','=', main_topic_id)]`). El problema son los **datos**: 
 `tmc_data` le cuelga a `Licitación` 25 hijos directos que **mezclan dos dimensiones**:
 
 - **Subtipo** (lo esperado): `Privada`, `Pública` (2).
-- **Etapas/actos del proceso licitatorio** (23): `Adjudicación`, `Apertura de Sobres`, `Desierta`,
+- **Subtemas de clasificación documental** (23): `Adjudicación`, `Apertura de Sobres`, `Desierta`,
   `Deja Sin Efecto`, `Desestima Oferta`, `Llamado`, `Impugnación`, `Prórroga Contrato/Llamado`,
-  `Rescisión - Extinción`, `Multa - Sanción`, `Recepción de Obra…`, etc. — conceptualmente son
-  **eventos del proceso** (territorio de JUNCO `process_event`), no subtipos del expediente.
+  `Rescisión - Extinción`, `Multa - Sanción`, `Recepción de Obra…`, etc.
 
 Además `Concurso de Precios` **no tiene hijos** → su subtema queda vacío (mismo tema que la
 pregunta "¿ocultar subtema si el tema no tiene hijos?").
+
+### ⚠️ Corrección importante (revisado en repos, 2026-07-30)
+
+El encuadre original de arriba ("las 23 son eventos del proceso, territorio de JUNCO") **es
+falso** — corregido tras revisar los repos con el usuario:
+
+- Los 25 hijos son **temas de la taxonomía de Gestión Documental (GD)**, definidos en `tmc_data`
+  (`tmc_document_topic_licitacion_*`). GD los usa para **clasificar DOCUMENTOS** (resoluciones,
+  decretos, convenios, etc.) relacionados con una licitación (ej. una *Resolución de Adjudicación*
+  → tema `Licitación` / subtema `Adjudicación`). **No son eventos de JUNCO**: JUNCO tiene su
+  propio modelo `junco.process_event`, aparte.
+- El árbol `tmc.document_topic` es **general y grande** (62 raíces / 201 temas); ME solo usa 4
+  raíces (`_EXP_ROOT_TOPIC_XMLIDS`). `tmc.document` ofrece tema/subtema para todo tipo de
+  documento, filtrado por dependencia (`document_topic_ids`).
+- **El dato NO está mal** y **no se puede tocar en `tmc_data`** sin romper la clasificación
+  documental de GD. Descarta el "reestructurar el árbol" del planteo original.
+- Los 25 hijos **no tienen `dependence_ids`** → el filtro por dependencia de GD no ayuda (los
+  vaciaría). Ese camino tampoco sirve.
+
+**JUNCO consume el subtema (riesgo de correctitud, no solo UX):** `junco.purchase_process`
+(`purchase_process.py` ~l.686-697) lee `exp.secondary_topic_id` y compara por XML ID contra
+`tmc_document_topic_licitacion_publica` / `_privada` para derivar el subtipo del proceso. Si al
+cargar la Licitación el usuario elige una de las **23 etapas** en vez de Privada/Pública, **la
+derivación de JUNCO no matchea** → comportamiento por defecto/incorrecto. Es decir: mostrar 25
+opciones **invita a un error de carga que rompe el downstream**. Privada/Pública son un **contrato
+de facto** (JUNCO ya las hardcodea por xmlid).
+
+**Reencuadre:** no es un bug de dato, es un **desajuste de concepto en ME**. ME reusa el
+subtema-de-documento de GD como "subtipo del expediente", y son cosas distintas: GD quiere una
+clasificación rica (25); el expediente/JUNCO quieren un subtipo angosto (Privada/Pública).
+La decisión de fondo: **¿qué debe ser `secondary_topic_id` en un expediente de Licitación?**
+
+- **(A) Aceptarlo:** el subtema ES el subtema documental de GD → 25 opciones "por diseño".
+  **Contra:** deja abierto el error de carga que rompe la derivación de JUNCO (ver arriba). Riesgoso.
+- **(B) Acotar el subtema del expediente al subtipo real (Privada/Pública) para Licitación.**
+  Alinea la carga con lo que JUNCO consume. Dos caminos, ninguno rompe GD:
+  - **(B1) ME referencia los dos xmlids** (`_licitacion_publica` / `_privada`) para el subtema de
+    Licitación — **mismo patrón que JUNCO ya usa** (no inventa regla: reusa el contrato de facto).
+    Todo en ME, sin tocar `tmc_data`. Pragmático. Ojo: acopla ME a esos xmlids (como junco).
+  - **(B2) Discriminador aditivo en `tmc_data`** (flag "es subtipo" en Privada/Pública) → ME filtra
+    por el flag, genérico. Más limpio y general, pero toca repo externo + coordinar.
+- **(C) descartadas:** filtro por dependencia (vaciaría — los hijos no tienen `dependence_ids`);
+  lista hardcodeada arbitraria (pero B1 no es arbitraria: son los xmlids del contrato con JUNCO).
+- **Aparte:** ocultar el subtema cuando el tema no tiene hijos (Concurso de Precios → subtema vacío).
 
 ### Puntos a explorar
 
@@ -76,6 +119,36 @@ pregunta "¿ocultar subtema si el tema no tiene hijos?").
       (repo externo, no se toca desde este flujo) — igual que el nomenclador del #033.
 - [ ] ¿El subtema debería tener enforcement backend (`@api.constrains`) o seguir siendo solo
       ayuda de carga por `domain`? (mismo dilema que los temas raíz).
+
+### Verificado en junco (revisión de código, 2026-07-30)
+
+Investigación adversarial de 2 lentes sobre `odoo-junco` (consumo real + impacto del recorte):
+
+- **JUNCO lee el subtema en UN solo lugar de producción:** `_derive_process_type_from_exp`
+  (`purchase_process.py:692-699`) — `publica→public_tender`, `privada→private_tender`, cualquier
+  otra cosa (etapa/vacío)→`False`. **No escribe** el subtema en ningún lado (solo `_persist_dem_origin`
+  escribe jurisdicción/origen). Ninguna vista de junco pone domain sobre el campo.
+- **JUNCO ya exige Privada/Pública hoy:** el gate `_set_current_expediente_id` (`:751-758`) lanza
+  `UserError` ("Correct the classification in ME first") si la derivación da `False`. → El recorte
+  de ME (B1) **alinea con un requisito que ya existe** y vuelve ese error **inalcanzable** para
+  expedientes nuevos. **Sin regresión, sin migrar dato** (los preexistentes con subtema "etapa"
+  junco ya los tolera/rechaza igual). La elegibilidad del picker filtra por **tema principal, no
+  por subtema** → no cambia.
+- **⚠️ Guardrail (único riesgo, condicional):** junco depende de que las "etapas" sigan siendo
+  **hijos de `tmc_document_topic_licitacion`**, pero vía **otro campo** —
+  `junco.process_event.document_topic_id`, cuyo dropdown de "Actos" sale de `licitacion.child_ids`
+  (`process_event.py:206-217`). Por eso el recorte **DEBE ser B1 (domain de vista en ME)** y **NO
+  tocar `tmc_data`**. Reestructurar el árbol rompería el dropdown de Actos y la derivación de
+  estado/`call_document` de junco. (Refuerza descartar B2-reestructuración; un flag aditivo sería
+  inocuo, pero B1 es más simple y ya alcanza).
+- Gap menor (de junco, informativo): ningún test de junco cubre el fallback "licitación sin
+  subtipo → False → UserError".
+
+**Confirmado por junco (chat, 2026-07-30):** ambos puntos SÍ — Privada/Pública son los únicos
+subtipos reconocidos, ningún flujo necesita otro, adelante con B1, sin regresión, no requieren
+cambios. Cerraron el gap: agregaron `test_licitacion_without_subtype_rejected` (`d3497c8`, suite
+junco 175/0) que blinda el camino ORM/import que el recorte de vista no cubre. **→ B1 habilitado
+para implementar** (domain de vista en ME, sin tocar `tmc_data`).
 
 ### Relación con otras ideas / reglas
 
