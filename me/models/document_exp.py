@@ -5,6 +5,10 @@ class DocumentExp(models.Model):
     _name = "me.document_exp"
     _inherits = {"tmc.document": "document_id"}
     _description = "Expediente Registry"
+    # Lista ordenada por ingreso más reciente primero; `id desc` desempata (intake_date es
+    # un Date, muchos comparten día). Es el _order del modelo → default de todas las vistas
+    # de lista (el <list> de Odoo no lleva orden propio en el arch).
+    _order = "intake_date desc, id desc"
 
     document_id = fields.Many2one(
         "tmc.document",
@@ -701,11 +705,22 @@ class DocumentExp(models.Model):
                 record.dependence_id == tmc_dependence
             )
             if not origin_is_tmc and tmc_dependence:
-                # Movimiento 1 (DEM/CM): dependencia de origen → TMC
+                # Movimiento 1 (DEM/CM): dependencia de origen → TMC.
+                # EPIC-004/TASK-002 (IDEA 4): en una Nota, ME carga la jurisdicción al
+                # ingreso (obligatoria, estable, JUNCO no la toca) → el 1er movimiento
+                # refleja la secretaría REAL de origen, no el genérico dependence_id. Las
+                # compras siguen con dependence_id: su jurisdicción está vacía al ingreso y
+                # JUNCO la completa DESPUÉS, cuando este movimiento ya existe (por eso el
+                # origen es un snapshot y no la seguiría). Defensivo: cae a dependence_id.
+                origin_dependence = (
+                    record.jurisdiction_dependence
+                    if record.is_nota and record.jurisdiction_dependence
+                    else record.dependence_id
+                )
                 env_create['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
-                    'origin_dependence_id': record.dependence_id.id,
+                    'origin_dependence_id': origin_dependence.id,
                     'destination_dependence_id': tmc_dependence.id,
                     'user_id': self.env.uid,
                     'fojas': record.fojas,

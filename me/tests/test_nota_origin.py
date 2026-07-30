@@ -216,6 +216,30 @@ class TestNotaOrigin(TransactionCase):
         with self.assertRaises(exceptions.AccessError):
             exp.with_user(operador).write({'jurisdiction_dependence': otra.id})
 
+    # --- IDEA 4: origen del 1er movimiento automático ---
+
+    def _first_auto_movement_to_tmc(self, exp):
+        return exp.document_movement_ids.filtered(
+            lambda m: m.is_automatic and m.destination_dependence_id == self.dep_tmc)[:1]
+
+    def test_nota_first_movement_origin_is_jurisdiction(self):
+        """IDEA 4: el 1er movimiento automático de una Nota sale de la jurisdicción real
+        (la secretaría), no del genérico dependence_id ('Departamento Ejecutivo')."""
+        exp = self.env['me.document_exp'].create(
+            self._vals(99820, self.topic_nota, jurisdiction_dependence=self.jur.id))
+        first = self._first_auto_movement_to_tmc(exp)
+        self.assertTrue(first, 'debe existir el 1er movimiento origen→TMC')
+        self.assertEqual(first.origin_dependence_id, self.jur)
+
+    def test_purchase_first_movement_origin_is_dependence(self):
+        """No-regresión: en compras (jurisdicción vacía al ingreso, la completa JUNCO
+        después) el 1er movimiento sigue saliendo de dependence_id (DEM)."""
+        exp = self.env['me.document_exp'].create(
+            self._vals(99821, self.topic_licitacion))
+        first = self._first_auto_movement_to_tmc(exp)
+        self.assertTrue(first)
+        self.assertEqual(first.origin_dependence_id, self.dep_dem)
+
     # --- Dato preexistente (protege el update de producción) ---
 
     def test_legacy_dem_nota_without_jurisdiction_survives_recompute(self):

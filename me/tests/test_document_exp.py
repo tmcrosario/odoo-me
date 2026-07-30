@@ -456,6 +456,20 @@ class TestDocumentExp(TransactionCase):
         with self.assertRaises(ValidationError):
             expediente.write({'date': today})
 
+    def test_list_default_order_by_intake_desc(self):
+        """La lista ordena por `intake_date` desc (ingreso más reciente primero),
+        con `id desc` de desempate (intake_date es un Date, muchos comparten día)."""
+        today = fields.Date.today()
+        older = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99979,
+                 intake_date=today - timedelta(days=3), date=today - timedelta(days=3)))
+        newer = self.env['me.document_exp'].create(
+            dict(self.valid_vals, number=99978, intake_date=today, date=today))
+        found = self.env['me.document_exp'].search(
+            [('id', 'in', [older.id, newer.id])])
+        self.assertEqual(found[0], newer,
+                         'el expediente de ingreso más reciente debe venir primero')
+
     def test_intake_date_stored_correctly(self):
         """intake_date se persiste correctamente en el registro."""
         today = fields.Date.today()
