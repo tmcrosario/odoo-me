@@ -44,6 +44,7 @@
                     <field name="dependence_abbreviation" invisible="1"/>
                     <field name="allowed_sub_dependence_ids" invisible="1"/>
                     <field name="allowed_exp_topic_ids" invisible="1"/>
+                    <field name="allowed_secondary_topic_ids" invisible="1"/>
                     <field name="allowed_jurisdiction_ids" invisible="1"/>
 
                     <!-- Fase 1 — siempre visible -->
@@ -75,7 +76,8 @@
                     <group invisible="not is_origin_complete">
                         <group>
                             <field name="main_topic_id"/>
-                            <field name="secondary_topic_id" invisible="not main_topic_id"/>
+                            <field name="secondary_topic_id"
+                                   invisible="not main_topic_id or not allowed_secondary_topic_ids"/>
                             <field name="document_object" string="Reference"/>
                             <field name="jurisdiction_dependence"
                                    domain="[('id', 'in', allowed_jurisdiction_ids)]"

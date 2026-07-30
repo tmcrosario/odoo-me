@@ -75,6 +75,15 @@ class DocumentExp(models.Model):
         string='Allowed EXP Topics',
     )
 
+    # relation= explícito: sin él colisionaría la tabla auto-inferida con allowed_exp_topic_ids
+    # (mismo par de modelos me.document_exp ↔ tmc.document_topic).
+    allowed_secondary_topic_ids = fields.Many2many(
+        comodel_name='tmc.document_topic',
+        relation='me_exp_allowed_secondary_topic_rel',
+        compute='_compute_allowed_secondary_topic_ids',
+        string='Allowed Secondary Topics',
+    )
+
     # Proxy Many2one fields for subject selection (topic + subtopic).
     # Wrap main_topic_ids and secondary_topic_ids from tmc.document (Many2many)
     # to provide single-value selection in the UI without modifying the base model.
@@ -90,7 +99,7 @@ class DocumentExp(models.Model):
         string='Specification',
         compute='_compute_secondary_topic_id',
         inverse='_set_secondary_topic_id',
-        domain="[('parent_id', '=', main_topic_id)]",
+        domain="[('id', 'in', allowed_secondary_topic_ids)]",
     )
 
     # NO re-declarar number aquí. Re-declararlo rompe el mecanismo _inherits:
@@ -269,6 +278,35 @@ class DocumentExp(models.Model):
                 topics |= topic
         for record in self:
             record.allowed_exp_topic_ids = topics
+
+    # Depende de main_topic_id (el proxy del form) para reaccionar EN VIVO al elegir el tema,
+    # antes de guardar (main_topic_ids recién se escribe al guardar).
+    @api.depends('main_topic_id')
+    def _compute_allowed_secondary_topic_ids(self):
+        Topic = self.env['tmc.document_topic']
+        licitacion = self.env.ref(
+            'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
+        )
+        subtipos = Topic.browse()
+        if licitacion:
+            for xmlid in ('tmc_data.tmc_document_topic_licitacion_publica',
+                          'tmc_data.tmc_document_topic_licitacion_privada'):
+                t = self.env.ref(xmlid, raise_if_not_found=False)
+                if t:
+                    subtipos |= t
+        for record in self:
+            main = record.main_topic_id
+            if licitacion and main == licitacion:
+                # Licitación: acotar a los 2 subtipos reales (Privada/Pública), no los 23
+                # subtemas documentales de GD que cuelgan del tema — ver business_rules
+                # ("Subtema acotado al tema") / brainstorming IDEA 2.
+                record.allowed_secondary_topic_ids = subtipos
+            elif main:
+                record.allowed_secondary_topic_ids = Topic.search(
+                    [('parent_id', '=', main.id)]
+                )
+            else:
+                record.allowed_secondary_topic_ids = Topic.browse()
 
     @api.depends('main_topic_ids')
     def _compute_main_topic_id(self):
