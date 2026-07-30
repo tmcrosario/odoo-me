@@ -74,8 +74,12 @@ Consultado y **confirmado por el chat de `odoo-junco`** (verificado contra su c�
 - Confirmaron el diagnóstico: hoy la elegibilidad la sostiene **solo un domain de vista**; un
   vínculo por ORM/import/API de una Nota con `dem_jurisdiction_id` **pisaría en silencio** la
   jurisdicción cargada por Mesa. La guarda de ME tapa ese agujero **del lado del dato**.
-- Ellos agendaron la **defensa simétrica** en su repo (`junco:EPIC-010/TASK-003`: constraint
-  backend de elegibilidad). **No nos bloquea ni nos pide cambios.**
+- Implementaron la **defensa simétrica** (`junco:EPIC-010/TASK-003`, Done `53e7d98`): constraint
+  backend en `junco.process_expediente` que valida la elegibilidad del expediente autorizante,
+  tapando el camino ORM/import que podía pisar la jurisdicción cargada por Mesa. **BR-005 queda
+  con doble enforcement** (domain de vista + constraint backend). Junto con la guarda de ME
+  (rechazo de `action_set_origin_from_junco` sobre Nota), **cada repo protege su lado del
+  contrato**. Sin dependencia entre ambos.
 
 ## Acceptance criteria
 
