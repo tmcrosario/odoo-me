@@ -31,7 +31,7 @@ explícitamente las reglas.
 | Excepción DEM + tema Nota (EPIC-004/TASK-002) | EPIC-004 asumió que **todo** DEM va a un proceso de compras; no es así: las **Notas** (ej. "nota que eleva informe") no llegan a JUNCO. Por eso, en **DEM con tema `Nota`** (`is_nota`, computed stored por XML ID `tmc_data.tmc_document_topic_nota`), ME **sí** carga jurisdicción y repartición, **editables al ingreso** y con **jurisdicción obligatoria** (vista `required` + `@api.constrains` backend — llamado desde `create()` y `write()`, **no** vía `@api.constrains('is_nota')` porque al recomputarse rompería el `-u`). El "solo al ingreso" lo garantiza el **guard de `write()`** (el operativo no puede tocar el origen ya guardado; el Responsable sí), **no** la vista (condicionar el readonly al valor en edición bloquea la carga y Odoo no envía el campo → se pierde). Al cambiar el tema **a** Nota o **desde** Nota, el origen se limpia/valida acorde. **Guarda defensiva:** `action_set_origin_from_junco` **rechaza** un expediente con tema Nota (hoy JUNCO no llega por su domain de elegibilidad, confirmado con junco; la guarda cubre ORM/import). Los temas de compra **no cambian** (siguen cediendo a JUNCO). |
 | Jurisdicción DEM — multi-año (intencional) | El dropdown de `jurisdiction_dependence` ofrece **todas** las jurisdicciones de **todos** los nomencladores cargados (hijos de `tmc_dependence_adm` en `tmc.dependence_order`), **sin filtrar por año/`institutional_classifier`**, **a propósito**: un documento puede llegar hoy pero haberse generado en una estructura anterior con una secretaría que ya no existe o cambió de nombre, y el expediente debe poder referenciar la jurisdicción vigente en su momento. Por eso `_compute_allowed_jurisdictions` no filtra por año — **no es un bug** (#033). |
 | Temas raíz del expediente (junco:EPIC-011) | El asunto (`main_topic_id`) se ofrece acotado a **4 temas raíz** resueltos por XML ID contra `tmc_data` (`_EXP_ROOT_TOPIC_XMLIDS`): licitación, nota, contratación directa, concurso de precios. Los 2 últimos se sumaron para que JUNCO pueda derivar su `process_type`. **Hoy el acote es solo el `domain` de la vista** (no hay `@api.constrains`): una escritura por ORM/API puede fijar otro tema — ver Limitaciones conocidas. |
-| Subtema acotado al tema | `secondary_topic_id` ("Specification") se ofrece **filtrado a los hijos directos del tema elegido** (`domain=[('parent_id','=',main_topic_id)]`, `document_exp.py`), **oculto hasta elegir un tema** (`invisible="not main_topic_id"`) y se **limpia al cambiar el tema** (`_onchange_main_topic_id`). Como los temas raíz: **solo `domain` de vista, sin `@api.constrains`**. Que ofrezca "los correctos" depende de que el nomenclador modele bien los hijos del tema — ver Limitaciones conocidas (caso Licitación). |
+| Subtema acotado al tema | `secondary_topic_id` ("Specification") se ofrece filtrado por el computed `allowed_secondary_topic_ids` (`domain=[('id','in', allowed_secondary_topic_ids)]`, `document_exp.py`): por defecto los **hijos directos del tema**; para **Licitación**, acotado a los **2 subtipos reales — Privada/Pública** (EPIC-004/TASK-004), no los 25 subtemas documentales de GD (JUNCO deriva su `process_type` del subtema — ver `brainstorming.md` IDEA 2). Se **oculta** hasta elegir tema **y** si el tema no tiene subtemas permitidos (`invisible="not main_topic_id or not allowed_secondary_topic_ids"` → caso Concurso de Precios, sin hijos). Se **limpia al cambiar el tema** (`_onchange_main_topic_id`). **Solo `domain` de vista, sin `@api.constrains`** (JUNCO tiene el enforcement duro de su lado). **No se toca `tmc_data`**: las 23 "etapas" siguen colgando de Licitación (guardrail — `junco.process_event` las usa vía `licitacion.child_ids`). |
 | Permisos cross-sistema (ME ↔ GD) | **Ver [`security.md`](security.md)** (postura, grupos y elevaciones). La regla del **stack** es **BR-016, gobernada en `odoo-junco`**; acá no se duplica. |
 | Registro automático en RAA | Todo expediente queda registrado en `raa.registry_aa` al crearse. |
 | Fojas — bloqueo post-creación | El número de fojas no se modifica una vez guardado, excepto por un Responsable de Mesa de Entradas; las variaciones se registran vía movimientos. |
@@ -77,15 +77,14 @@ limitado. Formalizarlo sigue siendo un ítem de backlog.
   a JUNCO (si el tema no está en lista, `process_type` simplemente no deriva).
   **Pregunta abierta** (decisión del usuario, no se asume): ¿endurecerlo con un constrains?
   Un constrains podría bloquear cargas legítimas (importaciones, datos viejos).
-- **Árbol de subtemas mal modelado bajo Licitación** (dato del nomenclador, `tmc_data`
-  externo; #033-adjacente): al elegir tema `Licitación`, el subtema ofrece **25 hijos** que
-  **mezclan el subtipo real** (`Privada`, `Pública`) con **23 etapas/actos del proceso**
-  (`Adjudicación`, `Apertura de Sobres`, `Desierta`, `Deja Sin Efecto`, `Desestima Oferta`,
-  `Llamado`, `Impugnación`, `Prórroga…`, `Rescisión…`, …) — que conceptualmente son eventos
-  del proceso licitatorio (territorio de JUNCO), no subtipos del expediente. **El código
-  filtra bien** (hijos del tema); el problema es que el dato le cuelga 25 hijos a Licitación.
-  Además `Concurso de Precios` **no tiene hijos** → subtema vacío. El fix vive en `tmc_data`
-  (repo externo) o requiere un discriminador subtipo/etapa. Ver `brainstorming.md` → IDEA 2.
+- **Subtema de Licitación — RESUELTO (EPIC-004/TASK-004).** Antes, al elegir `Licitación` el
+  subtema ofrecía **25 hijos**. Encuadre corregido: esos 25 **no** son un dato mal modelado ni
+  eventos de JUNCO — son la **taxonomía documental de GD** (clasifica resoluciones/decretos/
+  convenios; `tmc.document_topic` tiene 62 raíces/201 temas). ME reusaba ese subtema-de-documento
+  como subtipo del expediente. Resuelto **del lado de ME** (domain de vista): Licitación se acota
+  a Privada/Pública (los que JUNCO consume); Concurso de Precios oculta el subtema vacío. **No se
+  tocó `tmc_data`** (guardrail: `junco.process_event` usa `licitacion.child_ids`). Ver regla
+  "Subtema acotado al tema" y `brainstorming.md` IDEA 2.
 
 > Nota: la **ubicación interna actual** ya está implementada (EPIC-003): campo
 > `current_location_dependence_id` (oficina interna de destino del último movimiento).

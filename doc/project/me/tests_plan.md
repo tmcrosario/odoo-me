@@ -1,15 +1,15 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015`, `EPIC-006`, `EPIC-004/TASK-002` y `EPIC-004/TASK-003` + `EPIC-003/TASK-003`.
-**Estado al 2026-07-30: 26 clases, 236 métodos de test**, suite verde.
+`junco:EPIC-015`, `EPIC-006`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003`.
+**Estado al 2026-07-30: 27 clases, 241 métodos de test**, suite verde.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **236** | `odoo.tests.result: 0 failed, 0 error(s) of 236 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 288 | `odoo.tests.stats: me: 288 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **241** | `odoo.tests.result: 0 failed, 0 error(s) of 241 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 295 | `odoo.tests.stats: me: 295 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -112,6 +112,12 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 > vive en `create()`/`write()` y **no** en `@api.constrains('is_nota')` (al ser stored,
 > recomputarlo dispararía la constraint sobre TODOS los registros en cada `-u me` y abortaría
 > el update sobre las Notas viejas legítimamente vacías). No relajar.
+
+### `test_licitacion_subtopic.py` — 5 métodos (EPIC-004/TASK-004)
+
+| Clase | # | Qué prueba | Semilla |
+| --- | ---: | --- | --- |
+| `TestLicitacionSubtopic` | 5 | El subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids`: solo esos 2 (no los 25 de GD); una "etapa" **no** se ofrece **pero sigue colgando de Licitación** en `tmc_data` (guardrail junco); reacciona al proxy `main_topic_id` antes de guardar; no-regresión (otros temas → hijos del tema); Concurso de Precios (sin hijos) → subtema vacío/oculto | EPIC-004/TASK-004 |
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que

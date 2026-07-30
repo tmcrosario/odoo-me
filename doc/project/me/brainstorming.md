@@ -43,6 +43,10 @@ vive en ME o en JUNCO (que ahora gestiona esos datos para DEM)?
 
 ## IDEA 2 - Subtema de Licitación: 25 hijos que mezclan subtipo con etapas del proceso
 
+> **IMPLEMENTADO** (opción B1) → ver **EPIC-004/TASK-004** (Done, 2026-07-30). Licitación acotada
+> a Privada/Pública del lado de ME (domain de vista, sin tocar `tmc_data`), coordinado y confirmado
+> con junco. Se deja acá como referencia (el análisis de abajo es el registro original + corrección).
+
 ### Resumen
 
 Al elegir el tema **Licitación**, el subtema (`secondary_topic_id`, "Specification") ofrece
