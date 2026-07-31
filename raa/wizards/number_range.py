@@ -24,4 +24,3 @@ class NumberRange(models.TransientModel):
                 raise exceptions.ValidationError(
                     _("Maximum number allowed has been exceeded")
                 )
-            return True
