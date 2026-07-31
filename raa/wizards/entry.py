@@ -1,4 +1,3 @@
-from datetime import date
 from itertools import count, groupby
 
 from odoo import _, api, exceptions, fields, models
@@ -21,7 +20,10 @@ class Entry(models.TransientModel):
 
     entry_date = fields.Date(required=True, default=fields.Date.context_today)
 
-    period = fields.Char(required=True, default=str(date.today().year))
+    period = fields.Char(
+        required=True,
+        default=lambda self: str(fields.Date.context_today(self).year),
+    )
 
     dependence_id = fields.Many2one(
         comodel_name="tmc.dependence",
@@ -44,27 +46,23 @@ class Entry(models.TransientModel):
     range_ids = fields.One2many(
         comodel_name="raa.number_range",
         inverse_name="registry_aa_id",
-        required=True,
     )
 
     def show_window_message(self):
         res = self.search_missing()
         if res["maximum"]:
             if res["missing"]:
-                try:
-                    missing = ", ".join(
-                        as_range(g)
-                        for _, g in groupby(
-                            res["missing"],
-                            key=lambda n, c=count(): int(n) - next(c),
-                        )
+                missing = ", ".join(
+                    as_range(g)
+                    for _, g in groupby(
+                        res["missing"],
+                        key=lambda n, c=count(): int(n) - next(c),
                     )
-                    title = _("Actos Administrativos faltantes")
-                    message = _("Missing administrative acts: %s") % missing
-                    notif_type = "warning"
-                    sticky = True
-                except StopIteration as e:
-                    raise exceptions.Error(e)
+                )
+                title = _("Actos Administrativos faltantes")
+                message = _("Missing administrative acts: %s") % missing
+                notif_type = "warning"
+                sticky = True
             else:
                 title = _("Sin faltantes")
                 message = _("No missing administrative acts")
@@ -96,7 +94,7 @@ class Entry(models.TransientModel):
 
         registries = self.env["raa.registry_aa"].search(domain)
 
-        document_numbers = registries.mapped("document_id.number")
+        document_numbers = set(registries.mapped("document_id.number"))
 
         last = None
         maximum = None

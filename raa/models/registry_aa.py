@@ -17,10 +17,6 @@ class RegistryAA(models.Model):
     dependence_id = fields.Many2one(
         related="document_id.dependence_id",
         readonly=True,
-        domain=[
-            ("document_type_ids", "!=", False),
-            ("system_ids", "ilike", "RAA"),
-        ],
     )
 
     number = fields.Integer(related="document_id.number", readonly=True)
