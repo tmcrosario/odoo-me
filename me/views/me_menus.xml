@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-    <menuitem id="me_menu" name="Mesa de Entrada" sequence="10" />
+    <menuitem
+        id="me_menu"
+        name="Mesa de Entrada"
+        web_icon="me,static/description/icon.png"
+        sequence="10"
+    />
 </odoo>
