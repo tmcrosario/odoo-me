@@ -4,23 +4,41 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 14.0-20220727\n"
+"Project-Id-Version: Odoo Server 19.0-20260630\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-08-05 15:39+0000\n"
-"PO-Revision-Date: 2022-08-09 10:22-0300\n"
+"POT-Creation-Date: 2026-08-05 16:03+0000\n"
+"PO-Revision-Date: 2026-08-05 16:03+0000\n"
 "Last-Translator: \n"
 "Language-Team: \n"
-"Language: es_AR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Transfer-Encoding: \n"
 "Plural-Forms: \n"
-"X-Generator: Poedit 3.1.1\n"
 
 #. module: raa
-#: model:ir.actions.report,print_report_name:raa.missing_raa_report
+#: model:ir.actions.report,print_report_name:raa.action_missing_raa_report
 msgid "'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)"
-msgstr ""
+msgstr "'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.report_tmc_header
+msgid "<b>Fecha:</b>"
+msgstr "<b>Fecha:</b>"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.report_tmc_header
+msgid ""
+"<b>Página:</b>\n"
+"                            <span class=\"page\"/>\n"
+"                            de\n"
+"                            <span class=\"topage\"/>"
+msgstr "<b>Página:</b>\n                            <span class=\"page\"/>\n                            de\n                            <span class=\"topage\"/>"
+
+#. module: raa
+#. odoo-python
+#: code:addons/raa/wizards/entry.py:0
+msgid "Actos Administrativos faltantes"
+msgstr "Actos Administrativos faltantes"
 
 #. module: raa
 #: model:ir.actions.act_window,name:raa.registry_aa_action_view_form
@@ -51,23 +69,23 @@ msgstr "Listado de Recibidos"
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.search_missing_view_form
 msgid "Buscar"
-msgstr ""
+msgstr "Buscar"
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.search_missing_view_form
 msgid "Buscar por Numeración Máxima"
-msgstr ""
+msgstr "Buscar por Numeración Máxima"
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.entry_view_form
 #: model_terms:ir.ui.view,arch_db:raa.search_missing_view_form
 msgid "Cancelar"
-msgstr ""
+msgstr "Cancelar"
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.entry_view_form
 msgid "Cargar"
-msgstr ""
+msgstr "Cargar"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__create_uid
@@ -90,14 +108,17 @@ msgid "Dependence"
 msgstr "Dependencia"
 
 #. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
 #: model_terms:ir.ui.view,arch_db:raa.registry_aa_view_search
 msgid "Dependencia"
-msgstr ""
+msgstr "Dependencia"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__display_name
 #: model:ir.model.fields,field_description:raa.field_raa_number_range__display_name
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__display_name
+#: model:ir.model.fields,field_description:raa.field_raa_report_logo__display_name
+#: model:ir.model.fields,field_description:raa.field_report_raa_missing_raa_report__display_name
 msgid "Display Name"
 msgstr "Mostrar Nombre"
 
@@ -119,11 +140,6 @@ msgid "Document Type"
 msgstr "Tipo de Documento"
 
 #. module: raa
-#: model:ir.model.constraint,message:raa.constraint_raa_registry_aa_document_id_unique
-msgid "El registro ya existe"
-msgstr ""
-
-#. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__entry_date
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__entry_date
 msgid "Entry Date"
@@ -137,32 +153,43 @@ msgstr "Asistente de Carga"
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.entry_view_form
 msgid "Especificar Rangos de Documentos"
-msgstr ""
+msgstr "Especificar Rangos de Documentos"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "Faltantes ("
+msgstr "Faltantes ("
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__id
 #: model:ir.model.fields,field_description:raa.field_raa_number_range__id
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__id
+#: model:ir.model.fields,field_description:raa.field_raa_report_logo__id
+#: model:ir.model.fields,field_description:raa.field_report_raa_missing_raa_report__id
 msgid "ID"
-msgstr ""
+msgstr "ID"
+
+#. module: raa
+#. odoo-python
+#: code:addons/raa/wizards/entry.py:0
+msgid "Info"
+msgstr "Info"
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.registry_aa_view_tree
 msgid "Ingresado por"
-msgstr ""
+msgstr "Ingresado por"
 
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.entry_view_form
 #: model_terms:ir.ui.view,arch_db:raa.search_missing_view_form
 msgid "Ingresar Datos de Documentos"
-msgstr ""
+msgstr "Ingresar Datos de Documentos"
 
 #. module: raa
-#: model:ir.model.fields,field_description:raa.field_raa_entry____last_update
-#: model:ir.model.fields,field_description:raa.field_raa_number_range____last_update
-#: model:ir.model.fields,field_description:raa.field_raa_registry_aa____last_update
-msgid "Last Modified on"
-msgstr "Última modificación en"
+#: model:ir.model,name:raa.model_raa_report_logo
+msgid "Institutional Logo for Printed Reports"
+msgstr "Logo institucional para reportes impresos"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__write_uid
@@ -179,6 +206,16 @@ msgid "Last Updated on"
 msgstr "Última actualización el"
 
 #. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "Listado de Actos Administrativos faltantes"
+msgstr "Listado de Actos Administrativos faltantes"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "Listado de Actos Administrativos faltantes hasta el Nº"
+msgstr "Listado de Actos Administrativos faltantes hasta el Nº"
+
+#. module: raa
 #: model:res.groups,name:raa.group_manager
 msgid "Manager"
 msgstr "Responsable"
@@ -189,45 +226,57 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
-#: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/number_range.py:0
-#, python-format
+#. odoo-python
+#: code:addons/raa/wizards/entry.py:0
+#: code:addons/raa/wizards/number_range.py:0
 msgid "Maximum number allowed has been exceeded"
-msgstr "Se ha excedido la numeración máxima permitida"
+msgstr "Se superó el número máximo permitido"
 
 #. module: raa
-#: model:ir.actions.report,name:raa.missing_raa_report
+#: model:ir.actions.report,name:raa.action_missing_raa_report
+#: model:ir.model,name:raa.model_report_raa_missing_raa_report
 msgid "Missing Administrative Acts Report"
-msgstr "Reporte de Actos Administrativos Faltantes"
+msgstr "Reporte de actos administrativos faltantes"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
-msgid "Missing administrative acts: <b>%s</b>"
-msgstr "Actos Administrativos Faltantes: <b>%s</b>"
+msgid "Missing administrative acts: %s"
+msgstr "Actos administrativos faltantes: %s"
 
 #. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "No existen actos administrativos faltantes."
+msgstr "No existen actos administrativos faltantes."
+
+#. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "No existing registries matching criteria"
-msgstr "No existen registros que coincidan con el criterio de búsqueda"
+msgstr "No existen registros que coincidan con el criterio"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "No missing administrative acts"
-msgstr "No existen actos administrativos faltantes"
+msgstr "No hay actos administrativos faltantes"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "No new registries were created. They already exist."
-msgstr "Los registros que se intentan crear ya existen."
+msgstr "No se crearon nuevos registros. Ya existían."
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "No ranges were specified"
-msgstr "No se expecificaron rangos"
+msgstr "No se especificaron rangos"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "No se registran ingresos con este criterio."
+msgstr "No se registran ingresos con este criterio."
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__number
@@ -251,15 +300,17 @@ msgid "Period"
 msgstr "Período"
 
 #. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
 #: model_terms:ir.ui.view,arch_db:raa.registry_aa_view_search
 msgid "Período"
-msgstr ""
+msgstr "Período"
 
 #. module: raa
 #: model:ir.module.category,name:raa.module_category_raa
 #: model:ir.ui.menu,name:raa.raa_menu
+#: model:res.groups.privilege,name:raa.res_groups_privilege_raa
 msgid "RAA"
-msgstr ""
+msgstr "RAA"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__range_ids
@@ -272,14 +323,13 @@ msgid "Read Only"
 msgstr "Sólo Lectura"
 
 #. module: raa
-#: code:addons/raa/models/registry_aa.py:0
-#, python-format
+#: model:ir.model.constraint,message:raa.constraint_raa_registry_aa_document_id_unique
 msgid "Record already exists"
 msgstr "El registro ya existe"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "Registries were created successfully"
 msgstr "Los registros se crearon correctamente"
 
@@ -296,7 +346,19 @@ msgstr "Registro"
 #. module: raa
 #: model_terms:ir.ui.view,arch_db:raa.search_missing_view_form
 msgid "Reporte"
-msgstr ""
+msgstr "Reporte"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.report_tmc_header
+msgid "Reporte de Mesa de Entradas"
+msgstr "Reporte de Mesa de Entradas"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.report_tmc_footer
+msgid ""
+"Reporte generado por RAA – Sistema de Registro de Actos\n"
+"                    Administrativos"
+msgstr "Reporte generado por RAA – Sistema de Registro de Actos\n                    Administrativos"
 
 #. module: raa
 #: model:ir.ui.menu,name:raa.raa_menu_search_missing
@@ -310,21 +372,43 @@ msgid "Search for Missing Administrative Acts"
 msgstr "Búsqueda de Faltantes"
 
 #. module: raa
+#. odoo-python
+#: code:addons/raa/wizards/entry.py:0
+msgid "Sin faltantes"
+msgstr "Sin faltantes"
+
+#. module: raa
+#. odoo-python
+#: code:addons/raa/wizards/entry.py:0
+msgid "Sin registros"
+msgstr "Sin registros"
+
+#. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__specify_maximum
 msgid "Specify Maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
-#, python-format
 msgid "Success"
-msgstr "Resultado"
+msgstr "Éxito"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/number_range.py:0
-#, python-format
 msgid "There are values in conflict"
-msgstr "Existen rangos en conflicto"
+msgstr "Hay valores en conflicto"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "Tipo de Documento"
+msgstr "Tipo de Documento"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.report_tmc_footer
+msgid "Tribunal Municipal de Cuentas – Municipalidad de Rosario"
+msgstr "Tribunal Municipal de Cuentas – Municipalidad de Rosario"
 
 #. module: raa
 #: model:res.groups,name:raa.group_user
@@ -334,10 +418,15 @@ msgstr "Usuario"
 #. module: raa
 #: model:ir.model,name:raa.model_raa_entry
 msgid "Wizard to load administrative acts"
-msgstr ""
+msgstr "Asistente para cargar actos administrativos"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/number_range.py:0
-#, python-format
 msgid "You must enter values greater than 0 (zero)"
 msgstr "Debe ingresar valores mayores a 0 (cero)"
+
+#. module: raa
+#: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
+msgid "Último Ingresado"
+msgstr "Último Ingresado"
