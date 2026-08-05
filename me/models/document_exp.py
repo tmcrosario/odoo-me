@@ -161,6 +161,16 @@ class DocumentExp(models.Model):
         ),
     )
 
+    current_legajo_number = fields.Char(
+        string="Legajo Number",
+        compute="_compute_current_legajo_number",
+        help=(
+            "Legajo file number when the expediente is currently in a Legajo: the "
+            "legajo_number of the LAST movement, only when that destination is 'Adjunto "
+            "a Legajo' (LEG). Empty otherwise. Non-stored (display label)."
+        ),
+    )
+
     is_licitacion = fields.Boolean(
         string="Licitación",
         compute="_compute_is_licitacion",
@@ -229,6 +239,16 @@ class DocumentExp(models.Model):
             last = record.document_movement_ids.sorted('id')[-1:]
             record.is_currently_internal = bool(
                 last and last.destination_dependence_id.is_internal
+            )
+
+    @api.depends('document_movement_ids.destination_dependence_id',
+                 'document_movement_ids.legajo_number')
+    def _compute_current_legajo_number(self):
+        for record in self:
+            last = record.document_movement_ids.sorted('id')[-1:]
+            dest = last.destination_dependence_id if last else False
+            record.current_legajo_number = (
+                last.legajo_number if (dest and dest.abbreviation == 'LEG') else False
             )
 
     @api.depends('main_topic_ids')

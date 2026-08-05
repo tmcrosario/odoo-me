@@ -2284,6 +2284,59 @@ class TestLegajoDependence026(TransactionCase):
         mov = self._add_movement(exp, self.dep_dem, self.dep_int)
         self.assertFalse(mov.legajo_number)
 
+    # --- IDEA 5: indicador "En Legajo Nº X" (current_legajo_number, estado actual) ---
+
+    def test_current_legajo_number_when_in_leg(self):
+        """current_legajo_number = número del ÚLTIMO movimiento cuando su destino es LEG."""
+        if not self.dep_leg:
+            self.skipTest("LEG no disponible")
+        exp = self._make_expediente(36010)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='4521')
+        self.assertEqual(exp.current_legajo_number, '4521')
+
+    def test_current_legajo_number_empty_when_last_not_leg(self):
+        """Estado actual: si tras Legajo el expediente se mueve a otro lado, deja de mostrarse."""
+        if not self.dep_leg:
+            self.skipTest("LEG no disponible")
+        exp = self._make_expediente(36011)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='4521')
+        self._add_movement(exp, self.dep_leg, self.dep_int)
+        self.assertFalse(exp.current_legajo_number)
+
+    def test_current_legajo_number_uses_last_leg(self):
+        """Con varios pases a Legajo, muestra el del último."""
+        if not self.dep_leg:
+            self.skipTest("LEG no disponible")
+        exp = self._make_expediente(36012)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, self.dep_dem, self.dep_leg, legajo_number='111')
+        self._add_movement(exp, self.dep_int, self.dep_leg, legajo_number='222')
+        self.assertEqual(exp.current_legajo_number, '222')
+
+    def test_current_legajo_number_empty_without_leg(self):
+        """Sin pase a Legajo (solo movimientos automáticos), current_legajo_number vacío."""
+        exp = self._make_expediente(36013)
+        self.assertFalse(exp.current_legajo_number)
+
+    def test_in_legajo_filter_domain_finds_legajo_expediente(self):
+        """El filtro 'Adjuntos a Legajo' (domain sobre current_location) encuentra el
+        expediente cuyo último pase fue a Legajo, y NO uno que después se movió."""
+        if not self.dep_leg:
+            self.skipTest("LEG no disponible")
+        domain = [('current_location_dependence_id.abbreviation', '=', 'LEG')]
+        en_legajo = self._make_expediente(36014)
+        en_legajo.document_movement_ids.unlink()
+        self._add_movement(en_legajo, self.dep_dem, self.dep_leg, legajo_number='777')
+        movido = self._make_expediente(36015)
+        movido.document_movement_ids.unlink()
+        self._add_movement(movido, self.dep_dem, self.dep_leg, legajo_number='888')
+        self._add_movement(movido, self.dep_leg, self.dep_int)
+        found = self.env['me.document_exp'].search(
+            [('id', 'in', [en_legajo.id, movido.id])] + domain)
+        self.assertEqual(found, en_legajo)
+
     def test_movement_to_leg_does_not_generate_reentry(self):
         """Movimiento directo a LEG sin salida previa: has_reentry = False."""
         self.assertTrue(self.dep_leg, "La dependencia LEG debe existir")

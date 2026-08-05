@@ -37,6 +37,14 @@
                             readonly="1"
                             placeholder="Fill in the basic fields to generate the name"/>
                         </h1>
+                        <!-- Indicador de legajo bajo el nombre. Texto en INGLÉS en el arch +
+                             traducción es_AR ("En Legajo Nº") en i18n (política de idioma).
+                             current_legajo_number = legajo del último movimiento si su destino es
+                             Legajo (LEG) — estado actual. -->
+                        <div class="alert alert-info d-inline-block mt-2 mb-0 py-1 px-2"
+                             role="status" invisible="not current_legajo_number">
+                            <i class="fa fa-paperclip me-1" role="img" aria-label="Legajo"/>In Legajo No. <field name="current_legajo_number" nolabel="1" readonly="1" class="oe_inline fw-bold"/>
+                        </div>
                     </div>
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
@@ -163,6 +171,8 @@
                         domain="[('has_reentry', '=', True)]"/>
                 <filter string="Currently at Tribunal" name="currently_at_tribunal"
                         domain="[('is_currently_internal', '=', True)]"/>
+                <filter string="Attached to Legajo" name="in_legajo"
+                        domain="[('current_location_dependence_id.abbreviation', '=', 'LEG')]"/>
                 <filter string="Licitaciones" name="licitacion"
                         domain="[('is_licitacion', '=', True)]"/>
                 <filter string="Originated at TMC" name="origin_tmc"

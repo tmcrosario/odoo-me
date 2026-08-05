@@ -568,3 +568,18 @@ msgid ""
 msgstr ""
 "La fecha de ingreso (%(intake)s) no puede ser anterior a la fecha de inicio "
 "del trámite (%(doc)s): el expediente no puede ingresar antes de existir."
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "In Legajo No."
+msgstr "En Legajo Nº"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Attached to Legajo"
+msgstr "Adjuntos a Legajo"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__current_legajo_number
+msgid "Legajo Number"
+msgstr "Número de Legajo"
