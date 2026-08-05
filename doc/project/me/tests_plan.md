@@ -1,15 +1,15 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015`, `EPIC-006`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003`.
-**Estado al 2026-07-30: 27 clases, 241 métodos de test**, suite verde.
+`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003`.
+**Estado al 2026-08-05: 27 clases, 246 métodos de test**, suite verde.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **241** | `odoo.tests.result: 0 failed, 0 error(s) of 241 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 295 | `odoo.tests.stats: me: 295 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **246** | `odoo.tests.result: 0 failed, 0 error(s) of 246 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 300 | `odoo.tests.stats: me: 300 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -52,7 +52,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 
 ## Inventario de tests (`me/tests/`)
 
-### `test_document_exp.py` — 187 métodos
+### `test_document_exp.py` — 192 métodos
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
@@ -67,7 +67,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestHasReentry021` | 7 | reingreso institucional (`is_internal` / `has_reentry`) | #021 |
 | `TestSearchFilters022023024` | 11 | filtros de búsqueda de expedientes | #022/#023/#024 |
 | `TestArchivoDependence025` | 6 | "Archivo" como destino de movimiento | #025 |
-| `TestLegajoDependence026` | 9 | movimiento a Legajo + `legajo_number` | #026 |
+| `TestLegajoDependence026` | 14 | movimiento a Legajo + `legajo_number`; **EPIC-006/TASK-002**: `current_legajo_number` (indicador "En Legajo Nº X" del último movimiento — en legajo/se movió/varios/sin legajo) + domain del filtro "Adjuntos a Legajo" | #026 |
 | `TestMovementDefaultGet` | 4 | `default_get` de `me.document_movement` | — |
 | `TestMovementPoseedor027` | 6 | solo el poseedor registra nuevos pases desde UI | #027 |
 | `TestMovementCorrection028` | 19 | corrección del último movimiento manual (campos editables) | #028 |

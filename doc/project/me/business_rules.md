@@ -41,6 +41,7 @@ explícitamente las reglas.
 | Integridad de movimientos | Origen y destino obligatorios; fecha no futura ni anterior al ingreso; no se permiten movimientos duplicados exactos (expediente+origen+destino+fecha). |
 | Poseedor actual | Solo el `user_id` del último movimiento puede registrar un pase nuevo desde la UI (managers sin restricción) — #027/#028/#029. |
 | Salida / reingreso institucional | Derivado de `is_internal` por dependencia; `has_reentry` marca reingreso tras una salida previa — #021/#030. |
+| Indicador de legajo actual (EPIC-006/TASK-002) | `current_legajo_number` (computed no-stored, del **último** movimiento cuando su destino es Legajo `LEG`) muestra "En Legajo Nº X" en el form (label bajo el nombre, visible solo en legajo). **Estado actual**: si el expediente se mueve después de Legajo, deja de mostrarse; con varios pases a Legajo muestra el del último. La lista se filtra con **"Adjuntos a Legajo"** (`current_location_dependence_id.abbreviation == 'LEG'`). Strings en inglés + i18n `es_AR`. |
 
 ## Append-only (principio, sin enforcement técnico)
 

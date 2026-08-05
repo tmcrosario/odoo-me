@@ -292,3 +292,39 @@ seteada DESPUÉS del alta). En Notas la jurisdicción se carga **al ingreso**, e
 **JUNCO nunca las toca** → el snapshot queda siempre consistente con la jurisdicción. La idea es,
 en esencia, **recuperar el origen=jurisdicción de pre-EPIC-004, pero solo para Notas** (donde es
 estable). Compras siguen con "Departamento Ejecutivo".
+
+## IDEA 5 - Indicar "En Legajo Nº XXXX" cuando el expediente está adjunto a un legajo
+
+> **IMPLEMENTADO** → ver **EPIC-006/TASK-002** (Done, 2026-08-05). Label en el form (estado actual,
+> del último movimiento) + filtro "Adjuntos a Legajo" en la lista. Se deja acá como referencia.
+
+### Resumen
+
+Cuando un expediente tiene un pase a **Legajo** (`Adjunto a Legajo`, abbr `LEG`), el número de
+legajo (`me.document_movement.legajo_number`) hoy **solo se ve** habilitando una columna opcional
+de la lista de movimientos. El usuario quiere una **indicación visible** — un label/badge tipo
+"En Legajo Nº XXXX" — sin tener que habilitar nada.
+
+### Enfoque propuesto (reusa patrón existente)
+
+Un computed sobre el expediente calcado de `current_location_dependence_id` / `current_holder_id`
+(que ya derivan del **último movimiento**): `current_legajo_number` = el `legajo_number` del
+último movimiento **si su destino es LEG**. Mostrarlo como label/ribbon en el form (`invisible`
+cuando no está en legajo) y, opcional, como columna visible en la lista.
+
+### Preguntas abiertas (dominio — no asumir)
+
+- [ ] **¿Estado actual o histórico?** ¿"En legajo" = el **último** movimiento va a LEG (estado
+      actual, como `current_location`), o **alguna vez** pasó a LEG aunque después se haya movido?
+- [ ] **¿Legajo es terminal o puede volver?** ¿Un expediente adjuntado a un legajo se queda ahí,
+      o puede tener un pase posterior a otro lado? (define si "actual" e "histórico" divergen).
+- [ ] **¿Puede haber varios legajos?** ¿Varios pases a LEG con distinto número? (mostraríamos el último).
+- [ ] **¿Dónde mostrarlo?** Label bajo el nombre del expediente / ribbon en la esquina / columna
+      visible en la lista / varias.
+
+### Relación con otras ideas / reglas
+
+- Reusa el patrón "último movimiento" (`_compute_current_location_dependence_id` y afines).
+- `legajo_number` vive en el movimiento (#026); el fix `[FIX] no perder legajo_number` (1547b8a)
+  es el que dejó que se cargue bien.
+- Modo estimado: **S** (computed + label en vista + tests). Toca campo persistente/computed → AC antes de código.
