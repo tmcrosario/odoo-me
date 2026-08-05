@@ -1,6 +1,6 @@
 {
     "name": "TMC RAA",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "summary": "Sistema de Registro de Actos Administrativos",
     "author": "Tribunal Municipal de Cuentas - Municipalidad de Rosario",
     "website": "https://www.tmcrosario.gob.ar",
@@ -8,6 +8,7 @@
     "depends": [
         "tmc",
         "me",
+        "tmc_data",
     ],
     "data": [
         "security/raa_groups.xml",
@@ -23,7 +24,9 @@
         "reports/missing_raa_template.xml",
         "reports/missing_raa.xml",
     ],
-    "demo": [],
+    "demo": [
+        "demo/registry_aa_demo.xml",
+    ],
     "installable": True,
     "application": True,
 }  # yapf: disable

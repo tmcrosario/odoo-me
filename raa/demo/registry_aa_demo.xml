@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- Documents use REAL tmc_data dependences/types (names are not sensitive),
+         with invented but realistic numbers (the name zero-pads to 6 digits, as
+         in production). No ACT (skips the seq ref); date/object empty to skip
+         the date-year==period and 125-char checks; number>0 and within the
+         per-type/dependence _check_number cap (6000, DHH 9999). -->
+    <record id="demo_doc_res_dhh_8471_2026" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_dhh" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">8471</field>
+        <field name="period">2026</field>
+    </record>
+    <record id="demo_doc_res_sal_5230_2026" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_sal" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">5230</field>
+        <field name="period">2026</field>
+    </record>
+    <record id="demo_doc_dec_dem_5744_2026" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_dem" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_dec" />
+        <field name="number">5744</field>
+        <field name="period">2026</field>
+    </record>
+    <record id="demo_doc_res_des_4318_2025" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_des" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">4318</field>
+        <field name="period">2025</field>
+    </record>
+    <record id="demo_doc_ext_imps_1187_2025" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_imps" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_ext" />
+        <field name="number">1187</field>
+        <field name="period">2025</field>
+    </record>
+    <record id="demo_doc_res_cul_3925_2025" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_cul" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">3925</field>
+        <field name="period">2025</field>
+    </record>
+    <record id="demo_doc_res_hac_5602_2024" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_hac" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">5602</field>
+        <field name="period">2024</field>
+    </record>
+    <record id="demo_doc_dec_dem_4903_2024" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_dem" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_dec" />
+        <field name="number">4903</field>
+        <field name="period">2024</field>
+    </record>
+    <record id="demo_doc_res_dhh_7368_2024" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_dhh" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">7368</field>
+        <field name="period">2024</field>
+    </record>
+    <record id="demo_doc_res_dem_4172_2026" model="tmc.document">
+        <field name="dependence_id" ref="tmc_data.tmc_dependence_dem" />
+        <field name="document_type_id" ref="tmc_data.tmc_document_type_res" />
+        <field name="number">4172</field>
+        <field name="period">2026</field>
+    </record>
+
+    <!-- One registry entry per distinct document (UNIQUE(document_id)). -->
+    <record id="demo_raa_01" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_dhh_8471_2026" />
+        <field name="entry_date">2026-03-12</field>
+    </record>
+    <record id="demo_raa_02" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_sal_5230_2026" />
+        <field name="entry_date">2026-02-20</field>
+    </record>
+    <record id="demo_raa_03" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_dec_dem_5744_2026" />
+        <field name="entry_date">2026-04-05</field>
+    </record>
+    <record id="demo_raa_04" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_des_4318_2025" />
+        <field name="entry_date">2025-06-18</field>
+    </record>
+    <record id="demo_raa_05" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_ext_imps_1187_2025" />
+        <field name="entry_date">2025-09-30</field>
+    </record>
+    <record id="demo_raa_06" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_cul_3925_2025" />
+        <field name="entry_date">2025-05-14</field>
+    </record>
+    <record id="demo_raa_07" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_hac_5602_2024" />
+        <field name="entry_date">2024-08-22</field>
+    </record>
+    <record id="demo_raa_08" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_dec_dem_4903_2024" />
+        <field name="entry_date">2024-11-03</field>
+    </record>
+    <record id="demo_raa_09" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_dhh_7368_2024" />
+        <field name="entry_date">2024-07-09</field>
+    </record>
+    <record id="demo_raa_10" model="raa.registry_aa">
+        <field name="document_id" ref="demo_doc_res_dem_4172_2026" />
+        <field name="entry_date">2026-01-15</field>
+    </record>
+</odoo>
