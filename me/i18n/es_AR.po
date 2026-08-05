@@ -103,6 +103,7 @@ msgstr "Utilizada por la municipalidad para identificar expedientes"
 
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_exp__jurisdiction_dependence
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "Jurisdiction"
 msgstr "Jurisdicción"
 

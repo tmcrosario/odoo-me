@@ -165,6 +165,9 @@
                 <field name="current_holder_id" string="Holder"/>
                 <field name="current_location_dependence_id" string="Destination Office"
                        domain="[('is_internal', '=', True)]"/>
+                <!-- Sin string=: usa el label del campo ("Jurisdiction"), que ya se traduce
+                     por field_description → se traduce solo, sin entrada nueva en el .po. -->
+                <field name="jurisdiction_dependence"/>
                 <filter string="In My Possession" name="in_my_possession"
                         domain="[('current_holder_id', '=', uid)]"/>
                 <filter string="With Institutional Reentry" name="has_reentry"
@@ -181,6 +184,8 @@
                         context="{'group_by': 'current_holder_id'}"/>
                 <filter name="group_by_location" string="Destination Office"
                         context="{'group_by': 'current_location_dependence_id'}"/>
+                <filter name="group_by_jurisdiction" string="Jurisdiction"
+                        context="{'group_by': 'jurisdiction_dependence'}"/>
             </search>
         </field>
     </record>
