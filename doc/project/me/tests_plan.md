@@ -1,8 +1,9 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003`.
-**Estado al 2026-08-05: 27 clases, 246 métodos de test**, suite verde.
+`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003/004`.
+**Estado al 2026-08-05: 27 clases, 246 métodos de test**, suite verde (EPIC-003/TASK-004 es
+view-only → sin tests nuevos).
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 

@@ -11,6 +11,10 @@ Documento vivo para ideas, dudas y posibles tareas del módulo `me`.
 
 ## IDEA 1 - Búsqueda DEM por jurisdicción / procedencia (post-EPIC-004)
 
+> **IMPLEMENTADO** (parte jurisdicción) → ver **EPIC-003/TASK-004** (Done, 2026-08-05): campo
+> buscable + group-by por Jurisdicción en la lista (se descartó el searchpanel por cardinalidad).
+> Queda como referencia. La parte "procedencia/source" no se pidió; se puede sumar igual si aparece.
+
 ### Resumen
 
 Tras EPIC-004, en los expedientes **DEM** los campos `jurisdiction_dependence` y
