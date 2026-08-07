@@ -42,6 +42,13 @@ No incluye: backend constraint del tema; se decidió a propósito (ver arriba).
   no-compras = Nota) → requerir el tema no fuerza clasificaciones incorrectas.
 - **Datos existentes:** 2 DEM sin tema en me2 (probablemente de prueba) → required solo para
   nuevas; el filtro los encuentra.
+- **Confirmado por junco (verificado en su código, 2026-08-07):** un expediente de compra **sin
+  tema simplemente no aparece** en su selector (el domain filtra por `main_topic_ids in
+  [licitación, concurso, directa]`), **sin error** — la premisa de esta task es correcta. El
+  error solo se da por **link ORM directo**, no por UI. Junco **parkeó** el micro-ajuste de un
+  constraint en su link table para "licitación sin subtema por ORM directo": con el enforcement
+  upstream de ME + sus capas, el único hueco es un write crudo por ORM/migración (marginal); lo
+  reabren solo si aparece un ingestor ORM real.
 
 ## Acceptance criteria
 

@@ -64,9 +64,16 @@ No incluye: backfill del dato viejo (ver caveats); required global del tema (es 
 
 **Done.** Push: usuario. Deploy a prod: diferido.
 
+## Confirmado por junco (2026-08-07)
+
+Verificado en su código: su inverse ya lanza el `UserError` "Correct the classification in ME
+first" ante una licitación sin subtipo → con el required condicional de ME, **para licitaciones
+nuevas ese camino queda inalcanzable por UI**. Además `action_submit_to_control` valida el
+`process_type` aguas abajo (un proceso sin tipo tampoco avanza). Sin regresión.
+
 ## Resultado / cierre
 
 Cerrada (Done) el 2026-08-07 sobre `develop`. El subtema de una Licitación es obligatorio
 (patrón de la Nota: required condicional + validación en create/write, no en `@api.constrains`
 sobre el stored, para no romper el dato viejo). Alinea la carga de ME con lo que JUNCO ya exige
-al vincular (rechazo por clasificación). Coordinado con `odoo-junco`.
+al vincular (rechazo por clasificación). Coordinado y confirmado con `odoo-junco`.
