@@ -5,7 +5,9 @@
 > reciente). Las reglas marcadas como **principio sin enforcement** o **limitación**
 > NO deben asumirse como cerradas por su enunciado: el estado real se verificó contra
 > código en EPIC-001 (Done, 2026-06-19) y se revalida en cada cambio. El comportamiento
-> operativo detallado vive en [`workflows.md`](workflows.md).
+> operativo detallado vive en [`workflows.md`](workflows.md). La **procedencia normativa** de
+las reglas de ENTRADA (PRO-11, Ord. 7.767) y el contrato DEM/CM↔JUNCO (BR-021) están en
+[`entrada_expediente.md`](entrada_expediente.md).
 
 ## Invariantes del sistema (deben cumplirse siempre)
 
