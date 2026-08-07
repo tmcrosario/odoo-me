@@ -1400,7 +1400,9 @@ class TestFojasLock(TransactionCase):
         usuario operador (perm_write=0) → AccessError envuelto con 'Implicitly accessed
         through'. El fix escribe directamente vía record.document_id.sudo().write().
         """
-        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        # Contratación directa (tema de compra que NO requiere subtema) como tema neutro:
+        # licitación ahora exige subtema (EPIC-004/TASK-005) y acá probamos el inverse, no eso.
+        topic = self.env.ref('tmc_data.tmc_document_topic_contratacion_directa', raise_if_not_found=False)
         if not topic:
             topic = self.env['tmc.document_topic'].create({
                 'name': 'Topic Test Operator Create',
@@ -1455,7 +1457,8 @@ class TestFojasLock(TransactionCase):
 
     def test_manager_can_edit_main_topic_on_existing(self):
         """Manager puede cambiar main_topic_id en un expediente existente."""
-        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        # Contratación directa (tema neutro, sin subtema requerido — TASK-005).
+        topic = self.env.ref('tmc_data.tmc_document_topic_contratacion_directa', raise_if_not_found=False)
         if not topic:
             topic = self.env['tmc.document_topic'].create({'name': 'Topic Manager Test'})
         self.expediente.with_user(self.manager_user).write({'main_topic_id': topic.id})
@@ -1468,7 +1471,8 @@ class TestFojasLock(TransactionCase):
         (5,0,0)[2] = int 0 → set(0) → TypeError in tmc.document.write().
         (6,0,[])[2] = [] → set([]) = set() → no error.
         """
-        topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
+        # Contratación directa (tema neutro, sin subtema requerido — TASK-005).
+        topic = self.env.ref('tmc_data.tmc_document_topic_contratacion_directa', raise_if_not_found=False)
         if not topic:
             topic = self.env['tmc.document_topic'].create({'name': 'Clear Main Topic Test'})
         self.expediente.with_user(self.manager_user).write({'main_topic_id': topic.id})
@@ -1478,16 +1482,12 @@ class TestFojasLock(TransactionCase):
 
     def test_clear_secondary_topic_id_does_not_raise(self):
         """Clearing secondary_topic_id writes (6,0,[]) to tmc.document — not (5,0,0)."""
-        parent_topic = self.env.ref('tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False)
-        if not parent_topic:
-            parent_topic = self.env['tmc.document_topic'].create({'name': 'Clear Secondary Parent'})
-        child_topic = self.env['tmc.document_topic'].search(
-            [('parent_id', '=', parent_topic.id)], limit=1
-        )
-        if not child_topic:
-            child_topic = self.env['tmc.document_topic'].create({
-                'name': 'Clear Secondary Child', 'parent_id': parent_topic.id,
-            })
+        # Tema genérico (NO Licitación) con un hijo: clearear su subtema prueba el mecanismo
+        # (6,0,[]) sin disparar la regla "licitación requiere subtema" (TASK-005).
+        parent_topic = self.env['tmc.document_topic'].create({'name': 'Clear Secondary Parent'})
+        child_topic = self.env['tmc.document_topic'].create({
+            'name': 'Clear Secondary Child', 'parent_id': parent_topic.id,
+        })
         self.expediente.with_user(self.manager_user).write({
             'main_topic_id': parent_topic.id,
             'secondary_topic_id': child_topic.id,
@@ -1964,15 +1964,34 @@ class TestSearchFilters022023024(TransactionCase):
         exp = self._make_expediente(34010)
         self.assertFalse(exp.is_licitacion)
 
+    def test_unclassified_filter_finds_topicless(self):
+        """EPIC-004/TASK-006: el filtro 'Sin clasificar' (main_topic_ids = False) encuentra
+        los expedientes sin tema (los que quedarían invisibles para JUNCO)."""
+        sin_tema = self._make_expediente(34901)
+        con_tema = self._make_expediente(34902)
+        # Tema genérico (no licitación → no exige subtema) para el que SÍ está clasificado.
+        topic = self.env['tmc.document_topic'].create({'name': 'Tema Test Unclassified'})
+        con_tema.write({'main_topic_ids': [(6, 0, [topic.id])]})
+        found = self.env['me.document_exp'].search(
+            [('id', 'in', [sin_tema.id, con_tema.id]), ('main_topic_ids', '=', False)])
+        self.assertEqual(found, sin_tema)
+
     def test_licitacion_topic_sets_is_licitacion(self):
         """Tema principal = Licitación: is_licitacion = True."""
         licitacion = self.env.ref(
             'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
         )
-        if not licitacion:
-            self.skipTest('tmc_data.tmc_document_topic_licitacion not found')
+        publica = self.env.ref(
+            'tmc_data.tmc_document_topic_licitacion_publica', raise_if_not_found=False
+        )
+        if not (licitacion and publica):
+            self.skipTest('temas de licitación de tmc_data no disponibles')
         exp = self._make_expediente(34011)
-        exp.main_topic_ids = [(6, 0, [licitacion.id])]
+        # Con subtema: la licitación lo requiere (TASK-005); acá solo probamos is_licitacion.
+        exp.write({
+            'main_topic_ids': [(6, 0, [licitacion.id])],
+            'secondary_topic_ids': [(6, 0, [publica.id])],
+        })
         self.assertTrue(exp.is_licitacion)
 
     def test_other_topic_is_not_licitacion(self):

@@ -20,6 +20,9 @@ class TestNotaOrigin(TransactionCase):
         self.topic_licitacion = self.env.ref(
             'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
         )
+        self.publica = self.env.ref(
+            'tmc_data.tmc_document_topic_licitacion_publica', raise_if_not_found=False
+        )
         if not self.topic_nota or not self.topic_licitacion:
             self.skipTest("Temas de tmc_data no disponibles en esta DB")
 
@@ -58,6 +61,11 @@ class TestNotaOrigin(TransactionCase):
         vals = dict(self.base_vals, number=number, **extra)
         if topic:
             vals['main_topic_ids'] = [(4, topic.id)]
+            # Una licitación necesita subtema (EPIC-004/TASK-005); acá se usa solo como tema
+            # de compra representativo (no probamos el subtema) → le damos uno válido para
+            # que create() no la rechace.
+            if topic == self.topic_licitacion and self.publica:
+                vals['secondary_topic_ids'] = [(4, self.publica.id)]
         return vals
 
     # --- is_nota ---
@@ -171,10 +179,12 @@ class TestNotaOrigin(TransactionCase):
 
     def test_changing_topic_away_from_nota_after_save_is_allowed(self):
         """No endurecer de más: sacarle el tema Nota a un expediente no debe bloquear
-        (deja de aplicar la regla)."""
+        (deja de aplicar la regla). El subtema va porque la licitación lo requiere
+        (EPIC-004/TASK-005) — lo que se prueba es que el cambio DESDE Nota se permite."""
         exp = self.env['me.document_exp'].create(
             self._vals(99814, self.topic_nota, jurisdiction_dependence=self.jur.id))
-        exp.write({'main_topic_id': self.topic_licitacion.id})
+        exp.write({'main_topic_id': self.topic_licitacion.id,
+                   'secondary_topic_id': self.publica.id})
         self.assertFalse(exp.is_nota)
 
     def test_duplicate_warning_does_not_match_itself(self):

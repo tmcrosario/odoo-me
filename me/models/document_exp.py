@@ -251,13 +251,18 @@ class DocumentExp(models.Model):
                 last.legajo_number if (dest and dest.abbreviation == 'LEG') else False
             )
 
-    @api.depends('main_topic_ids')
+    # Depende del m2m del padre Y del proxy main_topic_id para reaccionar EN VIVO en el form
+    # (antes de guardar), como is_nota: así el `required` del subtema en la vista se activa al
+    # elegir el tema Licitación.
+    @api.depends('main_topic_ids', 'main_topic_id')
     def _compute_is_licitacion(self):
         licitacion = self.env.ref(
             'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
         )
         for record in self:
-            record.is_licitacion = bool(licitacion and licitacion in record.main_topic_ids)
+            record.is_licitacion = bool(licitacion and (
+                licitacion in record.main_topic_ids or record.main_topic_id == licitacion
+            ))
 
     # Depends on BOTH the stored source of truth (main_topic_ids, on the parent) and the
     # form proxy (main_topic_id): the proxy only writes through to the parent on save, so
@@ -531,6 +536,23 @@ class DocumentExp(models.Model):
                       "it must be loaded at intake.")
                 )
 
+    def _validate_licitacion_subtopic(self):
+        """Una Licitación no puede quedar sin subtema (EPIC-004/TASK-005, pedido de junco):
+        JUNCO deriva el subtipo del proceso (public_tender/private_tender) del subtema
+        (Pública/Privada) y no puede cerrar upstream el caso 'licitación sin subtema'.
+        Concurso de precios y contratación directa NO llevan subtema → no se validan.
+
+        Como _validate_nota_jurisdiction: se llama desde create()/write(), NO vía
+        @api.constrains('is_licitacion') — al ser stored, recomputarlo dispararía la
+        constraint sobre TODAS las licitaciones en cada -u y rompería el update sobre las
+        viejas sin subtema (required solo para nuevas, decisión del usuario)."""
+        for record in self:
+            if record.is_licitacion and not record.secondary_topic_id:
+                raise exceptions.ValidationError(
+                    _("A licitación requires a subtype (Pública/Privada) as its "
+                      "specification.")
+                )
+
     # Deliberately NOT @api.constrains('is_nota'): is_nota is a stored computed field, and
     # recomputing a stored field runs the constraints that list it (orm/models.py,
     # _compute_field_value). On module update is_nota is recomputed for EVERY existing
@@ -732,10 +754,11 @@ class DocumentExp(models.Model):
         ).create(vals_list)
         records = records.sudo(self.env.su)
 
-        # EPIC-004/TASK-002: enforced here, not via @api.constrains('is_nota') — see
-        # _validate_nota_jurisdiction for why. Runs before the movements/RAA below so a
-        # rejected expediente does not leave side effects behind.
+        # EPIC-004/TASK-002/005: enforced here, not via @api.constrains on the stored
+        # is_nota/is_licitacion — see _validate_nota_jurisdiction for why. Runs before the
+        # movements/RAA below so a rejected expediente does not leave side effects behind.
         records._validate_nota_jurisdiction()
+        records._validate_licitacion_subtopic()
 
         # env_create retains me_create_in_progress=True so write() calls
         # triggered by movement creation (e.g. has_reentry recompute) also pass.
@@ -931,8 +954,15 @@ class DocumentExp(models.Model):
         # regla (quedaron legítimamente vacíos) ante cualquier edición, p.ej. agregar un
         # movimiento. Tampoco sirve @api.constrains('is_nota'): al ser stored, recomputarlo
         # dispara la constraint sobre TODOS los registros en cada `-u me`.
-        if {'main_topic_id', 'main_topic_ids'} & set(vals):
+        touched = set(vals)
+        if {'main_topic_id', 'main_topic_ids'} & touched:
             self._validate_nota_jurisdiction()
+        # EPIC-004/TASK-005: reclasificar a Licitación (o quitarle el subtema a una) tampoco
+        # puede dejarla sin subtema. Se valida si el write toca el tema O el subtema; igual
+        # que la Nota, no rompe las licitaciones viejas sin subtema salvo que se re-toquen.
+        if {'main_topic_id', 'main_topic_ids',
+                'secondary_topic_id', 'secondary_topic_ids'} & touched:
+            self._validate_licitacion_subtopic()
         return res
 
     def unlink(self):

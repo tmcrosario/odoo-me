@@ -584,3 +584,8 @@ msgstr "Adjuntos a Legajo"
 #: model:ir.model.fields,field_description:me.field_me_document_exp__current_legajo_number
 msgid "Legajo Number"
 msgstr "Número de Legajo"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Unclassified"
+msgstr "Sin clasificar"

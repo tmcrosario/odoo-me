@@ -49,6 +49,7 @@
                     <field name="is_valid" invisible="1"/>
                     <field name="is_origin_complete" invisible="1"/>
                     <field name="is_nota" invisible="1"/>
+                    <field name="is_licitacion" invisible="1"/>
                     <field name="dependence_abbreviation" invisible="1"/>
                     <field name="allowed_sub_dependence_ids" invisible="1"/>
                     <field name="allowed_exp_topic_ids" invisible="1"/>
@@ -83,9 +84,16 @@
                          sí), no la vista. -->
                     <group invisible="not is_origin_complete">
                         <group>
-                            <field name="main_topic_id"/>
+                            <!-- Tema requerido para expedientes nuevos (EPIC-004/TASK-006): sin
+                                 tema, una compra queda invisible para JUNCO (filtra por tema). Solo
+                                 vista + filtro "Sin clasificar"; no @api.constrains (sería global y
+                                 rompería ORM/tests, y JUNCO ya gatea por tema). `not id`: no rompe
+                                 los expedientes viejos sin tema. -->
+                            <field name="main_topic_id"
+                                   required="not id and is_origin_complete"/>
                             <field name="secondary_topic_id"
-                                   invisible="not main_topic_id or not allowed_secondary_topic_ids"/>
+                                   invisible="not main_topic_id or not allowed_secondary_topic_ids"
+                                   required="is_licitacion and not id"/>
                             <field name="document_object" string="Reference"/>
                             <field name="jurisdiction_dependence"
                                    domain="[('id', 'in', allowed_jurisdiction_ids)]"
@@ -178,6 +186,8 @@
                         domain="[('current_location_dependence_id.abbreviation', '=', 'LEG')]"/>
                 <filter string="Licitaciones" name="licitacion"
                         domain="[('is_licitacion', '=', True)]"/>
+                <filter string="Unclassified" name="unclassified"
+                        domain="[('main_topic_ids', '=', False)]"/>
                 <filter string="Originated at TMC" name="origin_tmc"
                         domain="[('dependence_id.abbreviation', '=', 'TMC')]"/>
                 <filter name="group_by_holder" string="Holder"
