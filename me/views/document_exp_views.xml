@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <list>
                 <field name="name" string="Document"/>
-                <field name="intake_date"/>
+                <field name="intake_date" options="{'numeric': true}"/>
                 <field name="topics_display_name" string="Subject"/>
                 <field name="document_object" string="Reference"/>
             </list>
@@ -101,10 +101,10 @@
                         <!-- Columna derecha: cuándo y cuánto. Las dos fechas van juntas
                              (antes document_date quedaba en otro bloque, lejos de intake_date). -->
                         <group>
-                            <field name="intake_date"/>
+                            <field name="intake_date" options="{'numeric': true}"/>
                             <field name="date" string="Procedure Start Date"
                                    help="Expediente creation date (from the cover sheet). May differ from the intake date."
-                                   required="1"/>
+                                   required="1" options="{'numeric': true}"/>
                             <field name="fojas" required="1" readonly="id"/>
                             <field name="external_key"/>
                         </group>
@@ -114,7 +114,7 @@
                             <field name="document_movement_ids" mode="list,form" context="{'default_expediente_id': id}">
                                 <list>
                                     <field name="is_automatic" column_invisible="1"/>
-                                    <field name="date"/>
+                                    <field name="date" options="{'numeric': true}"/>
                                     <field name="origin_dependence_id" options="{'no_open': True}"/>
                                     <field name="destination_dependence_id" options="{'no_open': True}"/>
                                     <field name="fojas" readonly="is_automatic"/>
@@ -130,7 +130,7 @@
                                     <group>
                                         <field name="is_automatic" invisible="1"/>
                                         <field name="destination_abbreviation" invisible="1"/>
-                                        <field name="date"/>
+                                        <field name="date" options="{'numeric': true}"/>
                                         <field name="origin_dependence_id" options="{'no_open': True}"/>
                                         <field name="destination_dependence_id" options="{'no_open': True}"/>
                                         <field name="legajo_number"

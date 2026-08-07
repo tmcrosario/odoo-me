@@ -8,11 +8,11 @@
         <field name="arch" type="xml">
             <list>
                 <field name="expediente_id"/>
-                <field name="date"/>
+                <field name="date" options="{'numeric': true}"/>
                 <field name="origin_dependence_id"/>
                 <field name="destination_dependence_id"/>
                 <field name="user_id" readonly="1"/>
-                <field name="create_date" readonly="1" optional="hide"/>
+                <field name="create_date" readonly="1" optional="hide" options="{'numeric': true}"/>
             </list>
         </field>
     </record>
@@ -26,7 +26,7 @@
                 <sheet>
                     <group>
                         <field name="expediente_id"/>
-                        <field name="date"/>
+                        <field name="date" options="{'numeric': true}"/>
                         <field name="origin_dependence_id"/>
                         <field name="destination_dependence_id"/>
                         <field name="user_id"/>
