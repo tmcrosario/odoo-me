@@ -1,16 +1,20 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002/003/004` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-08-05: 27 clases, 246 métodos de test**, suite verde (EPIC-003/TASK-004 es
-view-only → sin tests nuevos).
+`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
+**Estado al 2026-08-07: 27 clases, 254 métodos de test**, suite verde.
+
+> ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
+> `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
+> el orden; en aislamiento y re-run pasa. No relacionado con ningún cambio funcional. Candidato a
+> aislar el fixture.
 
 **Convención de métrica (importante — hay dos números y ambos son correctos):**
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **246** | `odoo.tests.result: 0 failed, 0 error(s) of 246 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 300 | `odoo.tests.stats: me: 300 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **254** | `odoo.tests.result: 0 failed, 0 error(s) of 254 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 308 | `odoo.tests.stats: me: 308 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -53,7 +57,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 
 ## Inventario de tests (`me/tests/`)
 
-### `test_document_exp.py` — 192 métodos
+### `test_document_exp.py` — 193 métodos
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
@@ -66,7 +70,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestFojasLock` | 21 | matriz de permisos + bloqueo de `fojas` post-creación | #018 |
 | `TestJurisdictionConditional012` | 8 | jurisdicción condicional por origen (TMC/CM auto, DEM) | #012 |
 | `TestHasReentry021` | 7 | reingreso institucional (`is_internal` / `has_reentry`) | #021 |
-| `TestSearchFilters022023024` | 11 | filtros de búsqueda de expedientes | #022/#023/#024 |
+| `TestSearchFilters022023024` | 12 | filtros de búsqueda de expedientes; **EPIC-004/TASK-006**: el filtro "Sin clasificar" (`main_topic_ids = False`) encuentra los expedientes sin tema | #022/#023/#024 |
 | `TestArchivoDependence025` | 6 | "Archivo" como destino de movimiento | #025 |
 | `TestLegajoDependence026` | 14 | movimiento a Legajo + `legajo_number`; **EPIC-006/TASK-002**: `current_legajo_number` (indicador "En Legajo Nº X" del último movimiento — en legajo/se movió/varios/sin legajo) + domain del filtro "Adjuntos a Legajo" | #026 |
 | `TestMovementDefaultGet` | 4 | `default_get` de `me.document_movement` | — |
@@ -114,11 +118,11 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 > recomputarlo dispararía la constraint sobre TODOS los registros en cada `-u me` y abortaría
 > el update sobre las Notas viejas legítimamente vacías). No relajar.
 
-### `test_licitacion_subtopic.py` — 5 métodos (EPIC-004/TASK-004)
+### `test_licitacion_subtopic.py` — 12 métodos (EPIC-004/TASK-004 + TASK-005)
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestLicitacionSubtopic` | 5 | El subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids`: solo esos 2 (no los 25 de GD); una "etapa" **no** se ofrece **pero sigue colgando de Licitación** en `tmc_data` (guardrail junco); reacciona al proxy `main_topic_id` antes de guardar; no-regresión (otros temas → hijos del tema); Concurso de Precios (sin hijos) → subtema vacío/oculto | EPIC-004/TASK-004 |
+| `TestLicitacionSubtopic` | 12 | **TASK-004:** el subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids` (solo esos 2, no los 25 de GD; una "etapa" no se ofrece pero sigue colgando de Licitación — guardrail junco; reacciona al proxy; no-regresión; Concurso vacío/oculto). **TASK-005:** subtema **requerido** para Licitación (sin subtema→raise, con→ok, concurso/directa→ok, reclasificar/quitar subtema→raise, y **licitación vieja sin subtema sobrevive al `-u` y es editable** — validación en create/write, no `@api.constrains`) | EPIC-004/TASK-004 + TASK-005 |
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que

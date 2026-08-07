@@ -21,6 +21,8 @@ Nomenclatura:
 | EPIC-004/TASK-002 | Carga de jurisdicción/origen en DEM con tema Nota | Ale Gallo | L | Done (develop) | Excepción a TASK-001: las Notas no van a JUNCO → ME carga al ingreso. + validaciones de fecha + label i18n. Suite 233/0/0; UI verificada en me2 |
 | EPIC-004/TASK-003 | 1er movimiento de una Nota: origen = jurisdicción | Ale Gallo | S | Done (develop) | Habilitada por TASK-002. Compras intactas; el origen es snapshot al crear. Suite 236/0/0; UI verificada |
 | EPIC-004/TASK-004 | Acotar el subtema de Licitación a Privada/Pública (+ ocultar sin hijos) | Ale Gallo | S | Done (develop) | Domain de vista en ME (no toca `tmc_data`); alinea con lo que JUNCO consume (confirmado). Suite 241/0/0; UI verificada |
+| EPIC-004/TASK-005 | Subtema de Licitación requerido (upstream de JUNCO) | Ale Gallo | S | Done (develop) | Required condicional + validación create/write (no rompe dato viejo). Concurso/directa intactos. Suite 254/0/0; UI verificada |
+| EPIC-004/TASK-006 | Tema requerido al alta + filtro "Sin clasificar" | Ale Gallo | XS | Done (develop) | Compra sin tema no queda invisible para JUNCO. Required de vista (solo nuevas) + filtro; sin backend. Suite 254/0/0; UI verificada |
 | EPIC-003/TASK-003 | Orden de la lista por fecha de ingreso (más reciente primero) | Ale Gallo | XS | Done (develop) | `_order = "intake_date desc, id desc"`. Suite 236/0/0; UI verificada |
 | EPIC-003/TASK-004 | Búsqueda y group-by por Jurisdicción en la lista | Ale Gallo | XS | Done (develop) | Cierra IDEA 1. Campo buscable + group-by (searchpanel descartado por cardinalidad). Suite 246/0/0; UI verificada |
 | EPIC-005/TASK-001 | Remover campo muerto `allowed_dependence_ids` | sin asignar | XS | Done | Removido; sin referencias; suite 201/0/0 |
