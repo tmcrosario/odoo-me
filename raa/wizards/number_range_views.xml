@@ -6,8 +6,8 @@
         <field name="model">raa.number_range</field>
         <field name="arch" type="xml">
             <list string="Document Range" editable="bottom">
-                <field name="number_from" />
-                <field name="number_to" />
+                <field name="number_from" options="{'enable_formatting': False}" />
+                <field name="number_to" options="{'enable_formatting': False}" />
             </list>
         </field>
     </record>

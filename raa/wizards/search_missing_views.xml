@@ -26,7 +26,11 @@
                     <separator string="Buscar por Numeración Máxima" />
                     <group colspan="2" col="2">
                         <field name="specify_maximum" />
-                        <field name="maximum" invisible="not specify_maximum" />
+                        <field
+                            name="maximum"
+                            invisible="not specify_maximum"
+                            options="{'enable_formatting': False}"
+                        />
                     </group>
                 </group>
                 <footer>
