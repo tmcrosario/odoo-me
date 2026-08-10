@@ -1,6 +1,6 @@
 {
     "name": "TMC RAA",
-    "version": "19.0.1.0.1",
+    "version": "19.0.1.0.2",
     "summary": "Sistema de Registro de Actos Administrativos",
     "author": "Tribunal Municipal de Cuentas - Municipalidad de Rosario",
     "website": "https://www.tmcrosario.gob.ar",

@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <!-- Default A4 sets header_spacing equal to margin_top, hiding the header -->
-    <record id="paperformat_tmc_report" model="report.paperformat">
-        <field name="name">TMC Report A4</field>
-        <field name="format">A4</field>
-        <field name="orientation">Portrait</field>
-        <field name="margin_top">32</field>
-        <field name="margin_bottom">26</field>
-        <field name="margin_left">12</field>
-        <field name="margin_right">12</field>
-        <field name="header_spacing">9</field>
-        <field name="header_line" eval="False" />
-        <field name="dpi">90</field>
-    </record>
-
     <record id="action_missing_raa_report" model="ir.actions.report">
         <field name="name">Missing Administrative Acts Report</field>
         <field name="model">raa.entry</field>
         <field name="report_name">raa.missing_raa_report</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="paperformat_id" ref="paperformat_tmc_report" />
+        <field name="paperformat_id" ref="tmc.paperformat_tmc_report" />
         <field
             name="print_report_name"
         >'RAA_Faltantes_%s_%s' % (object.dependence_id.name, object.period)</field>

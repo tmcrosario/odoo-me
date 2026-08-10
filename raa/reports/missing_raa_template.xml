@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <!-- Self-contained styles: wkhtmltopdf can't fetch the asset bundle here -->
+    <!-- Body styles only; chrome (logo/header/footer/paperformat) lives in tmc -->
     <template id="report_tmc_styles">
         <style>
             .tmc-report { font-family: Helvetica, Arial, sans-serif; color: #000;
@@ -24,74 +24,14 @@
         </style>
     </template>
 
-    <!-- Header/footer are rendered as standalone documents by wkhtmltopdf,
-         so they cannot reuse the body styles above -->
-    <template id="report_tmc_chrome_styles">
-        <style>
-            .tmc-chrome { font-family: Helvetica, Arial, sans-serif; color: #000;
-            font-size: 10px; }
-            .tmc-chrome table { width: 100%; border-collapse: collapse; }
-            .tmc-chrome td { vertical-align: top; }
-            .tmc-chrome img.logo { width: 78mm; }
-            .tmc-chrome .meta { text-align: right; line-height: 1.6; }
-            .tmc-chrome .meta .rtitle { font-weight: bold; }
-            /* Odoo never passes --footer-spacing, and a margin would collapse */
-            div.footer { padding-top: 9mm; }
-            .tmc-chrome .foot { border-top: 1px solid #999; padding-top: 5px;
-            text-align: center; color: #333; font-size: 9px; line-height: 1.4; }
-        </style>
-    </template>
-
-    <template id="report_tmc_header">
-        <div class="header tmc-chrome">
-            <t t-call="raa.report_tmc_chrome_styles" />
-            <table>
-                <tr>
-                    <td>
-                        <img
-                            class="logo"
-                            t-att-src="env['raa.report_logo'].data_uri()"
-                            alt=""
-                        />
-                    </td>
-                    <td class="meta">
-                        <div class="rtitle">Reporte de Mesa de Entradas</div>
-                        <div>
-                            <b>Fecha:</b>
-                            <t
-                                t-out="datetime.date.today()"
-                                t-options='{"widget": "date"}'
-                            />
-                        </div>
-                        <div>
-                            <b>Página:</b>
-                            <span class="page" />
-                            de
-                            <span class="topage" />
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </template>
-
-    <template id="report_tmc_footer">
-        <div class="footer tmc-chrome">
-            <t t-call="raa.report_tmc_chrome_styles" />
-            <div class="foot">
-                <div>
-                    Reporte generado por RAA – Sistema de Registro de Actos
-                    Administrativos
-                </div>
-                <div>Tribunal Municipal de Cuentas – Municipalidad de Rosario</div>
-            </div>
-        </div>
-    </template>
-
     <template id="missing_raa_report">
         <t t-call="web.html_container">
+            <t t-set="report_title">Reporte de Mesa de Entradas</t>
+            <t
+                t-set="footer_line"
+            >Reporte generado por RAA – Sistema de Registro de Actos Administrativos</t>
             <t t-foreach="docs" t-as="o">
-                <t t-call="raa.report_tmc_header" />
+                <t t-call="tmc.report_tmc_header" />
                 <div
                     class="article tmc-report"
                     t-att-data-oe-model="o._name"
@@ -172,7 +112,7 @@
                         </p>
                     </t>
                 </div>
-                <t t-call="raa.report_tmc_footer" />
+                <t t-call="tmc.report_tmc_footer" />
             </t>
         </t>
     </template>
