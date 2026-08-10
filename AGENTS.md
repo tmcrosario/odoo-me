@@ -1,4 +1,4 @@
-# Claude Instructions for `odoo-me`
+# Agent conventions for `odoo-me`
 
 TMC Odoo 19.0 addon repository.
 
