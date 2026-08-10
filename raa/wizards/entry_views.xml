@@ -8,7 +8,7 @@
             <form string="Administrative Acts Entry">
                 <group string="Ingresar Datos de Documentos">
                     <group>
-                        <field name="entry_date" />
+                        <field name="entry_date" options="{'numeric': True}" />
                     </group>
                     <group>
                         <field name="period" />

@@ -14,7 +14,7 @@
         <field name="arch" type="xml">
             <list default_order="entry_date desc">
                 <field name="document_id" />
-                <field name="entry_date" />
+                <field name="entry_date" width="150px" options="{'numeric': True}" />
                 <field name="dependence_id" />
                 <field name="create_uid" string="Ingresado por" />
             </list>
@@ -37,7 +37,11 @@
                     name="dependence_id"
                     filter_domain="[('dependence_id', 'ilike', self)]"
                 />
-                <field name="entry_date" filter_domain="[('entry_date', '>=', self)]" />
+                <field
+                    name="entry_date"
+                    filter_domain="[('entry_date', '>=', self)]"
+                    options="{'numeric': True}"
+                />
                 <group>
                     <filter
                         name="group_by_dependence"
