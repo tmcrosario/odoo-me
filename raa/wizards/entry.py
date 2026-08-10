@@ -37,7 +37,9 @@ class Entry(models.TransientModel):
 
     document_type_id = fields.Many2one(comodel_name="tmc.document_type", required=True)
 
-    document_type_ids = fields.Many2many(related="dependence_id.document_type_ids")
+    document_type_ids = fields.Many2many(
+        related="dependence_id.document_type_ids", string="Available Document Types"
+    )
 
     specify_maximum = fields.Boolean()
 
@@ -116,10 +118,8 @@ class Entry(models.TransientModel):
         return {"last": last, "maximum": maximum, "missing": missing_formatted}
 
     def generate_report(self):
-        data = self.search_missing()
-        return self.env.ref("raa.action_missing_raa_report").report_action(
-            self, data=data
-        )
+        # Report recomputes it; a big list via report_action data overflows the URL.
+        return self.env.ref("raa.action_missing_raa_report").report_action(self)
 
     def create_registry_aa(self):
         raa_ids = []

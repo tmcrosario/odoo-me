@@ -7,11 +7,11 @@ class ReportMissingRaa(models.AbstractModel):
 
     @api.model
     def _get_report_values(self, docids, data=None):
-        # Nest the wizard payload under `data` so the template can read it
+        # Recompute here; large lists via report_action data overflow the URL.
         docs = self.env["raa.entry"].browse(docids)
         return {
             "doc_ids": docids,
             "doc_model": "raa.entry",
             "docs": docs,
-            "data": data or {},
+            "data": docs[:1].search_missing() if docs else {},
         }

@@ -430,3 +430,8 @@ msgstr "Debe ingresar valores mayores a 0 (cero)"
 #: model_terms:ir.ui.view,arch_db:raa.missing_raa_report
 msgid "Último Ingresado"
 msgstr "Último Ingresado"
+
+#. module: raa
+#: model:ir.model.fields,field_description:raa.field_raa_entry__document_type_ids
+msgid "Available Document Types"
+msgstr "Tipos de documento disponibles"
