@@ -71,6 +71,15 @@ first" ante una licitación sin subtipo → con el required condicional de ME, *
 nuevas ese camino queda inalcanzable por UI**. Además `action_submit_to_control` valida el
 `process_type` aguas abajo (un proceso sin tipo tampoco avanza). Sin regresión.
 
+## ⚠️ Contrato cross-repo (junco depende de esto, 2026-08-07)
+
+Junco adaptó un test suyo que creaba a propósito una licitación **sin** subtipo (para blindar un
+guard interno): ese fixture ya no se puede armar, así que ahora **asserta que ME lo rechaza con
+`ValidationError` al crear**. → **La suite de junco depende de que
+`_validate_licitacion_subtopic` siga rechazando una licitación sin subtipo con `ValidationError`
+en create/write.** Si se **relaja, se mueve, o se cambia el tipo de excepción**, avisar a
+`odoo-junco` para que ajusten su test.
+
 ## Resultado / cierre
 
 Cerrada (Done) el 2026-08-07 sobre `develop`. El subtema de una Licitación es obligatorio
