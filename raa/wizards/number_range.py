@@ -1,4 +1,4 @@
-from odoo import _, api, exceptions, fields, models
+from odoo import api, exceptions, fields, models
 
 
 class NumberRange(models.TransientModel):
@@ -15,12 +15,14 @@ class NumberRange(models.TransientModel):
     def _check_ranges(self):
         for number_range in self:
             if number_range.number_from > number_range.number_to:
-                raise exceptions.ValidationError(_("There are values in conflict"))
+                raise exceptions.ValidationError(
+                    self.env._("There are values in conflict")
+                )
             elif number_range.number_from < 1 or number_range.number_to < 1:
                 raise exceptions.ValidationError(
-                    _("You must enter values greater than 0 (zero)")
+                    self.env._("You must enter values greater than 0 (zero)")
                 )
             elif number_range.number_to > 9999:
                 raise exceptions.ValidationError(
-                    _("Maximum number allowed has been exceeded")
+                    self.env._("Maximum number allowed has been exceeded")
                 )

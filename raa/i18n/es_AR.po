@@ -35,12 +35,6 @@ msgid ""
 msgstr "<b>Página:</b>\n                            <span class=\"page\"/>\n                            de\n                            <span class=\"topage\"/>"
 
 #. module: raa
-#. odoo-python
-#: code:addons/raa/wizards/entry.py:0
-msgid "Actos Administrativos faltantes"
-msgstr "Actos Administrativos faltantes"
-
-#. module: raa
 #: model:ir.actions.act_window,name:raa.registry_aa_action_view_form
 msgid "Administrative Act Registries"
 msgstr "Registros"
@@ -134,7 +128,6 @@ msgstr "Rango"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_entry__document_type_id
-#: model:ir.model.fields,field_description:raa.field_raa_entry__document_type_ids
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__document_type_id
 msgid "Document Type"
 msgstr "Tipo de Documento"

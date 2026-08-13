@@ -1,6 +1,6 @@
 from itertools import count, groupby
 
-from odoo import _, api, exceptions, fields, models
+from odoo import api, exceptions, fields, models
 from odoo.api import SUPERUSER_ID
 
 
@@ -54,25 +54,28 @@ class Entry(models.TransientModel):
         res = self.search_missing()
         if res["maximum"]:
             if res["missing"]:
+                # Shared counter collapses consecutive numbers into ranges;
+                # input is pre-sorted so itertools.groupby semantics are correct.
+                counter = count()
                 missing = ", ".join(
                     as_range(g)
-                    for _, g in groupby(
+                    for _, g in groupby(  # pylint: disable=bad-builtin-groupby
                         res["missing"],
-                        key=lambda n, c=count(): int(n) - next(c),
+                        key=lambda n: int(n) - next(counter),
                     )
                 )
-                title = _("Actos Administrativos faltantes")
-                message = _("Missing administrative acts: %s") % missing
+                title = False
+                message = self.env._("Missing administrative acts: %s", missing)
                 notif_type = "warning"
                 sticky = True
             else:
-                title = _("Sin faltantes")
-                message = _("No missing administrative acts")
+                title = self.env._("Sin faltantes")
+                message = self.env._("No missing administrative acts")
                 notif_type = "success"
                 sticky = False
         else:
-            title = _("Sin registros")
-            message = _("No existing registries matching criteria")
+            title = self.env._("Sin registros")
+            message = self.env._("No existing registries matching criteria")
             notif_type = "info"
             sticky = False
 
@@ -125,7 +128,7 @@ class Entry(models.TransientModel):
         raa_ids = []
 
         if not self.range_ids:
-            raise exceptions.UserError(_("No ranges were specified"))
+            raise exceptions.UserError(self.env._("No ranges were specified"))
 
         for aa_range in self.range_ids:
             for number in range(aa_range.number_from, aa_range.number_to + 1):
@@ -162,8 +165,8 @@ class Entry(models.TransientModel):
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": _("Success"),
-                    "message": _("Registries were created successfully"),
+                    "title": self.env._("Success"),
+                    "message": self.env._("Registries were created successfully"),
                     "type": "success",
                     "sticky": False,
                 },
@@ -173,8 +176,10 @@ class Entry(models.TransientModel):
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": _("Info"),
-                    "message": _("No new registries were created. They already exist."),
+                    "title": self.env._("Info"),
+                    "message": self.env._(
+                        "No new registries were created. They already exist."
+                    ),
                     "type": "warning",
                     "sticky": False,
                 },
@@ -187,4 +192,6 @@ class Entry(models.TransientModel):
     @api.constrains("maximum")
     def _check_maximum(self):
         if self.maximum > 6000:
-            raise exceptions.UserError(_("Maximum number allowed has been exceeded"))
+            raise exceptions.UserError(
+                self.env._("Maximum number allowed has been exceeded")
+            )
