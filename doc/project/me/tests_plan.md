@@ -1,8 +1,9 @@
 # Plan de tests — módulo `me` (Mesa de Entradas)
 
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
-`junco:EPIC-015`, `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-08-07: 27 clases, 254 métodos de test**, suite verde.
+`junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
+`EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
+**Estado al 2026-08-14: 27 clases, 255 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -13,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **254** | `odoo.tests.result: 0 failed, 0 error(s) of 254 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **255** | `odoo.tests.result: 0 failed, 0 error(s) of 255 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 308 | `odoo.tests.stats: me: 308 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -90,11 +91,11 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestResponsibleUser011` | 4 | `user_id` como responsable operativo en destino | #011 |
 | `TestAutoOriginPreload020` | 5 | pre-carga de `origin_dependence_id` en `default_get()` | #020 |
 
-### `test_security.py` — 5 métodos (junco:EPIC-015)
+### `test_security.py` — 6 métodos (junco:EPIC-015)
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestMeSecurity` | 5 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; un **lector no puede crear expedientes**; y el **orden de la escalera del privilegio ME** (`test_me_privilege_ladder_order`) | junco:EPIC-015 (+ /TASK-004) |
+| `TestMeSecurity` | 6 | Permisos cross-sistema ME↔GD: el operativo hereda `tmc.group_read_only` y **no** `tmc.group_user`; **puede** crear expedientes (el `tmc.document` padre se crea con el `create` elevado — protege la regresión que rompería quitar el `sudo`); **lee** `tmc.document` pero no lo escribe ni lo crea; un **lector no puede crear expedientes**; un **lector de GD no puede escribir la fecha por `_update_document_date`** (`test_gd_read_only_cannot_update_document_date` — el SQL crudo ahora re-impone `check_access('write')`); y el **orden de la escalera del privilegio ME** (`test_me_privilege_ladder_order`) | junco:EPIC-015 (+ /TASK-004) |
 
 ### `test_save_button.py` — 2 métodos (EPIC-006)
 

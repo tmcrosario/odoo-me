@@ -133,6 +133,7 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
 | `create()` → `raa.registry_aa.sudo().create()` (~l.563) | el alta en RAA es un efecto interno del sistema; el operador no necesita permisos en `raa` |
 | `_set_main_topic_id()` / `_set_secondary_topic_id()` / `write()` → `document_id.sudo().write()` (~l.257 / 268 / 697) | campos delegados van a `tmc.document`; el operativo hereda `tmc.group_read_only` (solo `read` sobre `tmc.document`), así que sin `sudo` no podría. El guard de ME es la frontera |
 | `action_set_origin_from_junco()` → `sudo().write()` (~l.437; def ~l.389) | da permiso ORM para escribir los 2 campos de origen; el canal `me_origin_from_junco` los acota en `write()` |
+| `create()` → `record.sudo()._update_document_date()` | el seteo de fecha del padre es parte de la creación elevada (arriba); sin `sudo` el `check_access('write')` que ahora impone el método cortaría el alta del operativo (read-only sobre GD). El camino gobernado por ACL real es `write()` (manager-only, sin `sudo`) |
 
 Todas son `sudo()` **acotadas**: a una operación puntual (las 3 últimas) o a un tramo con
 des-elevación inmediata + chequeo previo de ACL (el `create()`).
@@ -145,6 +146,9 @@ des-elevación inmediata + chequeo previo de ACL (el `create()`).
 - **ACL del expediente bajo elevación** → `TestMeSecurity.test_me_read_only_cannot_create_expediente`:
   un lector no puede crear expedientes, y el test **discrimina** que el `AccessError` venga del ACL
   de `me.document_exp` (no del de `me.document_movement`, que lo enmascaraba).
+- **Escritura de fecha de GD por SQL crudo gobernada** → `TestMeSecurity.test_gd_read_only_cannot_update_document_date`:
+  un lector de GD que llega a `_update_document_date` recibe `AccessError` (antes el SQL directo
+  pasaba en silencio); el test **discrimina** que el corte venga de `tmc.document`.
 - No-poseedor no puede registrar/corregir movimiento → `TestMovementPoseedor027`, `TestMovementCorrection028`.
 - Operador no puede escribir campos arbitrarios del expediente / movimiento → guards (arriba);
   EPIC-004 verifica que un `me.group_user` no puede escribir `jurisdiction_dependence` por
@@ -161,9 +165,15 @@ des-elevación inmediata + chequeo previo de ACL (el `create()`).
   lectura cubierta por `tmc.group_read_only`.
 - `raa.registry_aa`: el alta la hace `me` con `sudo()`; el operador no requiere ACL en `raa`.
 
-> **Bypass registrado (deuda pre-existente, no huérfana):** `_update_document_date()`
-> (`document_exp.py`, ~l.603; SQL crudo ~l.617) escribe `tmc.document` **por SQL directo**, esquivando
-> ORM y ACL. **No la causó junco:EPIC-015** y no se rompe bajo la opción 1. Está parkeada como deuda de
-> seguridad pre-existente en `odoo-junco/doc/project/brainstorming.md` → "Deuda de seguridad detectada
-> (auditoría EPIC-015, 2026-07)", junto con `raa.group_manager` (que no hereda `tmc.group_manager`).
-> Sigue siendo **pregunta abierta** (no hay decisión sobre si debe gobernarse), pero tiene dueño.
+> **Bypass gobernado (deuda cerrada, 2026-08-14):** `_update_document_date()`
+> (`document_exp.py`) escribe `tmc.document` **por SQL directo** (a propósito: escapa la regla
+> año==período de `tmc.document` para archivar un documento viejo en un expediente del período
+> actual — **el SQL se mantiene**). El SQL esquiva ORM y ACL, así que la escritura de la fecha
+> quedaba **no gobernada**. Cerrada re-imponiendo el ACL a mano **justo antes del `cr.execute`**:
+> `self.document_id.check_access('write')` (mismo patrón que el `check_access('create')` del alta).
+> El alta legítima corre este método bajo `sudo()` (el seteo de fecha es parte de la creación
+> elevada del padre — ver tabla de `sudo()`), así que el operativo (read-only sobre GD) sigue
+> pudiendo dar de alta; el camino **gobernado por ACL real es `write()`**, que solo alcanzan los
+> managers (con `write` sobre `tmc.document`). Detectada por la auditoría de junco:EPIC-015;
+> **no la causó** esa épica ni se rompía bajo la opción 1. Cubierta por
+> `TestMeSecurity.test_gd_read_only_cannot_update_document_date`.

@@ -124,3 +124,16 @@ class TestMeSecurity(TransactionCase):
                 'document_type_id': self.exp_type.id,
                 'number': 900200, 'period': '2026',
             })
+
+    # _update_document_date escribe la fecha de GD con SQL crudo (para escapar la regla
+    # año==período de tmc y archivar un documento viejo en un expediente del período
+    # actual). El SQL saltea el ORM y, con él, ir.model.access: sin gobierno, un caller
+    # sin write sobre tmc.document escribiría la fecha igual. El método re-impone el ACL a
+    # mano (check_access('write') sobre document_id) → un lector de GD recibe AccessError.
+    # La fecha es válida (no futura, ingreso>=fecha) para que lo ÚNICO que pueda cortar sea
+    # el ACL y no una validación previa. Sin el fix este llamado pasaría en silencio.
+    def test_gd_read_only_cannot_update_document_date(self):
+        with self.assertRaises(AccessError) as cm:
+            self.exp.with_user(self.me_user)._update_document_date('2026-02-11')
+        # el corte debe venir de tmc.document (la frontera GD), no de otro modelo
+        self.assertIn('tmc.document', str(cm.exception))

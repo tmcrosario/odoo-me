@@ -22,7 +22,7 @@ Las épicas agrupan capacidades o líneas funcionales. Las tasks viven bajo
 | Épica (repo dueño) | Título | Qué tocó en `me` | Verdad durable en ME |
 | --- | --- | --- | --- |
 | **`junco:EPIC-011`** (`odoo-junco`) | Clasificar expedientes de compra directa / concurso de precios | `_EXP_ROOT_TOPIC_XMLIDS` +2 temas raíz (contratación directa, concurso de precios) y su test — commit `f0af6ac` | [`business_rules.md`](../project/me/business_rules.md) (regla "Temas raíz del expediente") · [`models.md`](../project/me/models.md) |
-| **`junco:EPIC-015`** (`odoo-junco`) | Permisos cross-sistema: ME edita ME y solo lee GD (opción 1) | `me_groups.xml` (`implied_ids` de `group_user`/`group_read_only`), `create()` elevado + `check_access` previo, suite `test_security.py` — commits `bfb1926` + `181d2e6` | [`security.md`](../project/me/security.md) (postura, grupos, elevaciones, regla durable) |
+| **`junco:EPIC-015`** (`odoo-junco`) | Permisos cross-sistema: ME edita ME y solo lee GD (opción 1) | `me_groups.xml` (`implied_ids` de `group_user`/`group_read_only`), `create()` elevado + `check_access` previo, suite `test_security.py` — commits `bfb1926` + `181d2e6`. **Fix 2026-08-14:** el bypass SQL de `_update_document_date` (escritura de fecha de GD sin ACL) quedó gobernado con `check_access('write')` + `sudo()` en `create()` (deuda de la auditoría EPIC-015 cerrada; test `test_gd_read_only_cannot_update_document_date`) | [`security.md`](../project/me/security.md) (postura, grupos, elevaciones, regla durable) |
 
 **Cerrado (gobernado en junco):** `junco:EPIC-015/TASK-004` — el dropdown del privilegio ME no
 ofrecía «User» a usuarios con grupos de JUNCO. Resuelto con la **cadena real** (opción b):

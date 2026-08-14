@@ -764,7 +764,11 @@ class DocumentExp(models.Model):
         # triggered by movement creation (e.g. has_reentry recompute) also pass.
         env_create = records.env
         for record, date_val in zip(records, dates):
-            record._update_document_date(date_val)
+            # sudo(): el seteo de fecha es parte de la creación del tmc.document padre, que
+            # ya se eleva (EPIC-015: el operativo lee GD pero no la escribe). Sin esto, el
+            # check_access('write') que ahora impone _update_document_date cortaría el alta
+            # del operativo. El camino gobernado por ACL real es write() (managers, sin sudo).
+            record.sudo()._update_document_date(date_val)
         tmc_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
         mesa_entrada_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         for record in records:
@@ -851,6 +855,15 @@ class DocumentExp(models.Model):
         # Mismo embudo, misma razón: el SQL de abajo no dispara constrains, así que la
         # coherencia ingreso >= fecha del documento se valida acá contra el valor NUEVO.
         self._validate_intake_not_before_document_date(doc_date=new_date)
+
+        # El UPDATE crudo de abajo saltea el ORM y, con él, ir.model.access y las record
+        # rules de tmc.document: sin esto, cualquiera que llegue a este método escribe la
+        # fecha aunque no tenga write sobre GD. Se re-impone el ACL a mano (misma API que
+        # create(), ~L751) para que la escritura quede gobernada. El alta legítima corre
+        # este método bajo sudo (el seteo de fecha es parte de la creación elevada del
+        # padre, EPIC-015), así que ahí pasa; el camino gobernado de verdad es write()
+        # (solo managers lo alcanzan, sin sudo → se les exige el write real sobre GD).
+        self.document_id.check_access('write')
 
         # Actualizar directamente en la base de datos para evitar la validación
         self.env.cr.execute(
