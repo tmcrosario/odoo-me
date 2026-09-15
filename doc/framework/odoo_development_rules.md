@@ -14,6 +14,7 @@ When a rule changes in a future Odoo version, update this file or document the e
 - Business rules belong in backend Python, not only in views.
 - UI rules must not be the only security barrier.
 - Keep changes small and cohesive within the task scope.
+- Comment sparingly: only for **non-obvious logic or a deliberate decision** — the *why*, not the *what*. No comments that restate the code, label sections, or add meta-notes (e.g. "REVIEW dev", "TODO cleanup"). Normative context (decrees/articles/decisions) goes in the docs/BRs, not inline — a short pointer to the BR is fine. Match the surrounding code's comment density; do not add comments to data XML/CSV.
 
 ## Models
 

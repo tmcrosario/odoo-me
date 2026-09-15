@@ -332,3 +332,36 @@ cuando no está en legajo) y, opcional, como columna visible en la lista.
 - `legajo_number` vive en el movimiento (#026); el fix `[FIX] no perder legajo_number` (1547b8a)
   es el que dejó que se cargue bien.
 - Modo estimado: **S** (computed + label en vista + tests). Toca campo persistente/computed → AC antes de código.
+
+## IDEA 6 - Revisión de comentarios de código de `me` vs. la convención
+
+> Registrada 2026-09-15. Convención definida por el usuario, **cross-repo con `odoo-junco`** (allá:
+> commit `e9e2a4c`). La regla vive en `doc/framework/odoo_development_rules.md` → General Principles.
+
+### Resumen
+
+La convención ("comentar solo lógica no obvia o una decisión deliberada: el porqué, no el qué")
+aplica **de acá en adelante**. El código existente de `me` tiene comentarios que no la cumplen.
+
+### Pendiente
+
+- [ ] Revisión de comentarios de código de `me` vs. la convención (algún momento). Barrido de los
+      comentarios existentes para sacar etiquetas / meta-notas / comentarios que repiten el "qué", y
+      conservar solo los "por qué no obvio" + punteros a BR. No urgente (higiene, sin valor de
+      usuario). Cross-repo con junco.
+
+## IDEA 7 - Fechas "hoy" en UTC vs. hora local (hallazgos laterales, 2026-09-15)
+
+> Surgieron en la revisión adversarial del margen de 60 s de `_check_date_not_future`. **No se
+> tocaron** (fuera de alcance); verificados leyendo el código. El proceso Odoo corre en UTC.
+
+### Pendiente
+
+- [ ] **`intake_date` no futura se chequea contra la fecha UTC** (`document_exp.py:437`,
+      `fields.Date.today()`), mientras que la fecha del documento usa la del usuario
+      (`:851`, `fields.Date.context_today`). Entre las 21:00 y las 24:00 (Argentina, UTC-3) la fecha
+      UTC ya es "mañana" → se puede cargar un ingreso con la fecha de **mañana** y pasa. Candidato:
+      usar `context_today`. Toca una validación → AC antes de código.
+- [ ] **`raa.entry.period` se calcula al levantar el servidor** (`raa/wizards/entry.py:25`,
+      `default=str(date.today().year)` sin lambda): después de Año Nuevo el wizard sigue proponiendo
+      el año anterior hasta reiniciar Odoo. Candidato: default con lambda / `context_today`.
