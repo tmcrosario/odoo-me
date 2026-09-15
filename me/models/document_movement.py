@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from odoo import _, api, exceptions, fields, models
 
 
@@ -87,10 +89,14 @@ class Movement(models.Model):
                     )
         return defaults
 
+    # Absorbs wall-clock steps between setting a movement to "now" and validating it.
+    _FUTURE_DATE_TOLERANCE = timedelta(seconds=60)
+
     @api.constrains('date')
     def _check_date_not_future(self):
+        limit = fields.Datetime.now() + self._FUTURE_DATE_TOLERANCE
         for record in self:
-            if record.date and record.date > fields.Datetime.now():
+            if record.date and record.date > limit:
                 raise exceptions.ValidationError(
                     _("Movement date cannot be in the future.")
                 )

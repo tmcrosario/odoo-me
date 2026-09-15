@@ -245,7 +245,7 @@ desde la pestaña "Movimientos" en el formulario.
 - `origin_dependence_id` y `destination_dependence_id` required=True: `me/models/document_movement.py`
 - Constraint UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date):
   impide duplicados exactos — `me/models/document_movement.py` `_sql_constraints`
-- `_check_date_not_future`: rechaza date > now() — `me/models/document_movement.py`
+- `_check_date_not_future`: rechaza date > now() + 60 s (`_FUTURE_DATE_TOLERANCE`, absorbe saltos del reloj de pared) — `me/models/document_movement.py`
 - `_check_date_not_before_intake`: rechaza date.date() < expediente.intake_date — `me/models/document_movement.py`
 - `user_id` representa al responsable en destino (no quien cargó); auditoría en `create_uid` (Odoo nativo)
 - `user_id` readonly cuando `is_automatic = True`: `me/views/document_exp_views.xml`

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from odoo import fields
 from odoo.exceptions import ValidationError
@@ -118,10 +119,9 @@ class TestDocumentMovement(TransactionCase):
 
     def test_same_path_different_date_does_not_raise(self):
         """Crear dos movimientos mismo exp+orig+dest pero fecha distinta no falla."""
-        # Ambas fechas deben ser pasadas (>= intake_date) y distintas entre sí.
-        # Usar horas del mismo día para no cruzar la restricción de fecha futura.
-        date1 = fields.Datetime.from_string(str(self.today) + ' 08:00:00')
-        date2 = fields.Datetime.from_string(str(self.today) + ' 09:00:00')
+        # Start of the UTC day: never in the future and never before intake_date, at any run hour.
+        date1 = fields.Datetime.from_string(str(self.today) + ' 00:00:00')
+        date2 = fields.Datetime.from_string(str(self.today) + ' 00:00:01')
         self._make_movement(date=date1)
         mov2 = self._make_movement(date=date2)
         self.assertTrue(mov2.id)
@@ -131,6 +131,24 @@ class TestDocumentMovement(TransactionCase):
         future = fields.Datetime.now() + timedelta(days=1)
         with self.assertRaises(ValidationError):
             self._make_movement(date=future)
+
+    def test_now_movement_tolerates_clock_step_back(self):
+        moment = fields.Datetime.now()
+        with patch.object(fields.Datetime, 'now', return_value=moment - timedelta(seconds=5)):
+            movement = self._make_movement(date=moment)
+        self.assertTrue(movement.id)
+
+    def test_date_at_tolerance_boundary_does_not_raise(self):
+        moment = fields.Datetime.now()
+        with patch.object(fields.Datetime, 'now', return_value=moment):
+            movement = self._make_movement(date=moment + timedelta(seconds=60))
+        self.assertTrue(movement.id)
+
+    def test_date_beyond_tolerance_raises(self):
+        moment = fields.Datetime.now()
+        with patch.object(fields.Datetime, 'now', return_value=moment):
+            with self.assertRaises(ValidationError):
+                self._make_movement(date=moment + timedelta(seconds=61))
 
     def test_date_before_intake_raises(self):
         """Crear movimiento con date.date() < expediente.intake_date lanza ValidationError."""

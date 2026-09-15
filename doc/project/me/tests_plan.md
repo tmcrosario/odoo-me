@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-08-14: 27 clases, 255 métodos de test**, suite verde.
+**Estado al 2026-09-15: 27 clases, 258 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,8 +14,8 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **255** | `odoo.tests.result: 0 failed, 0 error(s) of 255 tests`. Coincide con contar `def test_` en el fuente |
-| `stats` | 308 | `odoo.tests.stats: me: 308 tests` — cuenta distinto |
+| **Línea de resultado** (la que usamos) | **258** | `odoo.tests.result: 0 failed, 0 error(s) of 258 tests`. Coincide con contar `def test_` en el fuente |
+| `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
 en la doc de junco se bajaron a esta convención.
@@ -82,11 +82,11 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestNumberRange032` | 8 | rango de número 1–999999 | #032 |
 | `TestDefaultResponsible030` | 7 | `default_responsible_id` onchange en destino | #030 |
 
-### `test_document_movement.py` — 24 métodos
+### `test_document_movement.py` — 27 métodos
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestDocumentMovement` | 8 | integridad: origen/destino obligatorios, fecha (no futura/anterior), duplicado exacto | — |
+| `TestDocumentMovement` | 11 | integridad: origen/destino obligatorios, fecha (no futura/anterior), duplicado exacto; **margen de 60 s de "no futura"** con `now()` congelado por `patch` (retroceso de reloj no rompe un movimiento "ahora", borde exacto acepta, borde+1 s rechaza) | — |
 | `TestFojasMovimiento` | 7 | campo `fojas` en el movimiento (default/explícito/automático) | #015 |
 | `TestResponsibleUser011` | 4 | `user_id` como responsable operativo en destino | #011 |
 | `TestAutoOriginPreload020` | 5 | pre-carga de `origin_dependence_id` en `default_get()` | #020 |
