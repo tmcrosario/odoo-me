@@ -189,6 +189,7 @@ msgid "Maximum"
 msgstr "Máximo"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0 code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "Maximum number allowed has been exceeded"
@@ -200,30 +201,35 @@ msgid "Missing Administrative Acts Report"
 msgstr "Reporte de Actos Administrativos Faltantes"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Missing administrative acts: <b>%s</b>"
 msgstr "Actos Administrativos Faltantes: <b>%s</b>"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No existing registries matching criteria"
 msgstr "No existen registros que coincidan con el criterio de búsqueda"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No missing administrative acts"
 msgstr "No existen actos administrativos faltantes"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No new registries were created. They already exist."
 msgstr "Los registros que se intentan crear ya existen."
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No ranges were specified"
@@ -272,12 +278,14 @@ msgid "Read Only"
 msgstr "Sólo Lectura"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/models/registry_aa.py:0
 #, python-format
 msgid "Record already exists"
 msgstr "El registro ya existe"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Registries were created successfully"
@@ -315,12 +323,14 @@ msgid "Specify Maximum"
 msgstr "Especificar Máximo"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "Success"
 msgstr "Resultado"
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "There are values in conflict"
@@ -337,6 +347,7 @@ msgid "Wizard to load administrative acts"
 msgstr ""
 
 #. module: raa
+#. odoo-python
 #: code:addons/raa/wizards/number_range.py:0
 #, python-format
 msgid "You must enter values greater than 0 (zero)"

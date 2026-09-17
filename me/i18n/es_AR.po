@@ -382,18 +382,21 @@ msgstr "Usuario Odoo que queda a cargo del expediente en la dependencia destino 
 # ---------------------------------------------------------------------------
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "The document date is required."
 msgstr "La fecha de inicio del trámite es obligatoria."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "Intake date cannot be in the future."
 msgstr "La fecha de ingreso no puede ser una fecha futura."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -404,6 +407,7 @@ msgstr ""
 "Solo se aceptan DEM, TMC y CM."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -414,6 +418,7 @@ msgstr ""
 "cuando la jurisdicción seleccionada tiene reparticiones disponibles."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -426,12 +431,14 @@ msgstr ""
 "Solo un responsable de Mesa de Entrada puede corregir este valor."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "Existing Expediente"
 msgstr "Expediente Existente"
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "An expediente with this data already exists. Please verify the information."
@@ -442,12 +449,14 @@ msgstr "Ya existe un expediente con estos datos. Por favor, verifique la informa
 # ---------------------------------------------------------------------------
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "Movement date cannot be in the future."
 msgstr "La fecha del movimiento no puede ser una fecha futura."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid ""
@@ -477,24 +486,28 @@ msgid "Destination Abbreviation"
 msgstr "Abreviación del Destino"
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "File number is required when the destination is 'Adjunto a Legajo'."
 msgstr "El número de legajo es obligatorio cuando el destino es 'Adjunto a Legajo'."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "Only the current holder of the expediente can register a new movement."
 msgstr "Solo el responsable actual del expediente puede registrar un nuevo pase."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "Only the current holder of the expediente can correct a movement."
 msgstr "Solo el responsable actual del expediente puede corregir este movimiento."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "File number can only be set on movements with destination 'Adjunto a Legajo'."
@@ -506,12 +519,14 @@ msgid "Default Responsible"
 msgstr "Responsable por Defecto"
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "Invalid Number"
 msgstr "Número inválido"
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "Expediente number must be between 1 and 999,999 (6 digits maximum)."
@@ -528,6 +543,7 @@ msgid "Current Holder"
 msgstr "Responsable Actual"
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -538,6 +554,7 @@ msgstr ""
 "cargar al ingreso."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -548,12 +565,14 @@ msgstr ""
 "jurisdicción y repartición se cargan en Mesa al ingreso."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid "The document date cannot be in the future."
 msgstr "La fecha de inicio del trámite no puede ser futura."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
@@ -564,6 +583,7 @@ msgstr ""
 "expediente (%(period)s)."
 
 #. module: me
+#. odoo-python
 #: code:addons/me/models/document_exp.py:0
 #, python-format
 msgid ""
