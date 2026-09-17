@@ -233,7 +233,7 @@ msgstr "Los registros que se intentan crear ya existen."
 #: code:addons/raa/wizards/entry.py:0
 #, python-format
 msgid "No ranges were specified"
-msgstr "No se expecificaron rangos"
+msgstr "No se especificaron rangos"
 
 #. module: raa
 #: model:ir.model.fields,field_description:raa.field_raa_registry_aa__number
