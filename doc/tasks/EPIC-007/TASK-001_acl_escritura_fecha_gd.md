@@ -38,6 +38,10 @@ No incluye: quitar el SQL, ni cambiar la regla de período.
 - [x] El alta del operativo sigue funcionando (`test_me_user_can_create_expediente`).
 - [x] Suite `/me` verde con evidencia.
 
+## Verifier / close gate
+
+Sin bloque de verifier registrado al cierre (el framework lo exige en modo L). La evidencia que consta: suite 255/0/0 y el test de regresión; el diseño (`check_access('write')` + `sudo()` en `create()`) lo confirmó la sesión de `odoo-junco`, que pidió el cambio. Nota agregada el 2026-10-02 al auditar la documentación; **no se hizo un verifier retroactivo**.
+
 ## Tests evidenciados
 
 - Estado: OK

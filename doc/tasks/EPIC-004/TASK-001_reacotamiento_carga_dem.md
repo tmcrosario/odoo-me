@@ -131,6 +131,7 @@ documental formal queda para `/doc-close` tras el deploy joint con JUNCO.
 - Estado: OK
 - Comando: `docker compose -f develop.yml run --rm odoo odoo -d me1 --addons-path=/mnt/extra-addons/odoo-tmc,/mnt/extra-addons/odoo-tmc-data,/mnt/extra-addons/odoo-me,/mnt/extra-addons/odoo-junco,/mnt/addons/oca/* -u me --test-tags /me --stop-after-init --log-level=test`
   (el `--addons-path` explícito es necesario porque `run` sobrescribe el `command:` de develop.yml)
+  *Comando de la época (DB `me1`, servida): hoy se corre con el canónico de `doc/project/me/tests_plan.md`.*
 - Fecha: 2026-06-17
 - Resultado: **0 failed, 0 error(s) of 196 tests** (240 métodos, 7.2s, 19499 queries)
 - Salida (resumen):

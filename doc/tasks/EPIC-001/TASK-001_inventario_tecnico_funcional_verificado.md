@@ -61,6 +61,10 @@ Lectura dirigida de `me/models/document_exp.py`, `document_movement.py`,
 - Doc consolidada parcialmente histórica: no asumir sus afirmaciones como vigentes.
 - No inventar reglas: lo ambiguo queda como pregunta abierta.
 
+## Verifier / close gate
+
+Sin bloque de verifier registrado al cierre (el framework lo exige en modo L). Es un relevamiento solo-doc, sin cambios de código; la evidencia que consta es la reconciliación contra el código descripta en el cierre. Nota agregada el 2026-10-02 al auditar la documentación; **no se hizo un verifier retroactivo**.
+
 ## Tests evidenciados
 
 - Estado: N/A + motivo — task de relevamiento documental; no modifica código.

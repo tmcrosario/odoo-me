@@ -42,7 +42,7 @@ No incluye:
 - Los 25 hijos de Licitación son **taxonomía documental de GD** (usada por resoluciones, decretos,
   convenios…), **no** eventos de JUNCO (JUNCO tiene `junco.process_event` propio). El árbol
   `tmc.document_topic` es general (62 raíces / 201 temas); ME usa 4 raíces. **El dato NO está mal.**
-- **JUNCO consume el subtema:** `_derive_process_type_from_exp` (`purchase_process.py:692-699`)
+- **JUNCO consume el subtema:** `_derive_process_type_from_exp` (`purchase_process.py` de junco)
   mapea `publica→public_tender`, `privada→private_tender`, otra cosa→`False`; el gate
   `_set_current_expediente_id` **ya lanza UserError** si es `False`. → El recorte **alinea** con un
   requisito que junco ya imponía; vuelve ese error inalcanzable por UI para expedientes nuevos.

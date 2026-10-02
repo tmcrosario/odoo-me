@@ -9,7 +9,7 @@ Responsable: Ale Gallo
 
 ## Asignación
 
-- Estado de toma: tomada
+- Estado de toma: cerrada (Done)
 - Fecha de toma: 2026-07-28
 - Notas de coordinación: contrato confirmado con `odoo-junco` (ver "Coordinación con JUNCO").
 
@@ -124,6 +124,10 @@ me2 corre **solo en `en_US`** (ningún `es_AR` activo, todos los usuarios `en_US
 en inglés. El usuario confirmó que **producción debe correr en `es_AR`**. **Acción del usuario
 en deploy:** activar `es_AR` en prod para que se vean las traducciones (todas ya cargadas en el
 `.po`). No es cambio de código.
+
+## Verifier / close gate
+
+Sin bloque de verifier registrado al cierre (el framework lo exige en modo L). La evidencia que consta en la card: suite 233/0/0, UI verificada por el usuario en me2 y contrato confirmado con `odoo-junco`. Nota agregada el 2026-10-02 al auditar la documentación; **no se hizo un verifier retroactivo**.
 
 ## Tests evidenciados
 

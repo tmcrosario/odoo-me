@@ -110,6 +110,10 @@ No incluye:
   ya en producción, así que el costo es comparable).
 - **Tests** (`me/tests/test_document_exp.py`): ver Plan de tests (espejo de `TestCurrentHolder029`).
 
+## Verifier / close gate
+
+Sin bloque de verifier registrado al cierre (el framework lo exige en modo L). La evidencia que consta en la card: suite `me_test` 201/0/0 y UI verificada en me2. Nota agregada el 2026-10-02 al auditar la documentación; **no se hizo un verifier retroactivo**.
+
 ## Tests evidenciados
 
 - Estado: OK

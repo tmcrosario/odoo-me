@@ -69,7 +69,7 @@ cambios de permisos ni código.
 ## Resultado / cierre
 
 Cerrada (Done) el 2026-06-19. Entregado en `doc/project/me/security.md`:
-- **Grupos** (`me_groups.xml`): `group_user` (⇒ `tmc.group_user`), `group_manager`
+- **Grupos** (`me_groups.xml`) *— descripción al 2026-06-19; `junco:EPIC-015` la superó: hoy `group_user` implica `tmc.group_read_only`, no `tmc.group_user` (ver `security.md`)*: `group_user` (⇒ `tmc.group_user`), `group_manager`
   (⇒ user + `tmc.group_manager`; `implied_by base.group_erp_manager`), `group_read_only`.
 - **Matriz ACL** real (`ir.model.access.csv`): 2 modelos × 3 grupos; user sin unlink,
   read_only solo lectura. §8.5 resuelto (el CSV existe).

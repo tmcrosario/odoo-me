@@ -10,7 +10,7 @@ Branch: `chore/framework-migration`
 > Task card de bootstrap, previo a las épicas. Registra el port del Odoo Agentic
 > Delivery Framework desde odoo-junco a odoo-me como **copia propia e
 > independiente**, reconciliando la documentación que odoo-me ya tenía.
-> Plan de fondo: `MIGRATION_PLAN.md` (raíz del repo).
+> Plan de fondo: `MIGRATION_PLAN.md` (raíz del repo; **ya no existe**: se eliminó en `6c22dd8` por quedar superado por esta card; sigue en el historial de git).
 
 ## Objetivo
 
