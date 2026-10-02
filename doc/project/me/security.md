@@ -103,13 +103,23 @@ Si el usuario **no** es `me.group_manager` y **no** hay contexto `me_create_in_p
 - **Canal EPIC-004 (`me_origin_from_junco`):** excepción restringida a exactamente
   `jurisdiction_dependence` / `source_dependence_id`, para que JUNCO complete el origen de un
   DEM vía `action_set_origin_from_junco()` (valida DEM-only + nomenclador, eleva con `sudo()`).
-  No referencia grupos de `junco` (evita dependencia inversa); seguridad = validación interna
-  + superficie mínima.
+  También **rechaza con `UserError` los expedientes con tema Nota** (defensa en profundidad: lo que
+  impide llegar desde JUNCO es solo un domain de vista). No referencia grupos de `junco` (evita
+  dependencia inversa); seguridad = validación interna + superficie mínima.
 
 ### `me.document_exp.create()` (`me/models/document_exp.py`)
 **No tiene guard de grupo**: la frontera es el **ACL**, chequeado explícitamente
 (`self.check_access('create')`) **antes** de elevar — ver la tabla de `sudo()` y la regla durable
 del encabezado.
+
+### `me.document_exp.unlink()` (`me/models/document_exp.py`)
+Solo `me.group_manager` tiene `perm_unlink` sobre el expediente. El método borra primero el
+registro `raa.registry_aa` y recién después el `tmc.document` padre, y lo hace **sin `sudo()`**: el
+usuario necesita además permiso sobre `raa.registry_aa`. **Verificado 2026-10-02 en `me_test`:** un
+usuario que solo tiene `me.group_manager` recibe `AccessError` ("You are not allowed to access
+'Administrative Act Registry'") al borrar un expediente; con `raa.group_manager` además, el
+borrado funciona. `me.group_manager` implica `tmc.group_manager` pero **no** ningún grupo de RAA.
+Es la contracara de la tabla de `sudo()`: el alta en RAA va elevada, el borrado no.
 
 ### `me.document_movement.write()` (`me/models/document_movement.py`)
 Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un movimiento:

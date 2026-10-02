@@ -10,12 +10,10 @@
 > en ME al ingreso (TASK-002); el 1er movimiento automático usa `dependence_id` como origen, o
 > la jurisdicción en una Nota (TASK-003) — ver Workflow 1, Workflow 4 y `business_rules.md`);
 > **EPIC-003** (campo `current_location_dependence_id` = oficina interna actual, + filtros
-> por poseedor y por oficina de destino en la search view).
->
-> ⚠️ **Todavía no incorporados** (la fuente vigente es `business_rules.md` y las task cards):
-> el tema/subtema del expediente (EPIC-004/TASK-004..006) y el indicador de legajo
-> (EPIC-006/TASK-002). Los bloques Evidence citan métodos y campos, no números de línea (se
-> desfasan con cada cambio): buscarlos por nombre.
+> por poseedor y por oficina de destino en la search view); **EPIC-004/TASK-004..006**
+> (tema/subtema — Workflow 8); **EPIC-006/TASK-002** (indicador de legajo — Workflow 5).
+> Los bloques Evidence citan métodos y campos, no números de línea (se desfasan con cada
+> cambio): buscarlos por nombre.
 
 Este archivo documenta los workflows principales del módulo Mesa de Entradas
 basándose en el comportamiento real del código.
@@ -259,6 +257,9 @@ desde la pestaña "Movimientos" en el formulario.
      `destination_dependence_id` del último movimiento del expediente por `id`;
      si no hay movimientos previos, queda vacío; editable)
    - `destination_dependence_id` (requerido)
+   - `legajo_number` (visible y **obligatorio solo si el destino es Legajo, `LEG`**)
+   - `fojas` (pre-cargada con la `fojas` del último movimiento; es un snapshot, no la del
+     expediente)
    - `user_id` (default: usuario activo — representa al responsable en destino,
      no necesariamente quien cargó el movimiento; auditoría de carga en `create_uid`)
 4. Guarda el movimiento.
@@ -271,7 +272,14 @@ desde la pestaña "Movimientos" en el formulario.
 - Pestaña visible solo si el registro tiene id (`invisible="not id"`): `me/views/document_exp_views.xml`
 - `origin_dependence_id` y `destination_dependence_id` required=True: `me/models/document_movement.py`
 - Constraint UNIQUE(expediente_id, origin_dependence_id, destination_dependence_id, date):
-  impide duplicados exactos — `me/models/document_movement.py` `_sql_constraints`
+  impide duplicados exactos — `_unique_movement` (`models.Constraint`) en `me/models/document_movement.py`
+- `_check_legajo_number_required`: si el destino es `LEG`, `legajo_number` es obligatorio —
+  `me/models/document_movement.py`; en el popup, `required`/`invisible` según `destination_abbreviation`
+- Indicador "En Legajo Nº X" bajo el nombre del expediente (`current_legajo_number`, computed no
+  stored del **último** movimiento si su destino es `LEG`) y filtro "Adjuntos a Legajo" en la lista
+  (EPIC-006/TASK-002): `me/views/document_exp_views.xml`
+- El "último movimiento" (poseedor, ubicación, legajo, `origin` pre-cargado) se toma siempre por
+  `id`, no por `date`: `me.document_movement._order = "id"`
 - `_check_date_not_future`: rechaza date > now() + 60 s (`_FUTURE_DATE_TOLERANCE`, absorbe saltos del reloj de pared) — `me/models/document_movement.py`
 - `_check_date_not_before_intake`: rechaza date.date() < expediente.intake_date — `me/models/document_movement.py`
 - `user_id` representa al responsable en destino (no quien cargó); auditoría en `create_uid` (Odoo nativo)
@@ -372,15 +380,22 @@ según el estado de completitud de la Fase 1 del expediente.
 
 3. Cuando `dependence_id`, `number` y `period` están completos, `is_origin_complete` se vuelve `True`.
 4. `computed_name` muestra el nombre generado (ej. `EXP-000001-DEM/2025`).
-5. Se habilitan: `jurisdiction_dependence`, `source_dependence_id` (obligatorio si la
-   jurisdicción tiene reparticiones, salvo CM/TMC; filtrado a hijos de la jurisdicción),
-   `intake_date`, `main_topic_ids`, `document_object`, `date`, `external_key`, `fojas`.
-   Jurisdicción y repartición dependen del origen y del tema: ver Workflow 1, paso 6.
+5. Se habilitan, en dos columnas: a la izquierda `main_topic_id` (el tema va **arriba** de
+   la jurisdicción porque la gobierna), `secondary_topic_id` (solo si el tema tiene subtemas
+   ofrecibles), `document_object` (rotulado "Reference"), `jurisdiction_dependence` y
+   `source_dependence_id` (obligatorio si la jurisdicción tiene reparticiones, salvo CM/TMC;
+   filtrado a hijos de la jurisdicción); a la derecha `intake_date`, `date` (rotulada
+   "Procedure Start Date", obligatoria), `fojas` (obligatoria, readonly una vez guardado) y
+   `external_key`. Jurisdicción y repartición dependen del origen y del tema: ver Workflow 1,
+   paso 6; tema y subtema: Workflow 8.
 
 **Fase 3 — pestaña de movimientos (visible cuando el registro está guardado):**
 
 6. Cuando el registro tiene `id` (fue guardado), aparece el notebook con la pestaña "Movimientos".
 7. La pestaña "Documentos Relacionados" permanece siempre invisible.
+
+Aparte de las fases, bajo el nombre del expediente se muestra "En Legajo Nº X" cuando el último
+movimiento es un pase a Legajo (Workflow 5).
 
 ### Evidence
 
@@ -392,8 +407,8 @@ según el estado de completitud de la Fase 1 del expediente.
 - `computed_name` depende de los mismos 3 campos que `is_origin_complete`
 - Visibilidad del grupo Fase 2: `me/views/document_exp_views.xml` (`invisible="not is_origin_complete"`)
 - Visibilidad del notebook: `me/views/document_exp_views.xml` (`invisible="not id"`)
-- Tab "Documentos Relacionados" siempre invisible
-- `document_topic_ids` siempre invisible
+- Tab "Documentos Relacionados" (`related_document_ids`) siempre invisible
+- `document_topic_ids` **no figura en ninguna vista** (no se puede ver ni editar desde el form)
 
 **Inferred:**
 - El usuario puede completar los campos de Fase 1 sin guardar el registro.
@@ -451,3 +466,49 @@ el sistema no usa el ORM estándar para actualizar `tmc.document`.
   interceptan `cr.execute`.
 - No está definido si otros campos de `tmc.document` con constraints similares
   necesitarían el mismo tratamiento.
+
+
+--------------------------------------------------
+
+## 8. Clasificación del expediente: tema y subtema
+
+El tema (`main_topic_id`) y el subtema (`secondary_topic_id`) clasifican el expediente. JUNCO los
+consume para elegir qué compras puede vincular y para derivar el tipo de proceso; ME los usa además
+para decidir qué se exige al cargar (Workflow 1, paso 6).
+
+### Pasos
+
+1. En la Fase 2 (Workflow 6) el usuario elige el **tema**. La lista se acota a los **4 temas raíz**
+   admitidos (licitación, nota, contratación directa, concurso de precios). Es **obligatorio al
+   alta**, pero solo en la vista y solo para expedientes nuevos.
+2. El **subtema** aparece solo si el tema tiene subtemas para ofrecer: en **Licitación** se acota
+   a los 2 subtipos reales (Privada y Pública); en los demás temas se ofrecen sus hijos directos
+   (Contratación Directa: 4; Nota: 4; Concurso de Precios: ninguno, así que no aparece). Es
+   **obligatorio para Licitación** en expedientes nuevos.
+3. Al elegir el tema, `is_licitacion` e `is_nota` se recalculan **en vivo** (dependen de
+   `main_topic_ids` y del proxy `main_topic_id`), y activan los `required` de la vista antes de
+   guardar (subtema de Licitación; jurisdicción en DEM + Nota).
+4. Al guardar, el backend valida: en `create()` ambas reglas; en `write()` solo si el cambio toca el
+   tema o el subtema, para no rechazar expedientes viejos al editarles cualquier otro campo.
+5. En la lista, el filtro **"Sin clasificar"** (`main_topic_ids = False`) encuentra los expedientes
+   sin tema (los que entraron por ORM/import o anteriores a la regla).
+
+### Evidence
+
+**Observed in code** (`me/models/document_exp.py` salvo indicación):
+- Temas admitidos: `allowed_exp_topic_ids` / `_EXP_ROOT_TOPIC_XMLIDS` (por XML ID contra `tmc_data`); el
+  acote es solo el `domain` de la vista (no hay `@api.constrains` sobre el tema)
+- Subtemas ofrecidos: `_compute_allowed_secondary_topic_ids()`
+- Proxies de selección única: `main_topic_id` / `secondary_topic_id` (compute + inverse
+  `_set_main_topic_id()` / `_set_secondary_topic_id()` sobre los Many2many de `tmc.document`)
+- Reactividad: `_compute_is_licitacion()` y `_compute_is_nota()`, ambos con `@api.depends` sobre
+  `main_topic_ids` **y** `main_topic_id`
+- Validaciones: `_validate_licitacion_subtopic()` y `_validate_nota_jurisdiction()`, llamadas desde
+  `create()` y `write()`. **No** son `@api.constrains` sobre `is_licitacion`/`is_nota` porque al ser
+  stored se recomputan en cada `-u` y romperían los expedientes viejos
+- `required` de vista solo para nuevos (`not id`): `me/views/document_exp_views.xml`
+- Filtro "Unclassified" (es_AR "Sin clasificar"): `me/views/document_exp_views.xml`
+
+**Uncertain / pending definition:**
+- Si Contratación Directa debe ofrecer sus 4 subtemas (hoy la vista los ofrece como opcionales).
+  Decisión del usuario, ver `business_rules.md`.
