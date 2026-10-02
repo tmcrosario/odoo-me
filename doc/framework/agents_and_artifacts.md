@@ -108,7 +108,7 @@ card (ver `doc/framework/handoff_policy.md`).
 | Skills | `doc/skills/` | Prácticas reutilizables (feature, bugfix, review, close gate, analysis) |
 | Política Git | `doc/framework/git_policy.md` | Commit seguro guiado |
 | Antipatrones | `doc/framework/antipatterns.md` | Errores típicos a evitar |
-| Licencia | `LICENSE` | LGPL-3.0 |
+| Licencia | `LICENSE` | AGPL-3.0 (igual que los manifests de `me` y `raa`) |
 
 ## Mapa de artifacts del proyecto
 
@@ -118,9 +118,10 @@ card (ver `doc/framework/handoff_policy.md`).
 | Tasks | `doc/tasks/EPIC-XXX/` | Unidades de trabajo dentro de una épica |
 | Plantillas de task | `doc/tasks/templates/` | XS/S/M/FULL según intensidad |
 | Plantillas de épica | `doc/epics/templates/` | Estructura de epic card |
-| Docs canónicas por módulo | `doc/project/me/`, `doc/project/raa/` | Arquitectura, reglas, modelos, seguridad y tests de cada módulo |
-| Hotfix log | `doc/tasks/_hotfix_log.md` | Registro de hotfixes ad-hoc |
-| Migraciones | `doc/project/<modulo>/migrations.md` | Histórico cronológico de migraciones |
+| Docs canónicas por módulo | `doc/project/me/`, `doc/project/raa/` | Arquitectura, reglas, modelos, seguridad y tests de cada módulo (`raa`: solo `architecture.md`) |
+| Brainstorming | `doc/project/me/brainstorming.md` | Ideas sueltas y dudas sin decidir; no canónico |
+| Hotfix log | `doc/tasks/_hotfix_log.md` | Registro de hotfixes ad-hoc (no existe todavía: se crea al primer uso) |
+| Migraciones | `doc/project/<modulo>/migrations.md` | Histórico cronológico de migraciones (no existe todavía: se crea al primer uso) |
 
 ## Reglas de acceso a archivos
 

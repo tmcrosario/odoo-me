@@ -12,7 +12,7 @@ Referencia: $ARGUMENTS
 - Acceptance criteria OK o N/A justificado.
 - Tests OK, pendiente explícito o N/A justificado.
 - Verifier OK si el modo lo exige.
-- Docs canónicas actualizadas, diferidas o N/A: `doc/project/business_rules.md`, `models.md`, `architecture.md`, `security.md`, `tests_plan.md`.
+- Docs canónicas actualizadas, diferidas o N/A: `doc/project/<modulo>/business_rules.md`, `models.md`, `architecture.md`, `security.md`, `tests_plan.md` (`raa` solo tiene `architecture.md`).
 - Índices actualizados: `doc/epics/_index.md`, epic card, `doc/tasks/_index.md` y `doc/tasks/EPIC-XXX/_index.md` cuando corresponda.
 - Bloque **Estado / próximo paso** de la task card actualizado a cierre.
 

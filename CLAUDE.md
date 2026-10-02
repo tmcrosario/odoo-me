@@ -8,7 +8,7 @@
 Repo de dos módulos custom Odoo 19:
 
 - **`me`** — mesa de entradas (módulo principal).
-- **`raa`** — registro/área asociada (módulo secundario).
+- **`raa`** — Registro de Actos Administrativos (módulo secundario; hoy solo tiene `architecture.md`).
 
 No tocar código de `me/` ni `raa/` salvo en un paso explícito de implementación con
 acceptance criteria claros.
@@ -28,9 +28,9 @@ Entre sesiones no sobrevive contexto salvo lo que esté escrito:
 - **Estado de trabajo** → `doc/tasks/EPIC-XXX/TASK-YYY_*.md` + `doc/tasks/_index.md`.
   Toda task lleva un bloque **Estado / próximo paso** actualizado. Al retomar, leé
   la task card antes de re-derivar nada.
-- **Verdad del proyecto** → `doc/project/me/*` y `doc/project/raa/*` (architecture,
-  models, business_rules, security, tests_plan). Actualizalos cuando un cambio sea
-  durable.
+- **Verdad del proyecto** → `doc/project/me/*` (architecture, models, business_rules,
+  workflows, security, tests_plan) y `doc/project/raa/architecture.md` (`raa` no tiene
+  el resto). Actualizalos cuando un cambio sea durable.
 - **Ideas sueltas / brainstorming** → `doc/project/me/brainstorming.md` (documento vivo,
   **no canónico**: ideas, dudas y posibles tareas). No reemplaza épicas/specs/task cards;
   cuando una idea se cierra, se mueve a épica/task y queda acá solo como referencia.

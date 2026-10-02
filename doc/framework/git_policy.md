@@ -47,6 +47,9 @@ Tipos sugeridos:
 
 Mantener la primera línea concisa. Preferir un cambio lógico por commit.
 
+Sin atribución AI (ni `Co-Authored-By` ni "Generated with"). El mensaje de commit es **solo el
+título**; el comentario descriptivo va aparte, para pegar en GitHub.
+
 ## Naming de branches
 
 Formato estricto:
