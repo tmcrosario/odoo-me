@@ -29,15 +29,13 @@ con comando sugerido cuando el dev no pudo correrlos todavía.
 ```md
 ## Tests evidenciados
 - Estado: OK
-- Comando: docker compose -f develop.yml run --rm odoo odoo -d test_db -u me --test-tags /me --stop-after-init --log-level=test
-- Fecha: 2026-05-04
-- Resultado: 47 passed, 0 failed
+- Comando: canónico de `doc/project/me/tests_plan.md` (`exec -T`, DB `me_test`, `--addons-path` completo)
+- Fecha: 2026-09-17
+- Resultado: 0 failed, 0 error(s) of 258 tests
 - Salida (resumen):
   ```text
-  test_priority_field ... ok
-  test_priority_default ... ok
-  Ran 47 tests in 12.3s
-  OK
+  odoo.tests.stats: me: 312 tests 6.48s 16360 queries
+  odoo.tests.result: 0 failed, 0 error(s) of 258 tests
   ```
 ```
 

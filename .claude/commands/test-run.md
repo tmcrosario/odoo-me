@@ -3,21 +3,26 @@ description: Coordina ejecución de tests y exige evidencia; no declara OK sin s
 argument-hint: [EPIC-XXX/TASK-YYY | módulo]
 ---
 
-Coordiná la ejecución de los tests definidos en `doc/project/tests_plan.md`.
+Coordiná la ejecución de los tests definidos en `doc/project/<modulo>/tests_plan.md`
+(para `me`: `doc/project/me/tests_plan.md`).
 
 Referencia: $ARGUMENTS
 
-Comando de tests por módulo (correr desde la raíz del stack `odoo-docker-stack/`).
-odoo-me tiene dos módulos custom: `me` (mesa de entradas) y `raa`. Correr el
-módulo que toca la task:
+Comando de tests: **leelo y copialo de `doc/project/me/tests_plan.md`** (sección
+"Comando canónico"). No se duplica acá: una copia desactualizada es la causa del
+verde falso. Lo que no se negocia:
 
-```bash
-# Mesa de entradas
-docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u me --test-tags /me --stop-after-init --log-level=test
+- DB de test **dedicada y NO servida** (`me_test`). Sobre una DB que la instancia ya
+  sirve (me1/me2) el runner recolecta **0 tests**.
+- `--addons-path` explícito **y completo** (las 9 rutas, incluidas las 5 de OCA): sin él
+  el runner corre **0 tests**; sin las rutas OCA `tmc` no carga y se saltea todo el grafo.
+  Copiar también los parámetros de conexión del canónico (`--db_host`/`--db_user`/`--db_password`).
+- Verificar la línea de resultado `... of N tests` con **N > 0** y `0 failed, 0 error(s)`.
+  `0 tests of 0` **no es evidencia**.
 
-# RAA
-docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u raa --test-tags /raa --stop-after-init --log-level=test
-```
+odoo-me tiene dos módulos custom: `me` (mesa de entradas) y `raa`. **`raa` no tiene
+suite** (no existe `raa/tests/`): para `raa` la evidencia de tests es `N/A`, no un
+comando que devuelve 0 tests.
 
 ## Reglas
 

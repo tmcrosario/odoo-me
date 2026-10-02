@@ -33,11 +33,13 @@ Configuración persistente del proyecto odoo-me.
 
 ## Tests
 
-- Suite real de tests: pendiente de confirmar por módulo
-- Ubicación de planes de test: `doc/project/me/tests_plan.md`, `doc/project/raa/tests_plan.md`
-- Comando de tests por módulo (desde la raíz del stack `odoo-docker-stack/`):
-  - `me`: `docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u me --test-tags /me --stop-after-init --log-level=test`
-  - `raa`: `docker compose -f develop.yml run --rm odoo odoo -d <TEST_DB> -u raa --test-tags /raa --stop-after-init --log-level=test`
+- Suite real de tests: `me` relevada (ver `tests_plan.md`); `raa` **sin suite** (no tiene `tests/`)
+- Ubicación de planes de test: `doc/project/me/tests_plan.md` (`raa` no tiene plan: sin suite)
+- Comando de tests: **no se duplica acá**. El canónico y sus trampas viven en
+  [`doc/project/me/tests_plan.md`](../project/me/tests_plan.md) → sección "Comando canónico".
+  Lo que no se negocia: DB de test **dedicada y no servida** (`me_test`), `--addons-path`
+  explícito **y completo** (las 9 rutas, incluidas las 5 de OCA) y verificar la línea de
+  resultado `... of N tests` con **N > 0**. Sin eso el runner recolecta **0 tests** (verde falso).
 - Docker disponible: sí
 - CI disponible: pendiente
 - Política default de tests: user-run (default)
