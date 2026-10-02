@@ -6,10 +6,16 @@
 >
 > **Verificado contra código vigente — EPIC-001/TASK-001 (2026-06-19).** Deltas posteriores
 > a #030 incorporados: **EPIC-004** (en DEM, `jurisdiction_dependence`/`source_dependence_id`
-> ya no se cargan en ME — los completa JUNCO vía `action_set_origin_from_junco()`; el 1er
-> movimiento automático usa `dependence_id` como origen — ver Workflow 4 y `business_rules.md`);
+> los completa JUNCO vía `action_set_origin_from_junco()` — **salvo en Notas**, que se cargan
+> en ME al ingreso (TASK-002); el 1er movimiento automático usa `dependence_id` como origen, o
+> la jurisdicción en una Nota (TASK-003) — ver Workflow 1, Workflow 4 y `business_rules.md`);
 > **EPIC-003** (campo `current_location_dependence_id` = oficina interna actual, + filtros
 > por poseedor y por oficina de destino en la search view).
+>
+> ⚠️ **Todavía no incorporados** (la fuente vigente es `business_rules.md` y las task cards):
+> el tema/subtema del expediente (EPIC-004/TASK-004..006) y el indicador de legajo
+> (EPIC-006/TASK-002). Las referencias `~l.NNN` de los bloques Evidence están desfasadas:
+> buscar por nombre de método.
 
 Este archivo documenta los workflows principales del módulo Mesa de Entradas
 basándose en el comportamiento real del código.
@@ -45,10 +51,15 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 6. El usuario completa `intake_date` (obligatorio).
    Según la dependencia de origen elegida en Fase 1:
-   - **DEM** (EPIC-004): el operador **NO carga** `jurisdiction_dependence` ni
+   - **DEM sin tema Nota** (EPIC-004): el operador **NO carga** `jurisdiction_dependence` ni
      `source_dependence_id`. En la vista están **readonly** y **ocultos si vacíos**
      (`document_exp_views.xml`): quedan vacíos al ingresar y los completa **JUNCO** al
      vincular el expediente a un proceso, vía `action_set_origin_from_junco()`.
+   - **DEM con tema Nota** (EPIC-004/TASK-002): una Nota no va a JUNCO, así que el operador
+     **carga** la jurisdicción (visible, editable y **obligatoria** al alta) y la repartición
+     (obligatoria si la jurisdicción tiene reparticiones, ver Evidence). Después del alta
+     solo un manager puede cambiarlas (guard de `write()`). JUNCO **no puede** escribir el
+     origen de una Nota: `action_set_origin_from_junco()` lanza `UserError`.
    - **TMC**: `jurisdiction_dependence` se auto-asigna a TMC y es readonly.
      `source_dependence_id` no es requerido.
    - **CM**: `jurisdiction_dependence` y `source_dependence_id` no se muestran.
@@ -67,7 +78,13 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 - Filtro de `dependence_id` restringido a `['DEM','TMC','CM']`: domain en `me/views/document_exp_views.xml`; backend `_ALLOWED_DEPENDENCE_ABBREVIATIONS`
 - Warning de duplicado en tiempo real, no bloquea (retorna `warning` dict, no `raise`): `_onchange_document_data()` (~l.480)
 - `computed_name` visible desde el primer campo: `_compute_name()` (~l.364) + `me/views/document_exp_views.xml`
-- `source_dependence_id` opcional, domain dinámico vía `allowed_sub_dependence_ids`: `me/views/document_exp_views.xml`
+- `source_dependence_id` **obligatorio si la jurisdicción tiene reparticiones** (hijas en
+  `tmc.dependence_order`), salvo origen CM o TMC: `_check_source_dependence_required()` en
+  backend; en la vista, `required="allowed_sub_dependence_ids"` (la vista no exime a CM/TMC:
+  la regla dura es la del backend). Domain dinámico vía `allowed_sub_dependence_ids`.
+- DEM + Nota, jurisdicción obligatoria: `required` de vista (solo al alta) +
+  `_validate_nota_jurisdiction()` (en `create()`, en `write()` si se toca el tema, y como
+  `@api.constrains('jurisdiction_dependence')`). Rechazo desde JUNCO: `action_set_origin_from_junco()`.
 - Limpieza de `source_dependence_id` al cambiar jurisdicción: `_onchange_jurisdiction_dependence()` (~l.374)
 
 **Inferred:**
@@ -165,13 +182,19 @@ El número y recorrido depende de la dependencia de origen (`dependence_id`).
 > **Actualizado EPIC-004 (2026-06):** el Movimiento 1 ahora usa **`dependence_id`** como
 > origen (no `jurisdiction_dependence`), y el guard ya no exige la jurisdicción. Así el 1er
 > pase DEM→TMC se crea al ingresar aunque la jurisdicción esté vacía (en DEM la completa
-> JUNCO después). Ver `business_rules.md`.
+> JUNCO después). **Excepción Nota (EPIC-004/TASK-003, 2026-07-30):** en una Nota la
+> jurisdicción se carga al ingreso y es estable, así que el Movimiento 1 sale de la
+> **jurisdicción** (la secretaría real de origen). Ver `business_rules.md`.
 
 **Rama DEM (y cualquier origen distinto de TMC):**
 
 1. El sistema busca `tmc.dependence` con `abbreviation = 'TMC'` y con `abbreviation = 'ME'`.
 2. Crea Movimiento 1 (**origen → TMC**):
-   - origen: **`dependence_id`** (DEM) — EPIC-004, opción A (antes era `jurisdiction_dependence`)
+   - origen: **`dependence_id`** (DEM) — EPIC-004, opción A (antes era `jurisdiction_dependence`).
+     **En una Nota con jurisdicción cargada**, el origen es `jurisdiction_dependence`
+     (EPIC-004/TASK-003); si faltara, cae a `dependence_id`.
+   - el origen es un **snapshot** al crear: si JUNCO completa después la jurisdicción de una
+     compra, el Movimiento 1 no cambia.
    - destino: TMC
    - `fojas`: `record.fojas` (snapshot en el momento de creación)
    - `is_automatic`: True
@@ -201,7 +224,8 @@ base de datos, se omiten silenciosamente sin error.
 **Observed in code:**
 - Condicional `origin_is_tmc`: `me/models/document_exp.py`, método `create()`
 - Movimiento 1 omitido para TMC: `if not origin_is_tmc and tmc_dependence` (EPIC-004; antes
-  exigía `and record.jurisdiction_dependence`). Origen del Mov.1 = `record.dependence_id.id`.
+  exigía `and record.jurisdiction_dependence`). Origen del Mov.1 = `jurisdiction_dependence`
+  si `is_nota` y hay jurisdicción; si no, `dependence_id` (variable `origin_dependence` en `create()`).
 - Backup auto-asignación CM/TMC: pre-super() loop en `create()`
 - Campos `fojas` e `is_automatic` incluidos en cada movimiento automático
 
@@ -345,9 +369,10 @@ según el estado de completitud de la Fase 1 del expediente.
 
 3. Cuando `dependence_id`, `number` y `period` están completos, `is_origin_complete` se vuelve `True`.
 4. `computed_name` muestra el nombre generado (ej. `EXP-000001-DEM/2025`).
-5. Se habilitan: `jurisdiction_dependence`, `source_dependence_id` (opcional, filtrado
-   a hijos de la jurisdicción), `intake_date`, `main_topic_ids`, `document_object`,
-   `date`, `external_key`, `fojas`.
+5. Se habilitan: `jurisdiction_dependence`, `source_dependence_id` (obligatorio si la
+   jurisdicción tiene reparticiones, salvo CM/TMC; filtrado a hijos de la jurisdicción),
+   `intake_date`, `main_topic_ids`, `document_object`, `date`, `external_key`, `fojas`.
+   Jurisdicción y repartición dependen del origen y del tema: ver Workflow 1, paso 6.
 
 **Fase 3 — pestaña de movimientos (visible cuando el registro está guardado):**
 
@@ -399,16 +424,26 @@ el sistema no usa el ORM estándar para actualizar `tmc.document`.
 - Intercepción/extracción del campo `date` en `write()` (`date_in_vals` / `vals.pop('date')`, ~l.679)
 - Actualización vía SQL directo: `_update_document_date()` (~l.603; `cr.execute("UPDATE tmc_document…")` ~l.617)
 - Separación de flujos: campos delegados por `document_id.sudo().write()` (~l.697), fecha por SQL, resto por `super().write()`
+- Mismo embudo en el alta: `create()` saca `date` de `vals` antes del `super()` y la aplica con
+  `_update_document_date()` bajo `sudo()` (es parte de la creación elevada del padre).
+- `_update_document_date()` revalida a mano lo que el SQL se saltea: fecha **no futura**
+  (contra `fields.Date.context_today`) e **ingreso ≥ fecha del documento**; y re-impone el ACL
+  con `self.document_id.check_access('write')` (ver `security.md`).
+
+**Por qué existe el bypass (verificado en código):**
+- `tmc.document` controla la fecha por dos lados: `create()`/`write()` exigen que el **año de la
+  fecha coincida con el período** ("Date does not match with period", en
+  `odoo-tmc/tmc/models/document.py`), y `_check_date_not_future` prohíbe fechas futuras. El SQL
+  existe para escapar del **primero**: un documento viejo puede archivarse en un expediente del
+  período actual (no se exige año(`date`) == período, decisión del usuario — ver `business_rules.md`).
+- Escapar del segundo era un **efecto colateral** no buscado. Desde EPIC-004/TASK-002 está
+  tapado: `_update_document_date()` rechaza fechas futuras con `ValidationError`.
 
 **Inferred:**
-- El bypass existe para evitar la constraint `_check_date_not_future` definida en `tmc.document`.
-  El comentario en el método lo confirma: "evitando la validación problemática".
 - El SQL directo actualiza la tabla sin pasar por ningún evento ORM
   (`_write`, computed fields recompute, tracking).
 
 **Uncertain / pending definition:**
-- No está definido si el bypass de `_check_date_not_future` es intencional como regla de negocio
-  (los expedientes de ME pueden tener fechas futuras) o es una solución temporal.
 - No está evaluado el comportamiento en entornos multi-company o con extensiones que
   interceptan `cr.execute`.
 - No está definido si otros campos de `tmc.document` con constraints similares
