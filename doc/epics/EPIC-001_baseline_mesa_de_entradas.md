@@ -71,9 +71,14 @@ No incluye:
 - ¿Cuáles de los aspectos §8 (estados, append-only, jurisdiction vs dependence,
   comportamiento sin "Mesa de Entradas", etc.) son decisiones pendientes y cuáles
   ya quedaron resueltos en #021–#032?
+  → **Resuelta (EPIC-001/TASK-001):** §7/§8 reconciliados; lo que sigue pendiente quedó en
+  `business_rules.md` → *Limitaciones conocidas*.
 - ¿El bypass SQL de fecha (`_update_document_date`) es regla de negocio intencional
   o deuda técnica a remediar?
+  → **Resuelta:** es intencional (escapa la regla año == período de `tmc.document`; ver `business_rules.md`
+  y `workflows.md`, Workflow 7). Su ACL se gobernó después en EPIC-007/TASK-001.
 - ¿Declarar `raa` como dependencia formal en `me/__manifest__.py`?
+  → **Resuelta (EPIC-005/TASK-002):** no se puede (`raa` depende de `me`: ciclo).
 
 ## Cierre de épica
 

@@ -30,14 +30,18 @@ vive en ME o en JUNCO (que ahora gestiona esos datos para DEM)?
 ### Puntos a explorar
 
 - [ ] ¿El uso real de "buscar por jurisdicción/procedencia" es frecuente en ME?
-- [ ] Si se agrega, ¿confunde mostrar como filtro un campo que se ocultó en la carga?
-- [ ] ¿Alcanza con un campo buscable, o se quiere group-by / searchpanel?
+- [x] Si se agrega, ¿confunde mostrar como filtro un campo que se ocultó en la carga?
+  → **Resuelto (EPIC-003/TASK-004):** se muestra igual; para compras queda en el grupo *None* hasta que JUNCO carga la jurisdicción.
+- [x] ¿Alcanza con un campo buscable, o se quiere group-by / searchpanel?
+  → **Resuelto (EPIC-003/TASK-004):** campo buscable + group-by; el searchpanel se descartó por cardinalidad.
 
 ### Preguntas abiertas
 
 - [ ] (a) ¿Alguien busca expedientes por jurisdicción/procedencia en ME?
-- [ ] (b) Si sí, ¿se agrega el buscable/filtro aunque el campo esté oculto en el form?
-- [ ] (c) ¿O esa búsqueda se hace en JUNCO, que ahora gestiona esos datos para DEM?
+- [x] (b) Si sí, ¿se agrega el buscable/filtro aunque el campo esté oculto en el form?
+  → **Resuelto (EPIC-003/TASK-004):** sí, buscable y group-by aunque el campo no se cargue en el form.
+- [x] (c) ¿O esa búsqueda se hace en JUNCO, que ahora gestiona esos datos para DEM?
+  → **Resuelto (EPIC-003/TASK-004):** se resolvió en ME. Para compras el filtro sirve recién cuando JUNCO carga la jurisdicción; para Notas es dato de ME desde el ingreso.
 
 ### Relación con otras ideas / reglas
 
@@ -114,19 +118,24 @@ La decisión de fondo: **¿qué debe ser `secondary_topic_id` en un expediente d
 
 ### Puntos a explorar
 
-- [ ] ¿Las 23 "etapas" son subtemas del expediente en Mesa de Entradas, o son eventos del
+- [x] ¿Las 23 "etapas" son subtemas del expediente en Mesa de Entradas, o son eventos del
       proceso que gestiona JUNCO? Si es lo segundo, no deberían colgar de `Licitación` como subtema.
-- [ ] ¿El fix es de **datos** (reestructurar el árbol en `tmc_data`: subtipo vs etapas en
+  → **Resuelto (EPIC-004/TASK-004):** no son eventos de JUNCO ni un dato mal modelado: son la taxonomía documental de GD (ver la corrección de arriba).
+- [x] ¿El fix es de **datos** (reestructurar el árbol en `tmc_data`: subtipo vs etapas en
       nodos/niveles distintos) o hace falta un **discriminador** (flag "es subtipo" vs "es etapa")
       para que `me` filtre?
-- [ ] Ocultar el subtema cuando el tema no tiene hijos (caso Concurso de Precios).
+  → **Resuelto (EPIC-004/TASK-004):** de vista (domain en ME); no se tocó `tmc_data`.
+- [x] Ocultar el subtema cuando el tema no tiene hijos (caso Concurso de Precios).
+  → **Hecho (EPIC-004/TASK-004).**
 
 ### Preguntas abiertas
 
-- [ ] ¿Quién es dueño de la decisión del árbol de temas? El fix probablemente vive en `tmc_data`
+- [x] ¿Quién es dueño de la decisión del árbol de temas? El fix probablemente vive en `tmc_data`
       (repo externo, no se toca desde este flujo) — igual que el nomenclador del #033.
-- [ ] ¿El subtema debería tener enforcement backend (`@api.constrains`) o seguir siendo solo
+  → **Resuelto (EPIC-004/TASK-004):** se resolvió del lado de ME, sin tocar `tmc_data`.
+- [x] ¿El subtema debería tener enforcement backend (`@api.constrains`) o seguir siendo solo
       ayuda de carga por `domain`? (mismo dilema que los temas raíz).
+  → **Resuelto (EPIC-004/TASK-005):** sí para Licitación (validación en `create()`/`write()`, no `@api.constrains`); el acote de los 4 temas raíz sigue siendo solo de vista.
 
 ### Verificado en junco (revisión de código, 2026-07-30)
 
@@ -204,11 +213,13 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
 
 ### Puntos a explorar
 
-- [ ] ¿En qué form(s)? Criterio de junco: SÍ en forms de carga/edición operativa donde se tipean
+- [x] ¿En qué form(s)? Criterio de junco: SÍ en forms de carga/edición operativa donde se tipean
       varios campos antes de guardar; **arrancar por el form principal de `document_exp`** y ver
       con el usuario si suma antes de esparcirlo. NO en wizards, solo-lectura, o forms con toggles
       de acción inmediata.
-- [ ] ¿Conviene un asset backend global o acotarlo? (define la superficie del SCSS).
+  → **Resuelto (EPIC-006/TASK-001):** solo el form de `document_exp`.
+- [x] ¿Conviene un asset backend global o acotarlo? (define la superficie del SCSS).
+  → **Resuelto (EPIC-006/TASK-001):** acotado: todas las reglas del SCSS cuelgan de `.o_me_form_save_button`.
 
 ### Preguntas abiertas
 
@@ -249,23 +260,28 @@ real** que originó el expediente: `jurisdicción → TMC` en vez del genérico 
 
 ### Puntos a explorar
 
-- [ ] **¿Jurisdicción o repartición?** `source_dependence_id` (la repartición) es **más
+- [x] **¿Jurisdicción o repartición?** `source_dependence_id` (la repartición) es **más
       específica** que la jurisdicción. ¿El origen del movimiento debería ser la repartición
       cuando existe, y la jurisdicción si no? (el usuario pidió "jurisdicción").
-- [ ] **Consistencia con compras:** las compras seguirían con `DEM → TMC` (jurisdicción vacía
+  → **Resuelto (EPIC-004/TASK-003):** la jurisdicción.
+- [x] **Consistencia con compras:** las compras seguirían con `DEM → TMC` (jurisdicción vacía
       al ingreso). ¿Está bien que Notas y compras difieran en el 1er origen? (parece sí:
       Notas tienen el dato, compras no).
+  → **Resuelto (EPIC-004/TASK-003):** las compras siguen con `dependence_id`.
 - [ ] **`is_internal` de las jurisdicciones** está inconsistente en el dato (en me2: 3 con
       `true`, 31 con `NULL`) — no bloquea (nada computa sobre origin.is_internal), pero conviene
       entender qué significa antes de mostrarla como origen.
-- [ ] Defensivo: si una Nota no tuviera jurisdicción (no debería, es obligatoria), caer a
+- [x] Defensivo: si una Nota no tuviera jurisdicción (no debería, es obligatoria), caer a
       `dependence_id`.
+  → **Hecho (EPIC-004/TASK-003):** si falta la jurisdicción, cae a `dependence_id`.
 
 ### Preguntas abiertas
 
-- [ ] ¿El origen del 1er movimiento de una Nota debe ser la **jurisdicción** o la
+- [x] ¿El origen del 1er movimiento de una Nota debe ser la **jurisdicción** o la
       **repartición** (source)? Decisión de negocio/usuario.
-- [ ] ¿Solo Notas, o esto también aplicaría a compras el día que JUNCO complete la jurisdicción?
+  → **Resuelto (EPIC-004/TASK-003):** la jurisdicción.
+- [x] ¿Solo Notas, o esto también aplicaría a compras el día que JUNCO complete la jurisdicción?
+  → **Resuelto (EPIC-004/TASK-003):** solo Notas; las compras no cambian (el origen es un snapshot al crear).
 
 ### Relación con otras ideas / reglas
 
@@ -318,13 +334,17 @@ cuando no está en legajo) y, opcional, como columna visible en la lista.
 
 ### Preguntas abiertas (dominio — no asumir)
 
-- [ ] **¿Estado actual o histórico?** ¿"En legajo" = el **último** movimiento va a LEG (estado
+- [x] **¿Estado actual o histórico?** ¿"En legajo" = el **último** movimiento va a LEG (estado
       actual, como `current_location`), o **alguna vez** pasó a LEG aunque después se haya movido?
-- [ ] **¿Legajo es terminal o puede volver?** ¿Un expediente adjuntado a un legajo se queda ahí,
+  → **Resuelto (EPIC-006/TASK-002, decisión del usuario):** estado actual (último movimiento).
+- [x] **¿Legajo es terminal o puede volver?** ¿Un expediente adjuntado a un legajo se queda ahí,
       o puede tener un pase posterior a otro lado? (define si "actual" e "histórico" divergen).
-- [ ] **¿Puede haber varios legajos?** ¿Varios pases a LEG con distinto número? (mostraríamos el último).
-- [ ] **¿Dónde mostrarlo?** Label bajo el nombre del expediente / ribbon en la esquina / columna
+  → **Cubierto (EPIC-006/TASK-002):** al mostrar el estado actual, si el expediente se mueve después de Legajo el label deja de aparecer.
+- [x] **¿Puede haber varios legajos?** ¿Varios pases a LEG con distinto número? (mostraríamos el último).
+  → **Resuelto (EPIC-006/TASK-002):** se muestra el del último pase.
+- [x] **¿Dónde mostrarlo?** Label bajo el nombre del expediente / ribbon en la esquina / columna
       visible en la lista / varias.
+  → **Resuelto (EPIC-006/TASK-002, decisión del usuario):** label bajo el nombre en el form; sin columna en la lista.
 
 ### Relación con otras ideas / reglas
 
