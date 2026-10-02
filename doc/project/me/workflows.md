@@ -65,8 +65,11 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
    - **CM**: `jurisdiction_dependence` y `source_dependence_id` no se muestran.
      El sistema los completa internamente (jurisdiction = CM, source = vacío).
    Al cambiar `jurisdiction_dependence`, `source_dependence_id` se limpia automáticamente.
-7. Si los 5 campos básicos están completos y existe un expediente con los mismos datos,
-   el sistema emite un **warning** (no bloquea).
+7. Si los 5 campos básicos están completos (incluida la **jurisdicción**) y existe un
+   expediente con los mismos datos, el sistema emite un **warning** en el formulario. Como la
+   jurisdicción es parte de la condición, **no avisa en DEM de compras al ingreso** (queda vacía
+   hasta que la completa JUNCO). El aviso no es la barrera: al guardar, un duplicado exacto lo
+   rechaza `UNIQUE(name)` de `tmc.document`.
 8. El usuario guarda el formulario → se ejecuta `create()`.
 9. El sistema ejecuta los sub-pasos 2, 3 y 4 automáticamente.
 10. El formulario muestra el expediente creado con su nombre generado.
@@ -76,7 +79,7 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 **Observed in code** (`me/models/document_exp.py` salvo indicación):
 - Auto-asignación de `document_type_id`: `_onchange_dependence()` (~l.444)
 - Filtro de `dependence_id` restringido a `['DEM','TMC','CM']`: domain en `me/views/document_exp_views.xml`; backend `_ALLOWED_DEPENDENCE_ABBREVIATIONS`
-- Warning de duplicado en tiempo real, no bloquea (retorna `warning` dict, no `raise`): `_onchange_document_data()` (~l.480)
+- Warning de duplicado en tiempo real (retorna `warning` dict, no `raise`: el *aviso* no bloquea; el duplicado exacto lo bloquea `UNIQUE(name)` de `tmc.document` al guardar): `_onchange_document_data()` (~l.480)
 - `computed_name` visible desde el primer campo: `_compute_name()` (~l.364) + `me/views/document_exp_views.xml`
 - `source_dependence_id` **obligatorio si la jurisdicción tiene reparticiones** (hijas en
   `tmc.dependence_order`), salvo origen CM o TMC: `_check_source_dependence_required()` en

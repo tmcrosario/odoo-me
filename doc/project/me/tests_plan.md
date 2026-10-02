@@ -154,7 +154,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | **Jurisdicción multi-año (intencional)** | — | ❌ **gap (bajo)** |
 | Registro automático en RAA | `TestDocumentExp` (`registers_in_raa`) | ✅ |
 | Fojas — bloqueo post-creación | `TestFojasLock`, `TestFojasMovimiento` | ✅ |
-| **Aviso de duplicado (origen+número+período)** | — (solo duplicado de *movimiento*) | ❌ **gap (medio)** |
+| **Duplicado de expediente (origen+número+período)** | `TestNotaOrigin.test_duplicate_warning_does_not_match_itself` (solo que el aviso no se autodetecta) | ⚠️ **parcial (medio)** — sin test del bloqueo ni del aviso positivo |
 | Fecha del documento (pasadas / bypass SQL) | `TestRequiredFields017`, `TestDocumentMovement` | ✅ |
 | Integridad de movimientos | `TestDocumentMovement` | ✅ |
 | Poseedor actual (#027/#028/#029) | `TestMovementPoseedor027`, `TestMovementCorrection028`, `TestCurrentHolder029` | ✅ (fuerte) |
@@ -168,9 +168,12 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
    suite `/me`**. Los tests no están gateados → regresiones pueden llegar a deploy sin red.
    *Recomendación:* agregar un job que levante Postgres y corra la suite sobre `me_test`
    antes del build/deploy.
-2. **MEDIA — Aviso de duplicado de expediente** (origen+número+período, "avisa pero no
-   bloquea"): sin test. *Recomendación:* test del onchange que verifique el warning sin
-   bloqueo. (El duplicado de *movimiento* sí está cubierto.)
+2. **MEDIA — Duplicado de expediente** (origen+número+período): lo bloquea `UNIQUE(name)` de
+   `tmc.document` y hay un aviso preventivo que solo corre con jurisdicción cargada (no en DEM
+   de compras al ingreso). Solo está cubierto que el aviso no se autodetecta. *Recomendación:*
+   tests de (a) el bloqueo (`UniqueViolation` al crear dos expedientes idénticos), (b) el aviso
+   positivo con jurisdicción y (c) que no avisa en DEM sin jurisdicción. (El duplicado de
+   *movimiento* sí está cubierto.)
 3. **BAJA — Jurisdicción multi-año**: el comportamiento intencional de no filtrar por año
    no tiene test directo. *Recomendación:* test que confirme que el dominio incluye
    jurisdicciones de más de un nomenclador cargado.
