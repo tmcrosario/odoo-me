@@ -43,6 +43,13 @@
 - `Done`
 - `Blocked`
 
+**Convenciones observadas en los índices** (no son estados nuevos):
+
+- Un estado puede llevar un calificador entre paréntesis, p. ej. `Done (develop)`: la task está
+  cerrada y mergeada en `develop`, pero **sin desplegar a producción**.
+- Las épicas usan `Draft`, `En progreso` y `Done`; una épica-puntero cuyo trabajo se gobierna en
+  otro repo figura como `Gobernada en <repo>`.
+
 ## Tabla de transiciones
 
 Cada transición declara qué modo la ejecuta y qué precondiciones deben cumplirse.

@@ -3,7 +3,7 @@
 Estado: Draft  
 Modo: XS  
 Riesgo: bajo  
-Módulo: heredado de la épica / `<modulo>` / N/A (proyecto single-addon)  
+Módulo: heredado de la épica / `me` / `raa`  
 Responsable: sin asignar
 
 ## Asignación
@@ -16,9 +16,29 @@ Responsable: sin asignar
 
 Descripción breve.
 
-## Validación
+## Tests evidenciados
 
-N/A / revisión visual / comando puntual.
+> `Estado: PENDIENTE USER-RUN` o `Estado: N/A + motivo` son válidos (cambios solo de doc, texto o
+> trivialidades). No declarar `OK` sin pegar la salida.
+
+- Estado: OK / PENDIENTE USER-RUN / N/A + motivo
+- Comando:
+- Resultado:
+
+## Bloqueos
+
+> Completar **solo si la task pasa a estado `Blocked`**.
+
+- Bloqueada por:
+- Acción mínima para destrabar:
+
+## Estado / próximo paso
+
+> Actualizar en cada cambio de estado (lo exige `/doc-close`). Al cierre, por ejemplo:
+> "**Done.** Push: usuario. Deploy a prod: diferido."
+
+- Estado actual:
+- Próximo paso:
 
 ## Cierre
 

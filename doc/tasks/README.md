@@ -1,6 +1,7 @@
 # Tasks
 
-Las tasks no viven sueltas: siempre pertenecen a una épica.
+Las tasks no viven sueltas: siempre pertenecen a una épica. **Única excepción:** `SETUP-001` (bootstrap del
+framework), que vive en `doc/tasks/` fuera de toda épica.
 
 ## Estructura esperada
 

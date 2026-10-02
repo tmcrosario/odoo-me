@@ -18,8 +18,10 @@ Configuración persistente del proyecto odoo-me.
 - Módulos custom adicionales: `raa`
 - Cantidad total de módulos custom: 2
 - Layout `doc/project/`: **por módulo** (`doc/project/me/`, `doc/project/raa/`)
-- Dependencias Odoo: pendiente de relevar
-- Dependencias custom: pendiente de relevar (stack TMC compartido)
+- Dependencias (de los manifests): `me` → `tmc`, `tmc_data`; `raa` → `tmc`, `me`. `tmc` (repo
+  `odoo-tmc`) → `web_tree_many2one_clickable` y `remove_odoo_enterprise` (OCA); `tmc_data` (repo
+  `odoo-tmc-data`) → `tmc` y `auditlog` (OCA `server-tools`). `me` crea registros de `raa` sin
+  declararlo (ciclo): ver `doc/project/me/models.md`.
 - Integraciones externas: ninguna confirmada por ahora
 - Estado: base en Odoo 19; `me` con documentación rica previa, `raa` mínimo (stub)
 
@@ -41,7 +43,9 @@ Configuración persistente del proyecto odoo-me.
   explícito **y completo** (las 9 rutas, incluidas las 5 de OCA) y verificar la línea de
   resultado `... of N tests` con **N > 0**. Sin eso el runner recolecta **0 tests** (verde falso).
 - Docker disponible: sí
-- CI disponible: pendiente
+- CI: `.github/workflows/pipeline.yml` (build y push de la imagen Docker, escaneo Snyk y deploy);
+  dispara solo en push a la rama `14.0` y **no corre la suite de tests**. Para `develop` y `19.0` no
+  corre nada.
 - Política default de tests: user-run (default)
 - Evidencia suficiente: salida pegada / link CI / log resumido / captura
 
@@ -50,12 +54,13 @@ Configuración persistente del proyecto odoo-me.
 - Rama de integración: `develop`
 - Estilo de commit: `[TYPE] resumen imperativo breve` (mensaje = solo título;
   comentario descriptivo aparte para GitHub). Sin atribución AI.
-- Naming de branches: `<tipo>/EPIC-XXX-TASK-YYY-slug`
+- Naming de branches: `<tipo>/EPIC-XXX-TASK-YYY-slug` (en la práctica se trabaja directo sobre `develop`)
 - El agente puede commitear bajo pedido explícito: sí
 - El agente puede pushear bajo pedido explícito: no autorizado por default
 - Workflow de PR: `develop -> 19.0`. **Los PR los gestiona el usuario**; el framework
   no abre ni mergea PRs.
-- Checks / hooks obligatorios: pendiente / no confirmados
+- Checks / hooks obligatorios: ninguno (no hay hooks ni `.pre-commit-config`; el único check automático es
+  el CI de arriba)
 
 ## Reglas de riesgo
 
@@ -74,14 +79,15 @@ Configuración persistente del proyecto odoo-me.
 - modelos de expediente, numeración/secuencias, estados del trámite, jurisdicción
   (DEM/CM), permisos y record rules de mesa de entradas, datos XML/CSV.
 
-## Épicas iniciales
+## Épicas
 
-- EPIC-001 — Reverse-engineering + baseline de mesa de entradas (`me`)
+Al bootstrap solo existía EPIC-001 (reverse-engineering + baseline de `me`). El listado vigente está
+en [`doc/epics/_index.md`](../epics/_index.md).
 
 ## Estado de inicialización
 
-- Estado: parcial (bootstrap del framework en curso — `doc/tasks/SETUP-001_bootstrap_framework.md`)
+- Estado: bootstrap del framework completo (`doc/tasks/SETUP-001_bootstrap_framework.md`, Done)
 - Inicializado por: VS Code + Claude
 - Fecha: 2026-06-05
-- Configuración pendiente: confirmar suites de test por módulo, dependencias,
-  CI, hooks/checks obligatorios; baseline de `raa`.
+- Configuración pendiente: tests de CI para `develop`/`19.0` y baseline de `raa` (hoy solo
+  `architecture.md`, sin suite de tests).

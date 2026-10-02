@@ -3,7 +3,7 @@
 Estado: Draft  
 Modo: M  
 Riesgo: medio  
-Módulo: heredado de la épica / `<modulo>` / N/A (proyecto single-addon)  
+Módulo: heredado de la épica / `me` / `raa`  
 Responsable: sin asignar
 
 ## Asignación
@@ -43,9 +43,15 @@ No incluye:
 
 ...
 
+## Verifier / close gate
+
+> Cuando el modo lo exige (ver `doc/framework/delivery_modes.md`). Resultado de `doc/skills/close_gate.md`: `Ready` / `Blocked` y findings.
+
+Pendiente.
+
 ## Tests evidenciados
 
-> **Bloque obligatorio en M/FULL**. El validador rechaza `/doc-close` si está ausente o vacío. Aceptado: `Estado: PENDIENTE USER-RUN` o `Estado: N/A + motivo` para casos sin tests automatizables.
+> **Bloque obligatorio en M/FULL**. `/doc-close` no cierra la task si está ausente o vacío. Aceptado: `Estado: PENDIENTE USER-RUN` o `Estado: N/A + motivo` para casos sin tests automatizables.
 
 - Estado: OK / PENDIENTE USER-RUN / N/A + motivo
 - Comando:
@@ -56,6 +62,10 @@ No incluye:
   ```text
   # pegar tail relevante (errores, totales)
   ```
+
+## Docs canónicas
+
+Actualizar ahora / diferir (con registro) / N/A. Ver `doc/framework/documentation_policy.md`.
 
 ## Bloqueos
 
@@ -74,6 +84,14 @@ No incluye:
 - Dev responsable:
 - Motivo:
 - Riesgo asumido:
+
+## Estado / próximo paso
+
+> Actualizar en cada cambio de estado (lo exige `/doc-close`). Al cierre, por ejemplo:
+> "**Done.** Push: usuario. Deploy a prod: diferido."
+
+- Estado actual:
+- Próximo paso:
 
 ## Resultado / cierre
 

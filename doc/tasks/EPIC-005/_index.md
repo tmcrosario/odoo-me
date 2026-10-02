@@ -2,8 +2,8 @@
 
 Épica: `doc/epics/EPIC-005_deuda_tecnica.md`
 
-> Follow-ups de código derivados del inventario de EPIC-001/TASK-001 (§8.6 y §8.8). Las
-> task cards completas se crean con `/new-task` cuando se tomen.
+> Follow-ups de código derivados del inventario de EPIC-001/TASK-001 (§8.6 y §8.8). Las dos
+> task cards existen y están `Done` (TASK-001, TASK-002).
 
 | Task | Título | Responsable | Modo | Estado | Notas |
 | --- | --- | --- | --- | --- | --- |

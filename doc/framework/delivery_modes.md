@@ -24,7 +24,8 @@ Escalar automáticamente a L/XL si toca:
 - workflow de estados;
 - contabilidad, permisos, auditoría o datos críticos;
 - migraciones;
-- integraciones externas.
+- integraciones externas;
+- reglas de negocio ambiguas.
 
 ## Documentación canónica
 

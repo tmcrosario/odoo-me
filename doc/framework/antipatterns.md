@@ -20,8 +20,8 @@ pero olvidó pegar el resultado.
 **Consecuencia.** Pérdida total de trazabilidad. En la próxima regresión nadie sabe
 si los tests realmente pasaron.
 
-**Corrección.** En M/L/XL, el bloque "Tests evidenciados" es **obligatorio**. El
-validador rechaza `/doc-close` si está vacío. Aceptado `Estado: PENDIENTE USER-RUN`
+**Corrección.** En M/L/XL, el bloque "Tests evidenciados" es **obligatorio**:
+`/doc-close` no cierra la task si está vacío. Aceptado `Estado: PENDIENTE USER-RUN`
 con comando sugerido cuando el dev no pudo correrlos todavía.
 
 **Ejemplo correcto:**

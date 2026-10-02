@@ -45,6 +45,9 @@ La verificación devuelve `Ready` o `Blocked`. El cierre documental final lo hac
 
 - Confirmar que la task card registra implementación, tests, riesgos e impacto en
   docs.
+- Verificar que los **índices** (`doc/epics/_index.md`, `doc/tasks/_index.md` y
+  `doc/tasks/EPIC-XXX/_index.md`) y el bloque **Estado / próximo paso** de la card estén
+  actualizados: `/doc-close` los exige.
 - Las docs canónicas pueden quedar pendientes de consolidación si la task card lo
   deja registrado expresamente (sin SLA por defecto, revisión on-demand).
 
@@ -65,7 +68,7 @@ Salida en español rioplatense, formato:
 3. Acceptance criteria: OK / BLOCKED / N/A
 4. Seguridad: OK / BLOCKED / N/A
 5. Tests evidenciados: OK / PENDIENTE USER-RUN / N/A + motivo
-6. Documentación: OK / pendiente / N/A
+6. Documentación (incluye índices y Estado / próximo paso): OK / pendiente / N/A
 7. Override / forzado: presente sí/no
 8. Decisión de cierre: Ready / Blocked
 9. Acción mínima para destrabar

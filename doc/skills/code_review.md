@@ -49,7 +49,12 @@ VS Code + Claude. Source of truth: `doc/skills/`.
 - Cambios de permisos requieren análisis explícito por rol.
 - Caminos negativos sensibles deben tener test o quedar documentados como gap.
 
-### 6. Tests y regresiones
+### 6. Antipatrones
+
+- Declarar explícitamente que ningún antipatrón de `doc/framework/antipatterns.md` aplica antes
+  de dar `Ready` (o listar cuáles aplican).
+
+### 7. Tests y regresiones
 
 - Verificar que se hayan agregado/actualizado tests o que `N/A` esté justificado.
 - No declarar tests OK sin evidencia.

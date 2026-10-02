@@ -2,7 +2,7 @@
 
 Estado: Draft  
 Riesgo global: bajo/medio/alto  
-Módulo: `<modulo_principal>` / N/A (proyecto single-addon)  
+Módulo: `me` / `raa`  
 Owner: sin asignar
 
 ## Objetivo
