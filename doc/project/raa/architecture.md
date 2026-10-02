@@ -9,10 +9,11 @@
 
 - Modelo principal: **`raa.registry_aa`** (`raa/models/registry_aa.py`).
 - Tiene `document_id` (Many2one → `tmc.document`) con constraint **UNIQUE** sobre
-  `document_id` (`raa/models/registry_aa.py:52`).
+  `document_id` (`_document_id_unique` en `raa/models/registry_aa.py`).
 - Se **crea automáticamente** desde `me.document_exp.create()`:
-  `self.env["raa.registry_aa"].create({"document_id": record.document_id.id})`
-  (`me/models/document_exp.py:138`).
+  `env_create["raa.registry_aa"].sudo().create({"document_id": record.document_id.id})`
+  (`create()` en `me/models/document_exp.py`; con `sudo()` porque el alta en RAA es un efecto interno
+  y el operativo no tiene ACL de escritura en `raa`).
 
 ## Riesgo de acoplamiento
 

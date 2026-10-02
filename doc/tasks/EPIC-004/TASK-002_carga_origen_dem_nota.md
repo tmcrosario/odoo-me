@@ -46,12 +46,16 @@ No incluye:
 
 ## Reglas conocidas (verificadas en código, no asumidas)
 
+> Relevadas el 2026-07-28, **antes** de implementar la task. Las referencias de línea se quitaron
+> (se desfasan) y la última regla sobre `action_set_origin_from_junco` quedó superada: esta misma
+> task le agregó el guard que rechaza las Notas.
+
 - `is_origin_complete` = origen + número + período; **no** incluye el tema
-  ([`document_exp.py:339-344`](../../../me/models/document_exp.py#L339)).
-- `_onchange_dependence` fuerza `jurisdiction=False` en DEM (rama `else`, l.459-460).
+  (`is_origin_complete` en `me/models/document_exp.py`).
+- `_onchange_dependence` fuerza `jurisdiction=False` en DEM (rama `else`).
 - Constrains existente: la **repartición** ya es obligatoria si la jurisdicción tiene
-  sub-dependencias y el origen no es CM/TMC (l.378-387) → **no hay que agregar nada** para eso.
-- `action_set_origin_from_junco` valida **solo** que sea DEM; no mira el tema (l.401).
+  sub-dependencias y el origen no es CM/TMC (`_check_source_dependence_required`) → **no hay que agregar nada** para eso.
+- `action_set_origin_from_junco` valida **solo** que sea DEM; no mira el tema (al 2026-07-28).
 - Precedente de "editable solo al crear": `fojas` usa `readonly="id"` en la vista.
 - Precedente de campo por XML ID: `is_licitacion` (`store=True`, `@api.depends('main_topic_ids')`
   sobre un campo delegado por `_inherits`).

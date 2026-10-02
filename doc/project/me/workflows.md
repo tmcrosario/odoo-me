@@ -14,8 +14,8 @@
 >
 > ⚠️ **Todavía no incorporados** (la fuente vigente es `business_rules.md` y las task cards):
 > el tema/subtema del expediente (EPIC-004/TASK-004..006) y el indicador de legajo
-> (EPIC-006/TASK-002). Las referencias `~l.NNN` de los bloques Evidence están desfasadas:
-> buscar por nombre de método.
+> (EPIC-006/TASK-002). Los bloques Evidence citan métodos y campos, no números de línea (se
+> desfasan con cada cambio): buscarlos por nombre.
 
 Este archivo documenta los workflows principales del módulo Mesa de Entradas
 basándose en el comportamiento real del código.
@@ -77,10 +77,10 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 ### Evidence
 
 **Observed in code** (`me/models/document_exp.py` salvo indicación):
-- Auto-asignación de `document_type_id`: `_onchange_dependence()` (~l.444)
+- Auto-asignación de `document_type_id`: `_onchange_dependence()`
 - Filtro de `dependence_id` restringido a `['DEM','TMC','CM']`: domain en `me/views/document_exp_views.xml`; backend `_ALLOWED_DEPENDENCE_ABBREVIATIONS`
-- Warning de duplicado en tiempo real (retorna `warning` dict, no `raise`: el *aviso* no bloquea; el duplicado exacto lo bloquea `UNIQUE(name)` de `tmc.document` al guardar): `_onchange_document_data()` (~l.480)
-- `computed_name` visible desde el primer campo: `_compute_name()` (~l.364) + `me/views/document_exp_views.xml`
+- Warning de duplicado en tiempo real (retorna `warning` dict, no `raise`: el *aviso* no bloquea; el duplicado exacto lo bloquea `UNIQUE(name)` de `tmc.document` al guardar): `_onchange_document_data()`
+- `computed_name` visible desde el primer campo: `_compute_name()` + `me/views/document_exp_views.xml`
 - `source_dependence_id` **obligatorio si la jurisdicción tiene reparticiones** (hijas en
   `tmc.dependence_order`), salvo origen CM o TMC: `_check_source_dependence_required()` en
   backend; en la vista, `required="allowed_sub_dependence_ids"` (la vista no exime a CM/TMC:
@@ -88,7 +88,7 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 - DEM + Nota, jurisdicción obligatoria: `required` de vista (solo al alta) +
   `_validate_nota_jurisdiction()` (en `create()`, en `write()` si se toca el tema, y como
   `@api.constrains('jurisdiction_dependence')`). Rechazo desde JUNCO: `action_set_origin_from_junco()`.
-- Limpieza de `source_dependence_id` al cambiar jurisdicción: `_onchange_jurisdiction_dependence()` (~l.374)
+- Limpieza de `source_dependence_id` al cambiar jurisdicción: `_onchange_jurisdiction_dependence()`
 
 **Inferred:**
 - El formulario se muestra progresivamente: ver Workflow 6.
@@ -124,8 +124,8 @@ No es un workflow independiente — forma parte del Workflow 1.
 
 **Observed in code:**
 - `check_access('create')` + `super().create()` elevado + des-elevación:
-  `me/models/document_exp.py`, `create()` (~l.546-550)
-- Mecanismo `_inherits`: `me/models/document_exp.py:6`
+  `me/models/document_exp.py`, `create()`
+- Mecanismo `_inherits`: `_inherits = {"tmc.document": "document_id"}` en `me/models/document_exp.py`
 - Postura de permisos y elevaciones: [`security.md`](security.md)
 
 **Inferred:**
@@ -156,8 +156,8 @@ el registro ME. No es un workflow independiente.
 
 **Observed in code:**
 - Creación de `raa.registry_aa` con `sudo()` (efecto interno; el operador no necesita ACL
-  en `raa`): `me/models/document_exp.py`, `create()` (~l.563)
-- Constraint UNIQUE en `raa.registry_aa.document_id`: `raa/models/registry_aa.py:52–55`
+  en `raa`): `me/models/document_exp.py`, `create()`
+- Constraint UNIQUE en `raa.registry_aa.document_id`: `_document_id_unique` en `raa/models/registry_aa.py`
 
 **Inferred:**
 - Si `raa` no está instalado, la llamada `self.env["raa.registry_aa"]` falla en runtime.
@@ -424,9 +424,9 @@ el sistema no usa el ORM estándar para actualizar `tmc.document`.
 ### Evidence
 
 **Observed in code** (`me/models/document_exp.py`):
-- Intercepción/extracción del campo `date` en `write()` (`date_in_vals` / `vals.pop('date')`, ~l.679)
-- Actualización vía SQL directo: `_update_document_date()` (~l.603; `cr.execute("UPDATE tmc_document…")` ~l.617)
-- Separación de flujos: campos delegados por `document_id.sudo().write()` (~l.697), fecha por SQL, resto por `super().write()`
+- Intercepción/extracción del campo `date` en `write()` (`date_in_vals` / `vals.pop('date')`)
+- Actualización vía SQL directo: `_update_document_date()` (`cr.execute("UPDATE tmc_document…")`)
+- Separación de flujos: campos delegados por `document_id.sudo().write()`, fecha por SQL, resto por `super().write()`
 - Mismo embudo en el alta: `create()` saca `date` de `vals` antes del `super()` y la aplica con
   `_update_document_date()` bajo `sudo()` (es parte de la creación elevada del padre).
 - `_update_document_date()` revalida a mano lo que el SQL se saltea: fecha **no futura**

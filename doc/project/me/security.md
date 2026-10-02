@@ -60,7 +60,7 @@ dropdown lo fija `res_groups.py` con la clave `(rank, sequence, id)`, donde
 - **Saliente (ME → GD):** el operativo **lee** GD; **no escribe**. Las únicas escrituras a GD son
   **elevadas y acotadas** (tabla de `sudo()`).
 - **Entrante (JUNCO → ME):** `junco.group_user` cuelga de **`me.group_read_only`** con `(6,0)`
-  (`odoo-junco/junco/security/junco_groups.xml:27`) y `junco.group_manager` de `me.group_manager`.
+  (registro `group_user` en `odoo-junco/junco/security/junco_groups.xml`) y `junco.group_manager` de `me.group_manager`.
   ⇒ **`me.group_read_only` es contrato cross-repo**: cambiarlo impacta a JUNCO — coordinar.
 - La **regla del stack** ("cada `*.group_user` edita SU sistema y hereda solo LECTURA del de abajo")
   es **BR-016, gobernada en `odoo-junco`** (`odoo-junco/doc/project/security.md`). Acá se documenta
@@ -95,7 +95,7 @@ a tener en cuenta al razonar la postura de seguridad.
 
 ## Guards de backend (la frontera real)
 
-### `me.document_exp.write()` — guard al inicio del método (`me/models/document_exp.py`, ~l.623)
+### `me.document_exp.write()` — guard al inicio del método (`me/models/document_exp.py`)
 Si el usuario **no** es `me.group_manager` y **no** hay contexto `me_create_in_progress`:
 - solo se permiten escrituras que sean **comandos de `document_movement_ids`** (alta/edición
   de movimientos, con sus propias reglas); cualquier otro campo → `AccessError`
@@ -106,12 +106,12 @@ Si el usuario **no** es `me.group_manager` y **no** hay contexto `me_create_in_p
   No referencia grupos de `junco` (evita dependencia inversa); seguridad = validación interna
   + superficie mínima.
 
-### `me.document_exp.create()` (`me/models/document_exp.py`, ~l.499)
+### `me.document_exp.create()` (`me/models/document_exp.py`)
 **No tiene guard de grupo**: la frontera es el **ACL**, chequeado explícitamente
 (`self.check_access('create')`) **antes** de elevar — ver la tabla de `sudo()` y la regla durable
 del encabezado.
 
-### `me.document_movement.write()` (`me/models/document_movement.py`, ~l.139)
+### `me.document_movement.write()` (`me/models/document_movement.py`)
 Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un movimiento:
 - debe ser el **último movimiento manual** (`_is_last_manual_movement()`) — si no, `AccessError`;
 - debe ser el **poseedor** (`record.user_id == env.user`) — si no, `AccessError`;
@@ -137,10 +137,10 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
 
 | Lugar | Por qué |
 | --- | --- |
-| **`create()` → `super(... .sudo()).create()`** (~l.547; `check_access` ~l.546; des-elevación ~l.550) | **junco:EPIC-015**: el operativo ya solo lee GD, pero el `_inherits` crea el `tmc.document` padre **dentro** de este `super()`. Se eleva para permitir el alta; se **des-eleva** de inmediato (`records.sudo(self.env.su)`) para que movimientos y demás corran con los permisos del usuario. **Precedido por `self.check_access('create')`**: la elevación saltearía el ACL de `me.document_exp` (`ir.model.access.check` corta por `env.su`) |
-| `create()` → `raa.registry_aa.sudo().create()` (~l.563) | el alta en RAA es un efecto interno del sistema; el operador no necesita permisos en `raa` |
-| `_set_main_topic_id()` / `_set_secondary_topic_id()` / `write()` → `document_id.sudo().write()` (~l.257 / 268 / 697) | campos delegados van a `tmc.document`; el operativo hereda `tmc.group_read_only` (solo `read` sobre `tmc.document`), así que sin `sudo` no podría. El guard de ME es la frontera |
-| `action_set_origin_from_junco()` → `sudo().write()` (~l.437; def ~l.389) | da permiso ORM para escribir los 2 campos de origen; el canal `me_origin_from_junco` los acota en `write()` |
+| **`create()` → `super(... .sudo()).create()`** (`check_access('create')` antes del `super()`; des-elevación con `records.sudo(self.env.su)` después) | **junco:EPIC-015**: el operativo ya solo lee GD, pero el `_inherits` crea el `tmc.document` padre **dentro** de este `super()`. Se eleva para permitir el alta; se **des-eleva** de inmediato (`records.sudo(self.env.su)`) para que movimientos y demás corran con los permisos del usuario. **Precedido por `self.check_access('create')`**: la elevación saltearía el ACL de `me.document_exp` (`ir.model.access.check` corta por `env.su`) |
+| `create()` → `raa.registry_aa.sudo().create()` | el alta en RAA es un efecto interno del sistema; el operador no necesita permisos en `raa` |
+| `_set_main_topic_id()` / `_set_secondary_topic_id()` / `write()` → `document_id.sudo().write()` | campos delegados van a `tmc.document`; el operativo hereda `tmc.group_read_only` (solo `read` sobre `tmc.document`), así que sin `sudo` no podría. El guard de ME es la frontera |
+| `action_set_origin_from_junco()` → `sudo().write()` | da permiso ORM para escribir los 2 campos de origen; el canal `me_origin_from_junco` los acota en `write()` |
 | `create()` → `record.sudo()._update_document_date()` | el seteo de fecha del padre es parte de la creación elevada (arriba); sin `sudo` el `check_access('write')` que ahora impone el método cortaría el alta del operativo (read-only sobre GD). El camino gobernado por ACL real es `write()` (manager-only, sin `sudo`) |
 
 Todas son `sudo()` **acotadas**: a una operación puntual (las 3 últimas) o a un tramo con
@@ -166,7 +166,7 @@ des-elevación inmediata + chequeo previo de ACL (el `create()`).
 ## ACL de modelos externos que `me` usa
 
 - **`tmc.document`** (vía `_inherits`): el operativo hereda **`tmc.group_read_only`** → `1,0,0,0`
-  (`odoo-tmc/tmc/security/ir.model.access.csv:10`): **solo lectura**. Toda escritura de ME sobre
+  (entrada `access_tmc_document_read_only` de `odoo-tmc/tmc/security/ir.model.access.csv`): **solo lectura**. Toda escritura de ME sobre
   `tmc.document` (campos delegados y alta del padre) va por **`sudo()` acotado**. Solo
   `me.group_manager` alcanza `tmc.group_manager` (`1,1,1,1`) por herencia directa.
 - Resto de `tmc.*` (`tmc.dependence` extendido, `tmc.document_type`, `tmc.dependence_order`):
