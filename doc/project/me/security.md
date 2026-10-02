@@ -119,9 +119,17 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
 - `legajo_number` solo si el destino es `LEG` — si no, `AccessError`.
 
 ### Reglas de poseedor (resumen #027/#028/#029)
-- Solo el poseedor (`user_id` del último movimiento) registra un pase nuevo desde la UI; el
-  alta de movimiento por no-poseedor se rechaza (guard en `me.document_exp.write()` rama
-  `is_only_create_cmds`). Managers sin restricción.
+- Solo el poseedor (`user_id` del último movimiento) registra un pase nuevo **desde el formulario del
+  expediente**: el alta por no-poseedor se rechaza con `AccessError` ("Only the current holder of the
+  expediente can register a new movement.") en el guard de `me.document_exp.write()`, rama
+  `is_only_create_cmds`. Managers sin restricción.
+- ⚠️ **Alcance real del guard (verificado 2026-10-02 en `me_test` con dos usuarios `me.group_user`):**
+  cubre **solo ese camino**. `me.document_movement` **no define `create()`** y su ACL le da `create=1`
+  a `me.group_user`, así que un `create()` directo sobre el movimiento (ORM/RPC) de un no-poseedor
+  **se acepta**. No hay menú ni acción propia de movimientos, por lo que no es alcanzable desde la UI.
+  Hoy lo fija `TestFojasLock.test_operator_can_create_new_movement` (un operativo que no es
+  poseedor crea un movimiento directo). Si es intencional o un hueco es una **decisión pendiente**:
+  ver `brainstorming.md` → IDEA 8.
 - Corrección del último movimiento manual restringida por poseedor + campos editables (#028).
 - `fojas` queda bloqueado post-creación salvo manager / campo editable del último movimiento (#018).
 

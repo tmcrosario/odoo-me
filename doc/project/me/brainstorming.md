@@ -365,3 +365,29 @@ aplica **de acá en adelante**. El código existente de `me` tiene comentarios q
 - [ ] **`raa.entry.period` se calcula al levantar el servidor** (`raa/wizards/entry.py:25`,
       `default=str(date.today().year)` sin lambda): después de Año Nuevo el wizard sigue proponiendo
       el año anterior hasta reiniciar Odoo. Candidato: default con lambda / `context_today`.
+
+## IDEA 8 - Regla de poseedor: ¿también al crear un movimiento directo?
+
+> Registrada 2026-10-02 (hallazgo de la auditoría de doc, verificado en `me_test`). **Decisión del
+> usuario pendiente**; no se tocó código.
+
+### Resumen
+
+La regla "solo el poseedor registra un pase nuevo" (#027) se hace cumplir únicamente cuando el pase se
+agrega desde el formulario del expediente (`me.document_exp.write()`, rama `is_only_create_cmds`).
+`me.document_movement` no tiene `create()` propio y `me.group_user` tiene `create=1`: un `create()`
+directo (ORM/RPC) de un no-poseedor se acepta. No hay menú ni acción propia de movimientos, así que
+hoy no es alcanzable desde la UI. Detalle y evidencia en `security.md` (Reglas de poseedor).
+
+### Opciones
+
+- **(a) Hacerla cumplir también en `me.document_movement.create()`**: mismo chequeo de poseedor,
+  eximiendo a los managers y a los movimientos automáticos del alta (`me_create_in_progress`). Toca
+  seguridad → escala a L: criterios de aceptación antes de código, y revisar el test
+  `TestFojasLock.test_operator_can_create_new_movement`, que hoy afirma lo contrario.
+- **(b) Dejarlo como está**, documentado: la frontera real es la UI y el ACL de `create`.
+
+### Pendiente
+
+- [ ] Decidir (a) o (b). Si (a): task con acceptance criteria. Si (b): confirmar que
+      `test_operator_can_create_new_movement` es el comportamiento buscado y registrarlo en `security.md`.

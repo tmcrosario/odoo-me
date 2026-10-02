@@ -157,7 +157,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | **Duplicado de expediente (origen+número+período)** | `TestNotaOrigin.test_duplicate_warning_does_not_match_itself` (solo que el aviso no se autodetecta) | ⚠️ **parcial (medio)** — sin test del bloqueo ni del aviso positivo |
 | Fecha del documento (pasadas / bypass SQL) | `TestRequiredFields017`, `TestDocumentMovement` | ✅ |
 | Integridad de movimientos | `TestDocumentMovement` | ✅ |
-| Poseedor actual (#027/#028/#029) | `TestMovementPoseedor027`, `TestMovementCorrection028`, `TestCurrentHolder029` | ✅ (fuerte) |
+| Poseedor actual (#027/#028/#029) | `TestMovementPoseedor027`, `TestMovementCorrection028`, `TestCurrentHolder029` | ✅ (fuerte en el camino del formulario; el `create()` directo de un no-poseedor no se rechaza — ver gaps) |
 | Salida / reingreso institucional (#021/#030) | `TestHasReentry021`, `TestDefaultResponsible030` | ✅ |
 | Ubicación interna actual (EPIC-003) | `TestCurrentLocation` | ✅ |
 
@@ -174,10 +174,14 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
    tests de (a) el bloqueo (`UniqueViolation` al crear dos expedientes idénticos), (b) el aviso
    positivo con jurisdicción y (c) que no avisa en DEM sin jurisdicción. (El duplicado de
    *movimiento* sí está cubierto.)
-3. **BAJA — Jurisdicción multi-año**: el comportamiento intencional de no filtrar por año
+3. **MEDIA — Regla de poseedor cubierta solo en el camino del formulario**: `TestMovementPoseedor027`
+   prueba el rechazo por `write()` con comandos o2m; el `create()` directo de un no-poseedor sobre
+   `me.document_movement` no se rechaza y hoy lo acepta `TestFojasLock.test_operator_can_create_new_movement`.
+   *Recomendación:* decidir primero (`brainstorming.md` IDEA 8) y después fijar la decisión con un test.
+4. **BAJA — Jurisdicción multi-año**: el comportamiento intencional de no filtrar por año
    no tiene test directo. *Recomendación:* test que confirme que el dominio incluye
    jurisdicciones de más de un nomenclador cargado.
-4. **BAJA — Continuidad / append-only de movimientos**: no implementado y sin test (coincide
+5. **BAJA — Continuidad / append-only de movimientos**: no implementado y sin test (coincide
    con "Limitaciones conocidas"). Si se implementa el enforcement, agregar tests.
 5. **BAJA — Camino negativo "Mesa de Entradas" inexistente**: el movimiento automático a ME
    se omite sin aviso si no encuentra la dependencia; no hay test del caso.
