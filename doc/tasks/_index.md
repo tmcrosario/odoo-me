@@ -13,7 +13,7 @@ Nomenclatura:
 | SETUP-001 | Bootstrap del framework SDD en odoo-me | Ale Gallo | L | Done | Port del framework completo (pasos A–D) |
 | EPIC-001/TASK-001 | Inventario técnico-funcional verificado | sin asignar | L | Done | §7/§8 reconciliados; architecture datado; workflows corregido; #031 confirmado |
 | EPIC-001/TASK-002 | Baseline de seguridad (ACL/grupos/record rules) | sin asignar | M | Done | `security.md` completo: grupos, matriz ACL, sin record rules (seguridad por guards), sudo |
-| EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Done | `tests_plan.md` completo: 23 clases/201 métodos, cobertura, 5 gaps (CI no corre tests) |
+| EPIC-001/TASK-003 | Baseline de tests (inventario y gaps) | sin asignar | M | Done | `tests_plan.md` completo: 23 clases/201 métodos al cierre (hoy ver `tests_plan.md`), cobertura, 5 gaps (CI no corre tests) |
 | EPIC-001/TASK-004 | Investigación: filtrado de jurisdicciones del DEM (#033) | sin asignar | M | Done | Causa: dato (falta nomenclador 2025) + intencional (multi-año). No es bug de me. Fix en tmc_data (externo), anotado en business_rules |
 | EPIC-003/TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | Done | UI sobre `current_holder_id`; buscable + group-by. Verificada en UI |
 | EPIC-003/TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | Done | Campo `current_location_dependence_id` (internal-only) + filtro/group-by "Destination Office". Suite 201/0/0 |
@@ -29,11 +29,16 @@ Nomenclatura:
 | EPIC-005/TASK-002 | Decidir/declarar dependencia `raa` en el manifest | sin asignar | S | Done | No declarable (circular `raa→me`); acoplamiento implícito documentado |
 | EPIC-006/TASK-001 | Botón "Save" textual visible solo en dirty (form de expediente) | Ale Gallo | S | Done | Portado de `junco:EPIC-008/TASK-004`; primer asset frontend de `me`; suite 209/0/0; UI verificada en me2 |
 | EPIC-006/TASK-002 | Indicador "En Legajo Nº X" en el form + filtro "Adjuntos a Legajo" | Ale Gallo | S | Done | Computed del último movimiento a LEG + filtro de lista; strings inglés + i18n; suite 246/0/0; UI verificada |
+| EPIC-007/TASK-001 | Gobernar por ACL la escritura de fecha de GD por SQL crudo | Ale Gallo | L | Done | Retroactiva. `check_access('write')` + `sudo()` en `create()`; a pedido de junco. Suite 255/0/0 |
+| EPIC-007/TASK-002 | Tolerar saltos de reloj en la fecha no futura de movimientos | Ale Gallo | S | Done | Retroactiva. Margen de 60 s + corrige un test viejo que fallaba de noche. Suite 258/0/0 |
+| EPIC-007/TASK-003 | Formato Odoo 19 de las traducciones `es_AR` de `me` y `raa` | Ale Gallo | S | Done | Retroactiva. `#. module:` faltante + `#. odoo-python` en 31 entradas + typo. Suite 258/0/0 |
+| EPIC-007/TASK-004 | Período del wizard de RAA calculado al abrirlo | sin asignar | S | Draft | Hoy se fija al arrancar Odoo. Criterios propuestos, a confirmar. Conviene antes del 31/12 |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).
 >
 > **`junco:EPIC-011` y `junco:EPIC-015`** también están gobernadas en `odoo-junco` (repo dueño) y
-> aterrizaron **código** en `me` sin card local — es correcto: no se abren cards espejo. Ver las
+> aterrizaron **código** en `me` sin card local — es correcto: no se abren cards espejo. (Los ajustes
+> posteriores de `me` motivados por pedidos de junco sí tienen card local: `EPIC-007`.) Ver las
 > filas-puntero en [`../epics/_index.md`](../epics/_index.md) y la verdad durable en las canónicas
 > (`security.md`, `business_rules.md`, `models.md`, `tests_plan.md`).
