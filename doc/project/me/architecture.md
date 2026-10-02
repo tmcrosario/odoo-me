@@ -30,6 +30,7 @@
 > **Corregido 2026-10-02 (auditoría de doc):** la fila `number` de §2.1 (no se redeclara), el bloque
 > *Constraints* de §2.1 (hay 5 `@api.constrains` + validadores), el `[TODO]` de declarar `raa` en
 > §10.5 (cerrado: no se declara) y las dependencias de §1 (`tmc` y `tmc_data`).
+> `me/ai-context.md` se eliminó (2026-10-02): la fuente son los docs hermanos.
 > **Siguen siendo snapshot 2026-03-26 y no vigentes** (ver el doc hermano indicado): el origen del
 > 1er movimiento — en una Nota sale de la jurisdicción (§2.1 *Métodos* y el diagrama de §4.1;
 > `workflows.md` Workflow 4); el aviso de duplicado — un duplicado exacto lo bloquea `UNIQUE(name)` de
@@ -480,7 +481,8 @@ El módulo `me` referencia directamente a `raa.registry_aa` en su lógica de `cr
 > **Reconciliación EPIC-001/TASK-001 (2026-06-19).** Las 8 inconsistencias quedan
 > resueltas/obsoletas/reclasificadas (el código cambió desde el snapshot 2026-03-26):
 >
-> - **7.1 → obsoleta:** `me/ai-context.md` **ahora existe** (creado post-snapshot).
+> - **7.1 → obsoleta:** `me/ai-context.md` existió (creado post-snapshot) y se **eliminó el 2026-10-02**
+>   por duplicar y desactualizar las canónicas; sigue en el historial de git.
 > - **7.2 → resuelta:** integración RAA implementada (`create()` l.560, `unlink()` l.711)
 >   y documentada en `business_rules.md` ("Registro automático en RAA"). `docs/todo.md` migró.
 > - **7.3 → resuelta:** movimientos automáticos documentados en `business_rules.md`.
@@ -690,7 +692,7 @@ Esta búsqueda depende del nombre exacto de una dependencia en la base de datos.
 
 Las siguientes actualizaciones alinearían la documentación con el código real. No implican cambios de código.
 
-### 10.1 Crear `me/ai-context.md`
+### 10.1 Crear `me/ai-context.md` *(descartado: el archivo se creó y luego se eliminó, ver §7.1)*
 
 El archivo es referenciado en múltiples lugares pero no existe. Debería crearse describiendo:
 - Propósito del módulo ME
