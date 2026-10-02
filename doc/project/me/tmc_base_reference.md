@@ -74,9 +74,12 @@ Important fields include:
 - `secondary_topic_ids` → secondary topics
 
 
-The ME module extends this model through:
+The ME module extends this model through **delegation inheritance** (`_inherits`):
 
-`document_exp`
+`me.document_exp`
+
+Do not confuse it with `tmc.document_exp`, a **different model** of the base module (its own table
+and purpose). See [`models.md`](models.md).
 
 
 --------------------------------------------------
@@ -146,10 +149,10 @@ Conceptually:
 
 ```
 tmc.document
-      ↓ extended by
-document_exp
+      ↓ extended by (_inherits)
+me.document_exp
       ↓ tracked through
-document_movement
+me.document_movement
 ```
 
 Important:
@@ -195,3 +198,36 @@ Avoid:
 - redefining core document models
 - duplicating document entities
 - bypassing the base document system.
+
+
+--------------------------------------------------
+Validaciones de `tmc.document` que afectan a `me`
+--------------------------------------------------
+
+Verificadas en `odoo-tmc/tmc/models/document.py` (2026-10-02). Como `me.document_exp` delega en
+`tmc.document` (`_inherits`), el alta de un expediente crea el documento padre y **estas validaciones
+corren también sobre él**, salvo donde `me` las esquiva a propósito.
+
+| Validación en `tmc.document` | Efecto sobre un expediente |
+|---|---|
+| `UNIQUE(name)` ("Document already exists"); `name` = tipo + número + dependencia + período | Un expediente duplicado no se puede guardar (ver `business_rules.md`) |
+| `create()`/`write()`: el año de `date` debe coincidir con `period`, salvo tipo `CONV` ("Date does not match with period") | **Es la razón del SQL de `_update_document_date`** en `me`: permite archivar un documento viejo en un expediente del período actual (`workflows.md`, Workflow 7) |
+| `_check_date_not_future`: `date` > hoy (fecha UTC del servidor) → "Date cannot be in the future." | `me` la esquiva con el SQL y la **reimplementa** en `_update_document_date`, contra la fecha del usuario (`context_today`) |
+| `_check_document_object_length`: el objeto no puede superar **125 caracteres**, salvo tipo `DIC` (el campo admite 250, pero el constraint corta en 125) | Rige para el "Reference" del expediente: 125 pasa y 126 se rechaza (probado) |
+| `_check_period`: 1000 ≤ período ≤ año actual, y no antes de 1948 | El período de un expediente no puede ser anterior a 1948 |
+| `_check_number`: 0 es inválido (salvo tipo `ACT`); máximo 999999 para EXP/ACT/CONV/NTA/NJC y para CM/HCM/CONC, 9999 para DHH y 6000 en el resto | Para un EXP coincide con el rango 1–999999 que valida `me` (`_validate_number`) |
+
+--------------------------------------------------
+`tmc.dependence_order` (jerarquía de dependencias)
+--------------------------------------------------
+
+Modelo del base (`_order = "code"`) que ordena las dependencias en árbol: cada registro tiene `code`,
+la `dependence_id` que representa, su padre (`parent_id`, otra `tmc.dependence`) y los nomencladores
+(`institutional_classifier_ids`) en los que figura. **De él depende todo el filtrado de origen de `me`:**
+
+- **Jurisdicciones** ofrecidas (`allowed_jurisdiction_ids`): las dependencias hijas de `adm`
+  (`tmc_dependence_adm`), de **todos** los nomencladores cargados (multi-año, a propósito).
+- **Reparticiones** ofrecidas (`allowed_sub_dependence_ids`): las dependencias cuyo `parent_id` es la
+  jurisdicción elegida.
+- `action_set_origin_from_junco` valida jurisdicción y repartición contra este mismo árbol.
+
