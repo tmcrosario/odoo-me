@@ -19,6 +19,11 @@ relación proceso↔expedientes vive del lado JUNCO.
 
 ## Estado real (AS-IS, ya implementado en JUNCO)
 
+> ⚠️ **Snapshot histórico, no fuente de verdad.** Describe a JUNCO tal como se relevó; lo vigente
+> está en `odoo-junco/doc/epics/EPIC-002_integracion_junco_me.md`, que figura **Done** y lleva una
+> corrección de EPIC-014: **un proceso = un expediente** (el vínculo multi-expediente con
+> vigencia e históricos no se materializó). Esta tabla no se mantiene desde `me`.
+
 Verificado contra el código de `odoo-junco` (`junco/models/process_expediente.py`,
 `junco/models/purchase_process.py`):
 
@@ -26,30 +31,62 @@ Verificado contra el código de `odoo-junco` (`junco/models/process_expediente.p
 | --- | --- | --- |
 | Modelado de la relación | ✅ Tabla intermedia `junco.process_expediente` con metadatos (`date_linked`, `linked_by`, `change_reason`, `decree_ref`, `notes`) | junco |
 | Expediente vigente | ✅ `is_current` + constraint `_check_single_current` (máximo uno vigente) | junco |
-| Historial | ✅ One2many `expediente_ids` + `date_linked` + `linked_by` + `has_expediente_history` | junco |
+| Historial | ⚠️ Superado por junco:EPIC-014 — One2many `expediente_ids` + `date_linked` + `linked_by` existen, pero el historial multi-expediente no se usa (un proceso = un expediente). `has_expediente_history` **no existe** en el código de junco | junco |
 | Seguridad | ✅ ACL del modelo link para manager/user/read_only | junco |
 | Exclusividad (exp. en >1 proceso) | ❌ Abierta — sin constraint que lo impida | junco |
 | Anulación del vigente | ❌ Abierta — comportamiento no definido | junco |
 | Evento que motiva la incorporación | ⚠️ Parcial — `change_reason` captura el motivo; `continuity_event_id` está como TODO | junco |
 
-> Las decisiones que faltan son de negocio y se cierran **en JUNCO** (su EPIC-002),
-> no en este repo.
+> Las decisiones que faltan son de negocio y se cierran **en JUNCO**, no en este repo. Ojo: la
+> EPIC-002 de junco ya está cerrada, así que el estado actual de las filas ❌/⚠️ de arriba se
+> consulta en el repo de junco (no está relevado acá).
 
 ## Contrato de `me` hacia JUNCO (lo único que obliga a este repo)
 
 La responsabilidad de `me` frente a la integración es **pasiva**: mantener estable la
-superficie pública que JUNCO ya consume de `me.document_exp`. Cualquier cambio a estos
-campos (rename, semántica, eliminación) **rompe JUNCO** y debe coordinarse:
+superficie pública que JUNCO ya consume de `me.document_exp`. Cualquier cambio a esta
+superficie (rename, semántica, firma, eliminación) **rompe JUNCO** y debe coordinarse.
 
-- `computed_name`
-- `date`
-- `dependence_id`
-- `jurisdiction_dependence`
-- `document_movement_ids`
+Relevado en `odoo-junco/junco/` (código, vistas y tests) el 2026-10-02:
 
-Este contrato es una **restricción de entrada para EPIC-001** (baseline de `me`): el
-inventario y cualquier refactor del baseline deben preservar estos campos o versionar
-el cambio con JUNCO.
+**Campos que JUNCO lee** de `me.document_exp`:
+
+- `computed_name`, `date`, `document_object`, `intake_date`
+- `dependence_id`, `jurisdiction_dependence`, `source_dependence_id`
+- `main_topic_id`, `main_topic_ids`, `secondary_topic_id` (JUNCO deriva el tipo de proceso
+  del tema/subtema y filtra la elegibilidad por tema principal)
+- `document_id` (acceso al `tmc.document` por `_inherits`; lo usa el wizard de la Junta)
+
+`computed_name` es un computed **sin `store` ni `search`**: JUNCO solo lo lee. No asumir que se
+puede usar en un dominio (`search` directo sobre ese campo lanza `ValueError`).
+
+**Método que JUNCO llama:** `action_set_origin_from_junco(jurisdiction_id, source_id=False)`.
+Firma, idempotencia y alcance (solo DEM; rechaza Notas con `UserError`) son parte del contrato.
+
+**Alta por ORM:** los tests de JUNCO crean expedientes con `dependence_id`, `document_type_id`,
+`number`, `period`, `date`, `intake_date`, `document_object`, `main_topic_ids`,
+`secondary_topic_ids` y, en algunos, `jurisdiction_dependence` y `source_dependence_id`. Volver
+obligatorio otro campo, o quitar uno de estos, rompe esa suite.
+
+**Comportamiento:** ME rechaza con `ValidationError` una licitación sin subtema (JUNCO lo asserta
+en su suite) — ver `EPIC-004/TASK-005` y `business_rules.md`.
+
+**Relaciones y seguridad:**
+
+- JUNCO apunta a `me.document_exp` con `junco.process_expediente.expediente_id`
+  (`ondelete='restrict'`: **no se puede borrar un expediente vinculado a un proceso**; verificado
+  2026-10-02: el `unlink()` falla con `RestrictViolation` de PostgreSQL, no con un mensaje de usuario) y con
+  `predecessor_expediente_ids` (many2many).
+- Los grupos de JUNCO cuelgan de los de ME: `junco.group_read_only`/`group_user` implican
+  `me.group_read_only` y `junco.group_manager` implica `me.group_manager` — ver `security.md`.
+
+**Ya no forma parte del contrato:** `document_movement_ids` (figuraba antes; JUNCO no lo
+referencia en código, vistas ni tests).
+
+Este contrato es una **restricción para cualquier refactor de `me`** (rige desde EPIC-001): hay
+que preservar la superficie o versionar el cambio con JUNCO. Para volver a relevarlo:
+`grep -rhoE "(expediente_id|current_expediente_id|new_exp|exp)\.[a-z_]+" junco --include=*.py --exclude-dir=tests`
+desde `odoo-junco/`.
 
 ## Única decisión que podría tocar `me` (parkeada)
 
