@@ -29,7 +29,28 @@ When a rule changes in a future Odoo version, update this file or document the e
 - Use descriptive `snake_case` names.
 - Avoid vague names such as `data`, `value`, `info`, or `flag` unless the meaning is obvious from context.
 - Define `string`, `help`, `required`, and `default` when they add clarity.
-- User-visible Python strings must be translatable with `_()`; XML strings should be ready for i18n.
+- User-visible Python strings must be translatable with `_()`; XML strings should be ready for i18n. The `.po` format is under "Translations (i18n)".
+
+## Translations (i18n)
+
+- Source strings are English, in Python (`_()`) and in view arch. The Spanish translation lives in `<module>/i18n/es_AR.po`. Never write Spanish directly in code or views.
+- **Every** `.po` entry must start with `#. module: <module>`. A single entry without it makes `odoo --load-language=es_AR` fail with `AttributeError: 'NoneType' object has no attribute 'groups'` (`odoo/tools/translate.py`), and the whole load is rolled back.
+- Entries for Python strings (`_()` in a `.py`) also need `#. odoo-python` (JavaScript: `#. odoo-javascript`). Without it Odoo 19 ignores the translation silently and the message shows in English. The old `#, python-format` flag is not enough.
+- Entry format for a Python string:
+
+```po
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid "Intake date cannot be in the future."
+msgstr "La fecha de ingreso no puede ser una fecha futura."
+```
+
+- A `msgstr` must keep the same placeholders as its `msgid` (`%s`, `%(name)s`); otherwise rendering the message can fail.
+- Code translations are cached per process: restart Odoo after changing a `.po`.
+- Check before committing a `.po`:
+  - no entry lacks the module comment: `python3 -c "import polib,re; po=polib.pofile('<module>/i18n/es_AR.po'); print([e.linenum for e in po if not e.obsolete and not re.match(r'(module[s]?): (\w+)', e.comment)])"` must print `[]`;
+  - in `odoo shell`, `from odoo.tools.translate import code_translations; code_translations.get_python_translations('<module>', 'es_AR')` must return every Python entry of the file.
 
 ## Relations
 

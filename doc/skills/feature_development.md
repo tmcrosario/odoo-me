@@ -57,6 +57,9 @@ Para M / L / XL o cambios sensibles, dejar un plan corto antes de editar:
 - Las validaciones de backend mandan; no cubrir reglas de negocio solo con
   `readonly`/`invisible`.
 - No ampliar permisos sin criterio explícito.
+- Seguir `doc/framework/odoo_development_rules.md`: vistas Odoo 19 (`<list>`, sin `attrs`/`states`),
+  strings de UI en inglés con la traducción `es_AR` en el `.po` (entradas con `#. module:`; las de
+  Python además con `#. odoo-python`) y comentarios solo del porqué no obvio.
 
 ### 5. Validar y reportar
 

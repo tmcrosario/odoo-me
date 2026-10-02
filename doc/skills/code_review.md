@@ -34,12 +34,18 @@ VS Code + Claude. Source of truth: `doc/skills/`.
 ### 4. Compatibilidad Odoo
 
 - Chequear uso de Python / Odoo API.
-- Chequear sintaxis XML / vistas para la versión Odoo target.
+- Chequear sintaxis XML / vistas para la versión Odoo target. En Odoo 19: `<list>` (no `<tree>`) y
+  nada de `attrs`/`states`/`statusbar_colors` (`doc/framework/odoo_development_rules.md` →
+  *XML And Views For Odoo 19+*).
+- Strings de UI en inglés con la traducción `es_AR` en el `.po`: toda entrada con `#. module:` y las
+  de código Python además con `#. odoo-python`; si no, `es_AR` no carga o el mensaje sale en inglés
+  (mismo doc → *Translations (i18n)*).
+- Comentarios solo del porqué no obvio, sin etiquetas ni meta-notas (mismo doc → *General Principles*).
 - Revisar campos computados, constraints, lógica `onchange` y comportamiento batch.
 
 ### 5. Seguridad
 
-- Modelos nuevos requieren consideración de ACL.
+- Modelos nuevos requieren consideración de ACL (entrada en `ir.model.access.csv` o `N/A` con motivo).
 - Cambios de permisos requieren análisis explícito por rol.
 - Caminos negativos sensibles deben tener test o quedar documentados como gap.
 

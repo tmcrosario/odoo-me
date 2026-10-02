@@ -45,7 +45,8 @@ Default para odoo-me:
 
 - task cards y epic cards: español rioplatense;
 - execution reports: español rioplatense;
-- user-visible Odoo strings: inglés + i18n `es_AR` (política por módulo).
+- user-visible Odoo strings: inglés + i18n `es_AR` (política por módulo). El formato del `.po`
+  (`#. module:` y `#. odoo-python`) está en `doc/framework/odoo_development_rules.md` → *Translations (i18n)*.
 
 ## Por qué no todo en español
 
