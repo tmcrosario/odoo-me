@@ -59,6 +59,8 @@ No incluye:
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Filtro por usuario poseedor en la vista de lista | sin asignar | S | `me` | Done |
 | TASK-002 | Filtro por oficina (ubicación actual) en la vista de lista | sin asignar | L | `me` | Done |
+| TASK-003 | Orden de la lista por fecha de ingreso (más reciente primero) | Ale Gallo | XS | `me` | Done |
+| TASK-004 | Búsqueda y group-by por Jurisdicción en la lista | Ale Gallo | XS | `me` | Done |
 
 ## Preguntas abiertas
 
@@ -67,9 +69,14 @@ el filtro lista solo internas (campo internal-only).
 
 > Idea de follow-up (búsqueda DEM por jurisdicción/procedencia) registrada en
 > [`../project/me/brainstorming.md`](../project/me/brainstorming.md) — IDEA 1.
+> **Implementada en TASK-004** (campo buscable + group-by; se descartó el searchpanel por cardinalidad).
 
 ## Cierre de épica
 
 Cerrada (Done) el 2026-06-19 sobre `develop`, con TASK-001 (filtro por poseedor) y
 TASK-002 (filtro por oficina interna de destino) entregadas, suite `me` 201/0/0 y UI
 verificada en me2. Deploy a producción diferido (usuario).
+
+**Ampliada después del cierre** (sin reabrirla formalmente): TASK-003 (orden por `intake_date`
+desc, 2026-07-30) y TASK-004 (búsqueda/group-by por Jurisdicción, que cierra la IDEA 1,
+2026-08-05; suite 246/0/0 y UI verificada).

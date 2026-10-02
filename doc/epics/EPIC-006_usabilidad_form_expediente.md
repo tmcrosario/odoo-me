@@ -1,7 +1,7 @@
 # EPIC-006 — Usabilidad del formulario de expedientes
 
-Estado: En progreso (sobre develop) — TASK-001 Done
-Riesgo global: bajo (UX/cosmético; sin modelo, ACL ni JS)
+Estado: En progreso (sobre develop) — TASK-001 y TASK-002 Done
+Riesgo global: bajo (UX/cosmético; sin campos persistentes, ACL ni JS propio. TASK-002 suma un computed **no-stored** al modelo)
 Módulo: `me`
 Owner: sin asignar
 
@@ -23,6 +23,7 @@ La idea se registró antes en `brainstorming.md` (IDEA 3) y acá se formaliza y 
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Botón "Save" textual visible solo en dirty (form de expediente) | Ale Gallo | S | `me` | Done |
+| TASK-002 | Indicador "En Legajo Nº X" en el form + filtro "Adjuntos a Legajo" | Ale Gallo | S | `me` | Done |
 
 ## Reglas / decisiones durables
 
@@ -41,5 +42,6 @@ La idea se registró antes en `brainstorming.md` (IDEA 3) y acá se formaliza y 
 
 ## Cierre de épica
 
-Abierta. TASK-001 Done sobre `develop` (suite 209/0/0, UI verificada en me2). Deploy a prod:
-diferido (usuario). La épica queda abierta por si se suman mejoras de form.
+Abierta. TASK-001 (2026-07-27, suite 209/0/0) y TASK-002 (2026-08-05, suite 246/0/0) Done sobre
+`develop`, con UI verificada en me2. Deploy a prod: diferido (usuario). La épica queda abierta por
+si se suman mejoras de form.

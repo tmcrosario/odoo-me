@@ -203,6 +203,11 @@ No incluye:
 | Task | Título | Responsable | Modo | Módulo | Estado |
 | --- | --- | --- | --- | --- | --- |
 | TASK-001 | Reacotamiento de la carga DEM (cesión jurisdicción/origen a JUNCO) | sin asignar | L | `me` | Done (sobre develop) |
+| TASK-002 | Carga de jurisdicción/origen en DEM con tema Nota (excepción a TASK-001) | Ale Gallo | L | `me` | Done (sobre develop) |
+| TASK-003 | 1er movimiento de una Nota: origen = jurisdicción | Ale Gallo | S | `me` | Done (sobre develop) |
+| TASK-004 | Acotar el subtema de Licitación a Privada/Pública | Ale Gallo | S | `me` | Done (sobre develop) |
+| TASK-005 | Subtema de Licitación requerido (upstream de JUNCO) | Ale Gallo | S | `me` | Done (sobre develop) |
+| TASK-006 | Tema requerido al alta + filtro "Sin clasificar" | Ale Gallo | XS | `me` | Done (sobre develop) |
 
 ## Preguntas abiertas
 
@@ -231,3 +236,21 @@ Cerrada (Done) el 2026-06-17 sobre `develop`, con TASK-001 entregada y la integr
 ME↔JUNCO validada end-to-end en `me2` (deploy conjunto `-u me,junco`). Contraparte
 `odoo-junco` EPIC-010 cerrada (Done), D-005 derogada en su EPIC-002. **Deploy a
 producción diferido** (lo gestiona el usuario, `-u me,junco` conjunto cuando corresponda).
+
+**Ampliada después del cierre** (sin reabrirla formalmente), con TASK-002..006 cerradas entre
+2026-07-29 y 2026-08-07, todas sobre `develop` y con UI verificada en me2:
+
+- **TASK-002** (2026-07-29): enmienda a TASK-001. Los DEM con tema **Nota** no van a JUNCO, así que
+  ME carga jurisdicción y repartición al ingreso (obligatoria, guard en `write()`); suma las
+  validaciones de fecha del expediente. Suite 233/0/0.
+- **TASK-003** (2026-07-30): el 1er movimiento de una Nota sale de la jurisdicción; las compras
+  siguen con `dependence_id`. Suite 236/0/0.
+- **TASK-004** (2026-07-30): el subtema de Licitación se acota a Privada/Pública (domain de vista;
+  no se toca `tmc_data`). Suite 241/0/0.
+- **TASK-005** (2026-08-07): el subtema de una Licitación es obligatorio (pedido de JUNCO). Su suite
+  asserta el `ValidationError` → ver el contrato en la card. Suite 254/0/0.
+- **TASK-006** (2026-08-07): tema requerido al alta (solo vista, solo nuevas) + filtro "Sin
+  clasificar". Suite 254/0/0.
+
+El alcance "solo DEM de compras" de D-3 se mantiene: la excepción Nota (TASK-002) es el único caso en
+que ME sigue cargando el origen de un DEM.
