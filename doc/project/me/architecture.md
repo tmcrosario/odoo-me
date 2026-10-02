@@ -27,6 +27,16 @@
 > que **ya no existen** (`allowed_dependence_ids`, removido en EPIC-005/TASK-001) y marca
 > `jurisdiction_dependence` como required (dejó de serlo en EPIC-004).
 >
+> **Corregido 2026-10-02 (auditoría de doc):** la fila `number` de §2.1 (no se redeclara), el bloque
+> *Constraints* de §2.1 (hay 5 `@api.constrains` + validadores), el `[TODO]` de declarar `raa` en
+> §10.5 (cerrado: no se declara) y las dependencias de §1 (`tmc` y `tmc_data`).
+> **Siguen siendo snapshot 2026-03-26 y no vigentes** (ver el doc hermano indicado): el origen del
+> 1er movimiento — en una Nota sale de la jurisdicción (§2.1 *Métodos* y el diagrama de §4.1;
+> `workflows.md` Workflow 4); el aviso de duplicado — un duplicado exacto lo bloquea `UNIQUE(name)` de
+> `tmc.document` y el aviso no corre en DEM sin jurisdicción (§5.2; `business_rules.md`); los campos
+> de `me.document_movement` (§2.2); el unlink de RAA (§5.6) y que "RAA no se modifica desde ME" (§11:
+> ME borra su registro RAA en `unlink()`).
+>
 > ⚠️ **Refs de línea absolutas (`document_exp.py:NNN`, "líneas NNN–MMM") de §1–9 son del snapshot
 > 2026-03-26** (el archivo tenía ~200 líneas; hoy tiene ~720): **NO son confiables**, apuntan a
 > otros símbolos. Para ubicar código, buscá por **nombre de método/campo**, no por número. Las
@@ -66,7 +76,7 @@ El módulo `me` implementa el sistema de **Mesa de Entradas** del Tribunal Munic
 El módulo actúa como **punto de ingreso** de documentos al sistema. El flujo automático creado en `create()` (`me/models/document_exp.py`, líneas 142–160) sugiere que todo expediente ingresa por una dependencia jurisdiccional externa, pasa por el TMC, y llega a la Mesa de Entradas. Este flujo inicial es fijo y automático.
 
 **Observed in code:**
-El módulo depende exclusivamente de `tmc` (`me/__manifest__.py`). No tiene dependencias de otros módulos de Odoo estándar más allá del módulo base implícito.
+El módulo depende de `tmc` y `tmc_data` (`me/__manifest__.py`: `"depends": ["tmc", "tmc_data"]`); `tmc_data` aporta el nomenclador y los temas que ME referencia por xmlid (`tmc_data.tmc_document_topic_*`). `raa` no se declara: depende de `me` (ver §9.7).
 
 ---
 
@@ -86,13 +96,15 @@ El módulo depende exclusivamente de `tmc` (`me/__manifest__.py`). No tiene depe
 |---|---|---|---|
 | `document_id` | Many2one(`tmc.document`) | Sí | Enlace de delegación, `ondelete="cascade"` |
 | `external_key` | Char | No | Clave externa usada por la Municipalidad |
-| `jurisdiction_dependence` | Many2one(`tmc.dependence`) | Sí | Dependencia jurisdiccional del expediente |
+| `jurisdiction_dependence` | Many2one(`tmc.dependence`) | No (desde EPIC-004) | Dependencia jurisdiccional del expediente; en DEM la completa JUNCO, salvo en Notas (se carga en ME) |
 | `fojas` | Integer | No | Número de fojas del expediente |
-| `number` | Integer | Sí (reforzado) | Heredado de `tmc.document`, marcado `required=True` localmente |
-| `allowed_dependence_ids` | Many2many(`tmc.dependence`) | No | Computed, sin dependencias declaradas |
+| `number` | Integer | — | **NO se redeclara** en `me.document_exp`: es un campo delegado de `tmc.document` y redeclararlo rompe el `_inherits` (deja `tmc.document.number = 0` y el nombre sale "Unnamed Document"; ver el comentario en `document_exp.py`). El required vive en la vista (`required="1"`, rango 1–999999 validado en `_validate_number`) |
 | `is_valid` | Boolean | No | Computed: True si todos los campos clave están completos |
 | `computed_name` | Char | No | Computed: nombre en formato `EXP-XXXXXX-ABR/AÑO` |
 | `document_movement_ids` | One2many(`me.document_movement`) | No | Historial de movimientos del expediente |
+
+> El inventario **vigente** de campos está en [`models.md`](models.md): esta tabla es un snapshot y no
+> lista, por ejemplo, `intake_date`, `source_dependence_id` ni los campos de tema/subtema.
 
 **Observed in code:**
 Hay un campo comentado en el código: `asunto` (Char, "Asunto"), `document_exp.py` líneas 38–41. No está activo.
@@ -183,8 +195,22 @@ Hay un campo comentado en el código: `asunto` (Char, "Asunto"), `document_exp.p
 
 #### Constraints
 
-**Observed in code:** No hay `@api.constrains` ni `_sql_constraints` definidos en `me.document_exp`.
-Las validaciones de unicidad y formato provienen del modelo base `tmc.document` (ver sección 2.3).
+**Observed in code** (verificado 2026-10-02, `me/models/document_exp.py`): `me.document_exp` **no define
+constraints de tabla** (`models.Constraint`/`_sql_constraints`): la unicidad (`UNIQUE(name)`) viene de
+`tmc.document` (ver sección 2.3). Sí define **cinco `@api.constrains`**:
+
+| Método | Valida |
+|---|---|
+| `_check_intake_date_not_future` | el ingreso no es futuro |
+| `_check_intake_date_not_before_document_date` | ingreso ≥ fecha del documento |
+| `_check_intake_date_not_before_period` | el ingreso no es anterior al período (asimétrica: uno posterior sí es válido) |
+| `_check_nota_jurisdiction_required` | jurisdicción obligatoria en DEM + Nota |
+| `_check_source_dependence_required` | repartición obligatoria si la jurisdicción tiene reparticiones (salvo CM/TMC) |
+
+Además hay validadores llamados desde `create()`/`write()` (no como `@api.constrains`, a propósito, para no
+romper el dato viejo al recomputar campos stored): `_validate_number` (1–999999), `_validate_dependence`
+(DEM/TMC/CM), `_validate_nota_jurisdiction` y `_validate_licitacion_subtopic`. Reglas en
+[`business_rules.md`](business_rules.md).
 
 ---
 
@@ -701,7 +727,9 @@ El archivo es referenciado en múltiples lugares pero no existe. Debería crears
 - Agregar como `[TODO]` la creación de `ir.model.access.csv` si se confirma que falta
 - Agregar como `[TODO]` la formalización del principio append-only con constraint técnico
 - Agregar como `[TODO]` la definición del comportamiento cuando `Mesa de Entradas` no existe
-- Agregar como `[TODO]` declarar `raa` como dependencia en `me/__manifest__.py`
+- ~~Agregar como `[TODO]` declarar `raa` como dependencia en `me/__manifest__.py`~~ → **cerrado, no
+  se hace** (EPIC-005/TASK-002): `raa` depende de `me`, declararlo cerraría un ciclo `me ↔ raa`.
+  Ver §9.7
 
 ---
 
