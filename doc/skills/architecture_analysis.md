@@ -1,5 +1,11 @@
 # Architecture Analysis Workflow
 
+> **Skill histórica.** Se redactó para el relevamiento inicial de `me` (EPIC-001, ya Done y verificado en
+> `doc/project/me/*`). **No usar tal cual:** habla de Odoo 14 → 19 y de riesgos de migración (la migración ya
+> se hizo) y dice que `raa` está fuera de alcance y no se debe modificar, cuando hoy `raa` es el módulo
+> secundario (`doc/project/raa/architecture.md`; su código se toca solo en un paso explícito de implementación,
+> ver `CLAUDE.md`). Para un relevamiento nuevo, adaptala antes de seguirla.
+
 Use this skill to perform a **deep architectural analysis**
 of an Odoo module before modifying or extending it.
 
