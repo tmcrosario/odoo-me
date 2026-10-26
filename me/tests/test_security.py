@@ -37,7 +37,7 @@ class TestMeSecurity(TransactionCase):
     # EPIC-015/TASK-004 — la escalera del privilegio ME debe ser ESTRUCTURAL:
     # Read Only < User < Manager. El orden lo fija res_groups.py con la clave
     # (rank, sequence, id), rank = |all_implied_ids ∩ grupos del privilegio|; la cadena
-    # real (user implica read_only, manager implica user) da rank 0 < 1 < 2.
+    # real (user implica read_only, manager implica user) da rank 1 < 2 < 3.
     # Este test existe porque el defecto NO lo detectó ninguna suite: lo encontró un
     # humano mirando un dropdown. Si User vuelve a quedar arriba de Read Only, el widget
     # (res_user_group_ids_field.js) borra las opciones de menor nivel y "ME: User"

@@ -631,7 +631,7 @@ msgstr "Sin clasificar"
 #. odoo-python
 #: code:addons/me/models/document_exp.py:0
 msgid ""
-"A licitación requires a subtype (Pública/Privada) as its specification."
+"A Licitación requires a subtype (Public/Private) as its specification."
 msgstr "Una licitación requiere un subtipo (Pública/Privada) como especificación."
 
 #. module: me

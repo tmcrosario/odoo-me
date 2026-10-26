@@ -50,7 +50,7 @@
              escalera del privilegio ME sea ESTRUCTURAL. El orden del dropdown lo fija
              res_groups.py con la clave (rank, sequence, id), donde
              rank = |all_implied_ids ∩ grupos del privilegio|. Con la cadena:
-             Read Only=0 < User=1 < Manager=2, sin depender del desempate por id.
+             Read Only=1 < User=2 < Manager=3, sin depender del desempate por id.
              Antes User y Read Only empataban en rank 0 y sequence 0, y el id decidía:
              Read Only quedaba arriba y el widget (res_user_group_ids_field.js) borraba
              las opciones de menor nivel → "ME: User" desaparecía del dropdown para

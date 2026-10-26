@@ -555,7 +555,7 @@ class DocumentExp(models.Model):
         for record in self:
             if record.is_licitacion and not record.secondary_topic_id:
                 raise exceptions.ValidationError(
-                    _("A licitación requires a subtype (Pública/Privada) as its "
+                    _("A Licitación requires a subtype (Public/Private) as its "
                       "specification.")
                 )
 
