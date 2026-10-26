@@ -312,6 +312,9 @@ class DocumentExp(models.Model):
         licitacion = self.env.ref(
             'tmc_data.tmc_document_topic_licitacion', raise_if_not_found=False
         )
+        directa = self.env.ref(
+            'tmc_data.tmc_document_topic_contratacion_directa', raise_if_not_found=False
+        )
         subtipos = Topic.browse()
         if licitacion:
             for xmlid in ('tmc_data.tmc_document_topic_licitacion_publica',
@@ -326,6 +329,9 @@ class DocumentExp(models.Model):
                 # subtemas documentales de GD que cuelgan del tema — ver business_rules
                 # ("Subtema acotado al tema") / brainstorming IDEA 2.
                 record.allowed_secondary_topic_ids = subtipos
+            elif directa and main == directa:
+                # Sus hijos son subtemas documentales de GD que JUNCO no consume.
+                record.allowed_secondary_topic_ids = Topic.browse()
             elif main:
                 record.allowed_secondary_topic_ids = Topic.search(
                     [('parent_id', '=', main.id)]

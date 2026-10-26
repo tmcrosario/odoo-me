@@ -33,6 +33,7 @@ Nomenclatura:
 | EPIC-007/TASK-002 | Tolerar saltos de reloj en la fecha no futura de movimientos | Ale Gallo | S | Done | Retroactiva. Margen de 60 s + corrige un test viejo que fallaba de noche. Suite 258/0/0 |
 | EPIC-007/TASK-003 | Formato Odoo 19 de las traducciones `es_AR` de `me` y `raa` | Ale Gallo | S | Done | Retroactiva. `#. module:` faltante + `#. odoo-python` en 31 entradas + typo. Suite 258/0/0 |
 | EPIC-007/TASK-004 | Período del wizard de RAA calculado al abrirlo | sin asignar | S | Draft | Hoy se fija al arrancar Odoo. Criterios propuestos, a confirmar. Conviene antes del 31/12 |
+| EPIC-007/TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | Done | Decisión del usuario. Suite 259/0/0; UI verificada |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

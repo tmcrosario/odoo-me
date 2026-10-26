@@ -90,8 +90,6 @@ Este workflow incluye los sub-pasos 2, 3 y 4, que ocurren en el mismo
 
 **Inferred:**
 - El formulario se muestra progresivamente: ver Workflow 6.
-
-**Uncertain / pending definition:**
 - No existe validación que bloquee la creación si el expediente duplicado ya existe.
   El warning es informativo. No está definido si esto es intencional o un gap.
 
@@ -482,8 +480,9 @@ para decidir qué se exige al cargar (Workflow 1, paso 6).
    admitidos (licitación, nota, contratación directa, concurso de precios). Es **obligatorio al
    alta**, pero solo en la vista y solo para expedientes nuevos.
 2. El **subtema** aparece solo si el tema tiene subtemas para ofrecer: en **Licitación** se acota
-   a los 2 subtipos reales (Privada y Pública); en los demás temas se ofrecen sus hijos directos
-   (Contratación Directa: 4; Nota: 4; Concurso de Precios: ninguno, así que no aparece). Es
+   a los 2 subtipos reales (Privada y Pública); en Nota se ofrecen sus 4 hijos directos;
+   Contratación Directa (4 hijos en el nomenclador) y Concurso de Precios no ofrecen subtema, así
+   que no aparece (EPIC-007/TASK-005). Es
    **obligatorio para Licitación** en expedientes nuevos.
 3. Al elegir el tema, `is_licitacion` e `is_nota` se recalculan **en vivo** (dependen de
    `main_topic_ids` y del proxy `main_topic_id`), y activan los `required` de la vista antes de
@@ -508,7 +507,3 @@ para decidir qué se exige al cargar (Workflow 1, paso 6).
   stored se recomputan en cada `-u` y romperían los expedientes viejos
 - `required` de vista solo para nuevos (`not id`): `me/views/document_exp_views.xml`
 - Filtro "Unclassified" (es_AR "Sin clasificar"): `me/views/document_exp_views.xml`
-
-**Uncertain / pending definition:**
-- Si Contratación Directa debe ofrecer sus 4 subtemas (hoy la vista los ofrece como opcionales).
-  Decisión del usuario, ver `business_rules.md`.

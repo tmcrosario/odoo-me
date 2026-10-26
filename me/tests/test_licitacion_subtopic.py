@@ -101,6 +101,15 @@ class TestLicitacionSubtopic(TransactionCase):
         self.assertTrue(exp.is_licitacion)
         self.assertEqual(exp.secondary_topic_id, self.publica)
 
+    def test_contratacion_directa_offers_no_subtema(self):
+        """Contratación directa tiene hijos en tmc_data pero no se ofrecen (la vista oculta
+        el subtema)."""
+        if not self.directa:
+            self.skipTest("Contratación directa no disponible en esta DB")
+        self.assertTrue(self.directa.child_ids, "tmc_data debe seguir teniendo sus hijos")
+        record = self._new_with_topic(self.directa)
+        self.assertFalse(record.allowed_secondary_topic_ids)
+
     def test_concurso_without_subtema_ok(self):
         """No-regresión: concurso de precios NO lleva subtema → no se exige."""
         if not self.concurso:
