@@ -12,7 +12,7 @@
 ME **no tiene una ordenanza propia** (dato del usuario): no existe una "Ordenanza de Mesa de
 Entradas". El anclaje normativo de ME es:
 
-- **Ord. 7.767** (carta orgánica / funcionamiento del TMC, 2004). **ME es parte del TMC**, comparte
+- **Ord. 7.767** (funcionamiento del TMC, sanción 15/11/2004). **ME es parte del TMC**, comparte
   el marco. El rol de **veedor** del TMC en la Junta de Compras se ancla en el **art. 20**
   (detalle y cita en `odoo-junco` → `doc/project/normativa.md` §2 y `circuito_veedor_pro11.md`).
 - **Procedimientos internos**, no una ordenanza: **PRO-11 "Función Veedor TMC"** (Rev. 03, manual
@@ -57,7 +57,10 @@ expediente autorizante). Acá se registra **el lado ME**, sin duplicarla:
   `action_set_origin_from_junco()` (EPIC-004). La "Repartición Solicitante" de JUNCO espeja el
   `source`.
 - **CM**: entra por **sello de recepción**; ME solo **marca** el origen CM; **no** se carga
-  repartición; **no** pasa por Junta de Compras.
+  repartición; **no** pasa por Junta de Compras. Del lado de JUNCO (BR-021, desde 2026-09-24,
+  EPIC-008/TASK-023) la Repartición Solicitante se **completa sola** con el nodo CONCEJO MUNICIPAL y no
+  se muestra; las compras del Concejo no van a ninguna Junta, aunque el TMC puede intervenir con una
+  recomendación de pliego (evento `recommendation`, ficha NTA). Nada de eso cambia lo que carga ME.
 - **TMC interno**: excluido del selector de expediente autorizante en JUNCO (BR-005).
 - **Excepción DEM+Nota** (EPIC-004/TASK-002): las Notas **no** van a JUNCO → ME carga
   jurisdicción/origen al ingreso (y `action_set_origin_from_junco` rechaza Notas, defensa en
