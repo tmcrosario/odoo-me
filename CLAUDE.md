@@ -94,7 +94,8 @@ Después de un `-u` sobre la DB donde prueba el usuario (`me2`), **reiniciar odo
   `[REM]`/`[MIG]`/`[DOC]`/`[TEST]`/`[CHORE]`). Sin atribución AI. El mensaje de
   commit es solo el título; el comentario descriptivo va aparte (para pegar en
   GitHub).
-- Branches: `<tipo>/EPIC-XXX-TASK-YYY-slug`. Rama de integración: `develop`.
+- Branches: se trabaja directo sobre `develop` (rama de integración). Si se abre una rama aparte, convención
+  opcional `<tipo>/EPIC-XXX-TASK-YYY-slug`.
 - PR: `develop -> 19.0`. **Los PR los gestiona el usuario**; el framework no abre ni
   mergea PRs.
 

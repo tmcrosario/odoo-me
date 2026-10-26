@@ -52,7 +52,10 @@ título**; el comentario descriptivo va aparte, para pegar en GitHub.
 
 ## Naming de branches
 
-Formato estricto:
+El trabajo normal se commitea directo sobre `develop` (rama de integración); el PR `develop -> 19.0`
+lo gestiona el usuario. No hace falta una rama por task.
+
+Si se abre una rama aparte, el formato es una **convención opcional**:
 
 ```text
 <tipo>/EPIC-XXX-TASK-YYY-slug
@@ -65,7 +68,7 @@ Ejemplos:
 - `feature/EPIC-001-TASK-004-add-due-date-field`
 - `fix/EPIC-002-TASK-007-recompute-deadline`
 
-CI puede extraer la referencia para validar contra `doc/tasks/EPIC-XXX/TASK-YYY_*.md` cuando se active.
+Si algún día se activa un CI que valide la referencia contra `doc/tasks/EPIC-XXX/TASK-YYY_*.md`, el formato pasa a ser obligatorio.
 
 ## Flujo guiado por agente
 

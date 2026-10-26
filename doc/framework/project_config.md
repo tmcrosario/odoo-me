@@ -54,7 +54,7 @@ Configuración persistente del proyecto odoo-me.
 - Rama de integración: `develop`
 - Estilo de commit: `[TYPE] resumen imperativo breve` (mensaje = solo título;
   comentario descriptivo aparte para GitHub). Sin atribución AI.
-- Naming de branches: `<tipo>/EPIC-XXX-TASK-YYY-slug` (en la práctica se trabaja directo sobre `develop`)
+- Branches: se trabaja directo sobre `develop`; el formato `<tipo>/EPIC-XXX-TASK-YYY-slug` es una convención opcional si se abre una rama aparte (ver `git_policy.md`)
 - El agente puede commitear bajo pedido explícito: sí
 - El agente puede pushear bajo pedido explícito: no autorizado por default
 - Workflow de PR: `develop -> 19.0`. **Los PR los gestiona el usuario**; el framework
