@@ -13,3 +13,4 @@
 | TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | Done | Decisión del usuario; solo el dominio del subtema. Suite 259/0/0; UI verificada |
 | TASK-006 | Regla de poseedor también al crear un movimiento directo | Ale Gallo | L | Done | Opción (a) de IDEA 8: `create()` de `me.document_movement`. Suite 265/0/0 |
 | TASK-007 | Completar las traducciones `es_AR` de `me` | Ale Gallo | S | Done | 50 entradas nuevas + prefijo `model_terms` corregido; UI verificada |
+| TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | Done | `no_open` en `user_id`; UI verificada |

@@ -414,7 +414,8 @@ hoy no es alcanzable desde la UI. Detalle y evidencia en `security.md` (Reglas d
 
 ## IDEA 9 - Poseedor no clickeable en la grilla de movimientos
 
-> Registrada 2026-10-26 (pedido del usuario). Sin decidir ni implementar.
+> Registrada 2026-10-26 (pedido del usuario). **Resuelta 2026-10-26**, implementada en
+> EPIC-007/TASK-008.
 
 En la solapa Movements del expediente, la columna del poseedor (`user_id`) es un Many2one y se puede
 abrir como link al usuario. La idea es que no sea clickeable (`options="{'no_open': True}"`, como ya
@@ -422,5 +423,6 @@ tienen los campos de dependencia de la misma grilla). Es solo de vista (S).
 
 ### Pendiente
 
-- [ ] Confirmar si aplica a la lista y al popup de movimiento, y pasarla a task.
+- [x] Aplicada a la lista y al popup de movimiento del formulario del expediente. Las vistas propias de
+      `me.document_movement` (`movement_views.xml`) no se tocaron: no tienen menú ni acción.
 

@@ -126,7 +126,7 @@
                                     <field name="origin_dependence_id" options="{'no_open': True}"/>
                                     <field name="destination_dependence_id" options="{'no_open': True}"/>
                                     <field name="fojas" readonly="is_automatic"/>
-                                    <field name="user_id" readonly="is_automatic"/>
+                                    <field name="user_id" readonly="is_automatic" options="{'no_open': True}"/>
                                     <!-- SIN readonly: un campo readonly en el <list> de un o2m se
                                          descarta al guardar el padre aunque se haya cargado en el
                                          popup → el valor se pierde y salta "File number is required".
@@ -145,7 +145,7 @@
                                                invisible="destination_abbreviation != 'LEG'"
                                                required="destination_abbreviation == 'LEG'"/>
                                         <field name="fojas" readonly="is_automatic"/>
-                                        <field name="user_id" readonly="is_automatic"/>
+                                        <field name="user_id" readonly="is_automatic" options="{'no_open': True}"/>
                                     </group>
                                 </form>
                             </field>

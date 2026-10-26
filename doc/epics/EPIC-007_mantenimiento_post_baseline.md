@@ -1,6 +1,6 @@
 # EPIC-007 — Mantenimiento y endurecimiento post-baseline
 
-Estado: En progreso (sobre develop) — TASK-001..003, 005, 006 y 007 Done, TASK-004 Draft (derivada al dev de `raa`)
+Estado: En progreso (sobre develop) — TASK-001..003, 005 a 008 Done, TASK-004 Draft (derivada al dev de `raa`)
 Riesgo global: medio (TASK-001 toca seguridad/ACL; el resto es acotado)
 Módulo: `me` (+ `raa`)
 Owner: sin asignar
@@ -59,6 +59,7 @@ No incluye:
 | TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | `me` | Done |
 | TASK-006 | Regla de poseedor también al crear un movimiento directo | Ale Gallo | L | `me` | Done |
 | TASK-007 | Completar las traducciones `es_AR` de `me` | Ale Gallo | S | `me` | Done |
+| TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | `me` | Done |
 
 ## Preguntas abiertas
 
