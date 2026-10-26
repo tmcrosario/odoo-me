@@ -141,6 +141,15 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
   primer pase la posesión cambia, así que un segundo pase del mismo guardado sería de alguien que ya
   no es poseedor y saldría con el origen equivocado. Antes, un `create()` directo de un no-poseedor se aceptaba y lo hacía poseedor
   sin pase.
+- **Ser poseedor no da permisos** (decisión del usuario, 2026-10-26). El poseedor (`user_id` del pase) se
+  elige entre todos los usuarios, sin filtro por grupo: el manager que carga el pase elige al usuario del
+  área de destino. Pero registrar un pase exige además el permiso de escritura (`me.group_user`): un
+  poseedor con solo `me.group_read_only` figura como poseedor y no puede registrar su pase (no ve
+  "Add a line"; solo un manager puede moverlo). Por eso el usuario de cada área de destino debe tener
+  **ME / User**: es una condición de alta de usuarios, no de código. No se eleva el permiso por ser poseedor.
+- **Destino externo → sin poseedor.** El onchange deja `user_id` vacío si el destino no es interno
+  (`is_internal=False`): ningún no-manager puede registrar el pase siguiente, y el reingreso lo carga un
+  manager (el encargado de Mesa de Entradas).
 - Corrección del último movimiento manual restringida por poseedor + campos editables (#028).
 - `fojas` queda bloqueado post-creación salvo manager / campo editable del último movimiento (#018).
 

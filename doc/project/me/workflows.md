@@ -291,6 +291,9 @@ desde la pestaña "Movimientos" en el formulario.
   El guard de `write()` detecta comandos O2M CREATE y verifica el poseedor; el mismo chequeo
   vive en `me.document_movement.create()` (EPIC-007/TASK-006), para el `create()` directo por ORM/RPC.
   → `me/models/document_exp.py` `write()`, `me/models/document_movement.py` `create()`
+- El poseedor se elige sin filtro por grupo y ser poseedor no da permiso de escritura: el usuario del área
+  de destino debe tener ME / User para poder registrar su pase. Un destino externo deja el pase sin poseedor
+  y el reingreso lo carga un manager (ver `security.md`, Reglas de poseedor).
 
 **Observed in code (post #028):**
 - Corrección del último movimiento manual: el poseedor actual puede corregir el
