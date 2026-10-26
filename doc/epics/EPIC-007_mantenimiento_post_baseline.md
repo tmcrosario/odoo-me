@@ -1,6 +1,6 @@
 # EPIC-007 — Mantenimiento y endurecimiento post-baseline
 
-Estado: En progreso (sobre develop) — TASK-001..003 Done, TASK-004 Draft
+Estado: En progreso (sobre develop) — TASK-001..003, 005 y 006 Done, TASK-004 Draft (derivada al dev de `raa`)
 Riesgo global: medio (TASK-001 toca seguridad/ACL; el resto es acotado)
 Módulo: `me` (+ `raa`)
 Owner: sin asignar
@@ -26,12 +26,12 @@ Incluye:
 - escrituras a `tmc.document` fuera del ORM que hoy saltean el ACL;
 - fallos intermitentes de constraints de fecha;
 - formato de las traducciones `es_AR` de `me` y `raa` (Odoo 19);
-- correcciones de defaults que dependen de la fecha (TASK-004).
+- correcciones de defaults que dependen de la fecha (TASK-004);
+- decisiones chicas de clasificación y de la regla de poseedor (TASK-005 y TASK-006).
 
 No incluye:
 
 - funcionalidad nueva de la carga de expedientes (va en EPIC-004 o una épica propia);
-- la decisión de la regla de poseedor al crear un movimiento (ver `brainstorming.md` IDEA 8);
 - el barrido de comentarios del código (IDEA 6) ni la comparación de fechas en UTC (IDEA 7, salvo
   lo que cubre TASK-004).
 
@@ -56,6 +56,8 @@ No incluye:
 | TASK-002 | Tolerar saltos de reloj en la fecha no futura de movimientos | Ale Gallo | S | `me` | Done |
 | TASK-003 | Formato Odoo 19 de las traducciones `es_AR` de `me` y `raa` | Ale Gallo | S | `me` / `raa` | Done |
 | TASK-004 | Período del wizard de RAA calculado al abrirlo, no al arrancar el servidor | sin asignar | S | `raa` | Draft |
+| TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | `me` | Done |
+| TASK-006 | Regla de poseedor también al crear un movimiento directo | Ale Gallo | L | `me` | Done |
 
 ## Preguntas abiertas
 

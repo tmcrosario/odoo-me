@@ -37,7 +37,7 @@ class Movement(models.Model):
     # notes = fields.Text(string="Notes")
     user_id = fields.Many2one(
         "res.users",
-        string="Responsible",
+        string="Holder",
         default=lambda self: self.env.user,
         help="Odoo user responsible for the expediente at the destination of this movement",
     )
@@ -127,6 +127,28 @@ class Movement(models.Model):
                 raise exceptions.ValidationError(
                     _("File number is required when the destination is 'Adjunto a Legajo'.")
                 )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        ctx = self.env.context
+        if (
+            not ctx.get('me_create_in_progress')
+            and not self.env.user.has_group('me.group_manager')
+        ):
+            expediente_ids = [v.get('expediente_id') for v in vals_list]
+            if len(expediente_ids) != len(set(expediente_ids)):
+                raise exceptions.ValidationError(
+                    _("Only one new movement per expediente can be registered at a time.")
+                )
+            for expediente_id in set(expediente_ids):
+                last = self.search(
+                    [('expediente_id', '=', expediente_id)], order='id desc', limit=1
+                )
+                if last and last.user_id.id != self.env.user.id:
+                    raise exceptions.AccessError(
+                        _("Only the current holder of the expediente can register a new movement.")
+                    )
+        return super().create(vals_list)
 
     _OPERATOR_EDITABLE_FIELDS = frozenset({'fojas', 'user_id', 'legajo_number'})
 

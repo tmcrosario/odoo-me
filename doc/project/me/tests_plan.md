@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-09-15: 27 clases, 258 métodos de test**, suite verde.
+**Estado al 2026-10-26: 27 clases, 265 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **258** | `odoo.tests.result: 0 failed, 0 error(s) of 258 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **265** | `odoo.tests.result: 0 failed, 0 error(s) of 265 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -75,7 +75,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestArchivoDependence025` | 6 | "Archivo" como destino de movimiento | #025 |
 | `TestLegajoDependence026` | 14 | movimiento a Legajo + `legajo_number`; **EPIC-006/TASK-002**: `current_legajo_number` (indicador "En Legajo Nº X" del último movimiento — en legajo/se movió/varios/sin legajo) + domain del filtro "Adjuntos a Legajo" | #026 |
 | `TestMovementDefaultGet` | 4 | `default_get` de `me.document_movement` | — |
-| `TestMovementPoseedor027` | 6 | solo el poseedor registra nuevos pases desde UI | #027 |
+| `TestMovementPoseedor027` | 12 | solo el poseedor registra nuevos pases, por formulario y por `create()` directo (EPIC-007/TASK-006) | #027 |
 | `TestMovementCorrection028` | 19 | corrección del último movimiento manual (campos editables) | #028 |
 | `TestCurrentHolder029` | 6 | `current_holder_id` (poseedor = último movimiento) | #029 |
 | `TestCurrentLocation` | 5 | `current_location_dependence_id` (ubicación interna actual) | EPIC-003 |
@@ -123,7 +123,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestLicitacionSubtopic` | 12 | **TASK-004:** el subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids` (solo esos 2, no los 25 de GD; una "etapa" no se ofrece pero sigue colgando de Licitación — guardrail junco; reacciona al proxy; no-regresión; Concurso vacío/oculto). **TASK-005:** subtema **requerido** para Licitación (sin subtema→raise, con→ok, concurso/directa→ok, reclasificar/quitar subtema→raise, y **licitación vieja sin subtema sobrevive al `-u` y es editable** — validación en create/write, no `@api.constrains`) | EPIC-004/TASK-004 + TASK-005 |
+| `TestLicitacionSubtopic` | 13 | **TASK-004:** el subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids` (solo esos 2, no los 25 de GD; una "etapa" no se ofrece pero sigue colgando de Licitación — guardrail junco; reacciona al proxy; no-regresión; Concurso vacío/oculto). **TASK-005:** subtema **requerido** para Licitación (sin subtema→raise, con→ok, concurso/directa→ok, reclasificar/quitar subtema→raise, y **licitación vieja sin subtema sobrevive al `-u` y es editable** — validación en create/write, no `@api.constrains`) | EPIC-004/TASK-004 + TASK-005 |
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que
@@ -157,7 +157,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | **Duplicado de expediente (origen+número+período)** | `TestNotaOrigin.test_duplicate_warning_does_not_match_itself` (solo que el aviso no se autodetecta) | ⚠️ **parcial (medio)** — sin test del bloqueo ni del aviso positivo |
 | Fecha del documento (pasadas / bypass SQL) | `TestRequiredFields017`, `TestDocumentMovement` | ✅ |
 | Integridad de movimientos | `TestDocumentMovement` | ✅ |
-| Poseedor actual (#027/#028/#029) | `TestMovementPoseedor027`, `TestMovementCorrection028`, `TestCurrentHolder029` | ✅ (fuerte en el camino del formulario; el `create()` directo de un no-poseedor no se rechaza — ver gaps) |
+| Poseedor actual (#027/#028/#029) | `TestMovementPoseedor027`, `TestMovementCorrection028`, `TestCurrentHolder029` | ✅ (formulario y `create()` directo) |
 | Salida / reingreso institucional (#021/#030) | `TestHasReentry021`, `TestDefaultResponsible030` | ✅ |
 | Ubicación interna actual (EPIC-003) | `TestCurrentLocation` | ✅ |
 
@@ -174,10 +174,9 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
    tests de (a) el bloqueo (`UniqueViolation` al crear dos expedientes idénticos), (b) el aviso
    positivo con jurisdicción y (c) que no avisa en DEM sin jurisdicción. (El duplicado de
    *movimiento* sí está cubierto.)
-3. **MEDIA — Regla de poseedor cubierta solo en el camino del formulario**: `TestMovementPoseedor027`
-   prueba el rechazo por `write()` con comandos o2m; el `create()` directo de un no-poseedor sobre
-   `me.document_movement` no se rechaza y hoy lo acepta `TestFojasLock.test_operator_can_create_new_movement`.
-   *Recomendación:* decidir primero (`brainstorming.md` IDEA 8) y después fijar la decisión con un test.
+3. ~~**MEDIA — Regla de poseedor cubierta solo en el camino del formulario**~~ **Cerrado**
+   (EPIC-007/TASK-006): el `create()` directo de un no-poseedor se rechaza y está cubierto en
+   `TestMovementPoseedor027`.
 4. **BAJA — Jurisdicción multi-año**: el comportamiento intencional de no filtrar por año
    no tiene test directo. *Recomendación:* test que confirme que el dominio incluye
    jurisdicciones de más de un nomenclador cargado.

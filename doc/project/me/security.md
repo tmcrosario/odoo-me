@@ -133,13 +133,14 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
   expediente**: el alta por no-poseedor se rechaza con `AccessError` ("Only the current holder of the
   expediente can register a new movement.") en el guard de `me.document_exp.write()`, rama
   `is_only_create_cmds`. Managers sin restricción.
-- ⚠️ **Alcance real del guard (verificado 2026-10-02 en `me_test` con dos usuarios `me.group_user`):**
-  cubre **solo ese camino**. `me.document_movement` **no define `create()`** y su ACL le da `create=1`
-  a `me.group_user`, así que un `create()` directo sobre el movimiento (ORM/RPC) de un no-poseedor
-  **se acepta**. No hay menú ni acción propia de movimientos, por lo que no es alcanzable desde la UI.
-  Hoy lo fija `TestFojasLock.test_operator_can_create_new_movement` (un operativo que no es
-  poseedor crea un movimiento directo). Si es intencional o un hueco es una **decisión pendiente**:
-  ver `brainstorming.md` → IDEA 8.
+- La regla también se hace cumplir en **`me.document_movement.create()`** (EPIC-007/TASK-006,
+  IDEA 8): un no-poseedor que crea un movimiento por ORM/RPC recibe el mismo `AccessError`. Se eximen
+  los managers, los movimientos del alta (`me_create_in_progress`) y el primer movimiento de un
+  expediente sin movimientos. Un no-manager registra **un solo pase por expediente por guardado**
+  (`ValidationError` "Only one new movement per expediente can be registered at a time."): tras el
+  primer pase la posesión cambia, así que un segundo pase del mismo guardado sería de alguien que ya
+  no es poseedor y saldría con el origen equivocado. Antes, un `create()` directo de un no-poseedor se aceptaba y lo hacía poseedor
+  sin pase.
 - Corrección del último movimiento manual restringida por poseedor + campos editables (#028).
 - `fojas` queda bloqueado post-creación salvo manager / campo editable del último movimiento (#018).
 
@@ -167,7 +168,7 @@ des-elevación inmediata + chequeo previo de ACL (el `create()`).
 - **Escritura de fecha de GD por SQL crudo gobernada** → `TestMeSecurity.test_gd_read_only_cannot_update_document_date`:
   un lector de GD que llega a `_update_document_date` recibe `AccessError` (antes el SQL directo
   pasaba en silencio); el test **discrimina** que el corte venga de `tmc.document`.
-- No-poseedor no puede registrar/corregir movimiento → `TestMovementPoseedor027`, `TestMovementCorrection028`.
+- No-poseedor no puede registrar/corregir movimiento (por formulario ni por `create()` directo) → `TestMovementPoseedor027`, `TestMovementCorrection028`.
 - Operador no puede escribir campos arbitrarios del expediente / movimiento → guards (arriba);
   EPIC-004 verifica que un `me.group_user` no puede escribir `jurisdiction_dependence` por
   write crudo pero sí vía el método controlado (`TestDocumentExp`, bloque EPIC-004).

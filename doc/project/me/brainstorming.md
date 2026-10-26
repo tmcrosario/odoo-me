@@ -388,8 +388,8 @@ aplica **de acá en adelante**. El código existente de `me` tiene comentarios q
 
 ## IDEA 8 - Regla de poseedor: ¿también al crear un movimiento directo?
 
-> Registrada 2026-10-02 (hallazgo de la auditoría de doc, verificado en `me_test`). **Decisión del
-> usuario pendiente**; no se tocó código.
+> Registrada 2026-10-02 (hallazgo de la auditoría de doc, verificado en `me_test`). **Resuelta
+> 2026-10-26: opción (a)**, implementada en EPIC-007/TASK-006.
 
 ### Resumen
 
@@ -409,5 +409,18 @@ hoy no es alcanzable desde la UI. Detalle y evidencia en `security.md` (Reglas d
 
 ### Pendiente
 
-- [ ] Decidir (a) o (b). Si (a): task con acceptance criteria. Si (b): confirmar que
-      `test_operator_can_create_new_movement` es el comportamiento buscado y registrarlo en `security.md`.
+- [x] Decidido (a). Implementada en `EPIC-007/TASK-006`; el test que afirmaba lo contrario se
+      reemplazó por `test_operator_holder_can_create_new_movement`.
+
+## IDEA 9 - Poseedor no clickeable en la grilla de movimientos
+
+> Registrada 2026-10-26 (pedido del usuario). Sin decidir ni implementar.
+
+En la solapa Movements del expediente, la columna del poseedor (`user_id`) es un Many2one y se puede
+abrir como link al usuario. La idea es que no sea clickeable (`options="{'no_open': True}"`, como ya
+tienen los campos de dependencia de la misma grilla). Es solo de vista (S).
+
+### Pendiente
+
+- [ ] Confirmar si aplica a la lista y al popup de movimiento, y pasarla a task.
+

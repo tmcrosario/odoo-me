@@ -288,8 +288,9 @@ desde la pestaña "Movimientos" en el formulario.
 **Observed in code (post #027):**
 - Regla de poseedor: solo el `user_id` del movimiento con mayor `id` puede registrar
   un nuevo pase desde la UI del formulario del expediente. Managers sin restricción.
-  El guard de `write()` detecta comandos O2M CREATE y verifica el poseedor.
-  → `me/models/document_exp.py` `write()`
+  El guard de `write()` detecta comandos O2M CREATE y verifica el poseedor; el mismo chequeo
+  vive en `me.document_movement.create()` (EPIC-007/TASK-006), para el `create()` directo por ORM/RPC.
+  → `me/models/document_exp.py` `write()`, `me/models/document_movement.py` `create()`
 
 **Observed in code (post #028):**
 - Corrección del último movimiento manual: el poseedor actual puede corregir el

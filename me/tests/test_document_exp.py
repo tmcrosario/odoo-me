@@ -1325,8 +1325,9 @@ class TestFojasLock(TransactionCase):
         with self.assertRaises(AccessError):
             self.expediente.with_user(self.operator_user).write({'document_object': 'Intento de edición'})
 
-    def test_operator_can_create_new_movement(self):
-        """me.group_user puede crear movimientos nuevos."""
+    def test_operator_holder_can_create_new_movement(self):
+        """me.group_user poseedor puede crear movimientos nuevos por ORM directo."""
+        self.expediente.sudo().document_movement_ids.sorted('id')[-1].user_id = self.operator_user
         dep_me = self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
         dep_arch = self.env['tmc.dependence'].search([('abbreviation', '=', 'ARCH')], limit=1)
         if not dep_arch:
@@ -2645,6 +2646,66 @@ class TestMovementPoseedor027(TransactionCase):
             'document_movement_ids': [self._movement_cmd()],
         })
         self.assertEqual(len(self.expediente.document_movement_ids), count_before + 1)
+
+    def _direct_movement_vals(self):
+        return {
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.dep_me.id,
+            'destination_dependence_id': self.dep_dem.id,
+            'fojas': 1,
+        }
+
+    def test_non_poseedor_cannot_create_movement_directly(self):
+        """IDEA 8: create() directo por ORM de un no-poseedor recibe AccessError."""
+        count_before = len(self.expediente.document_movement_ids)
+        with self.assertRaises(AccessError):
+            self.env['me.document_movement'].with_user(self.operator_b).create(
+                self._direct_movement_vals()
+            )
+        self.assertEqual(len(self.expediente.document_movement_ids), count_before)
+
+    def test_poseedor_can_create_movement_directly(self):
+        movement = self.env['me.document_movement'].with_user(self.operator_a).create(
+            self._direct_movement_vals()
+        )
+        self.assertTrue(movement.id)
+
+    def test_manager_can_create_movement_directly_without_being_poseedor(self):
+        movement = self.env['me.document_movement'].with_user(self.manager_user).create(
+            self._direct_movement_vals()
+        )
+        self.assertTrue(movement.id)
+
+    def test_no_movements_any_operator_can_create_directly(self):
+        self.expediente.sudo().document_movement_ids.unlink()
+        movement = self.env['me.document_movement'].with_user(self.operator_b).create(
+            self._direct_movement_vals()
+        )
+        self.assertTrue(movement.id)
+
+    def _two_movement_cmds(self):
+        first = self._movement_cmd()
+        first[2]['user_id'] = self.operator_b.id
+        second = self._movement_cmd()
+        second[2]['destination_dependence_id'] = self.dep_jur.id
+        return [first, second]
+
+    def test_poseedor_cannot_add_several_movements_in_one_save(self):
+        """Dos pases en un guardado dejarían el segundo a nombre de quien ya no es poseedor."""
+        count_before = len(self.expediente.document_movement_ids)
+        with self.assertRaises(ValidationError):
+            self.expediente.with_user(self.operator_a).write({
+                'document_movement_ids': self._two_movement_cmds(),
+            })
+        self.assertEqual(len(self.expediente.document_movement_ids), count_before)
+
+    def test_manager_can_add_several_movements_in_one_save(self):
+        count_before = len(self.expediente.document_movement_ids)
+        self.expediente.with_user(self.manager_user).write({
+            'document_movement_ids': self._two_movement_cmds(),
+        })
+        self.assertEqual(len(self.expediente.document_movement_ids), count_before + 2)
 
     def test_operator_editing_expediente_field_still_blocked(self):
         """Regresión: operador sigue bloqueado al editar campos del expediente."""

@@ -11,3 +11,4 @@
 | TASK-003 | Formato Odoo 19 de las traducciones `es_AR` de `me` y `raa` | Ale Gallo | S | Done | `#. module:` faltante (no cargaba es_AR) + `#. odoo-python` en 31 entradas + typo. Suite 258/0/0 |
 | TASK-004 | Período del wizard de RAA calculado al abrirlo | sin asignar | S | Draft | Hoy se fija al arrancar Odoo; criterios propuestos, a confirmar |
 | TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | Done | Decisión del usuario; solo el dominio del subtema. Suite 259/0/0; UI verificada |
+| TASK-006 | Regla de poseedor también al crear un movimiento directo | Ale Gallo | L | Done | Opción (a) de IDEA 8: `create()` de `me.document_movement`. Suite 265/0/0 |

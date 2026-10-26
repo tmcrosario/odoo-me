@@ -369,8 +369,8 @@ msgstr "Verdadero cuando el movimiento fue generado automáticamente al crear el
 
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_movement__user_id
-msgid "Responsible"
-msgstr "Responsable"
+msgid "Holder"
+msgstr "Poseedor"
 
 #. module: me
 #: model:ir.model.fields,help:me.field_me_document_movement__user_id
@@ -495,16 +495,24 @@ msgstr "El número de legajo es obligatorio cuando el destino es 'Adjunto a Lega
 #. module: me
 #. odoo-python
 #: code:addons/me/models/document_exp.py:0
+#: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "Only the current holder of the expediente can register a new movement."
-msgstr "Solo el responsable actual del expediente puede registrar un nuevo pase."
+msgstr "Solo el poseedor actual del expediente puede registrar un nuevo pase."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_movement.py:0
+#, python-format
+msgid "Only one new movement per expediente can be registered at a time."
+msgstr "Solo se puede registrar un pase nuevo por expediente a la vez."
 
 #. module: me
 #. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format
 msgid "Only the current holder of the expediente can correct a movement."
-msgstr "Solo el responsable actual del expediente puede corregir este movimiento."
+msgstr "Solo el poseedor actual del expediente puede corregir este movimiento."
 
 #. module: me
 #. odoo-python
@@ -540,7 +548,7 @@ msgstr "En mi poder"
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_exp__current_holder_id
 msgid "Current Holder"
-msgstr "Responsable Actual"
+msgstr "Poseedor Actual"
 
 #. module: me
 #. odoo-python
