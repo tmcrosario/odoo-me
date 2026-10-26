@@ -22,6 +22,7 @@ msgstr ""
 
 #. module: me
 #: model:ir.module.category,name:me.module_category_me
+#: model:res.groups.privilege,name:me.res_groups_privilege_me
 msgid "ME"
 msgstr "Mesa de Entrada"
 
@@ -60,6 +61,7 @@ msgstr "Mesa de Entrada"
 
 #. module: me
 #: model:ir.ui.menu,name:me.me_menu_reg_exp
+#: model:ir.model,name:me.model_me_document_exp
 msgid "Expediente Registry"
 msgstr "Registro de Expedientes"
 
@@ -73,7 +75,7 @@ msgid "Expediente Registry"
 msgstr "Registro de Expedientes"
 
 #. module: me
-#: model:ir.actions.act_window,help:me.document_exp_action_view_form
+#: model_terms:ir.actions.act_window,help:me.document_exp_action_view_form
 msgid "Create a new expediente"
 msgstr "Crear un nuevo expediente"
 
@@ -203,6 +205,7 @@ msgstr "Temas Permitidos EXP"
 
 #. module: me
 #: model_terms:ir.ui.view,arch_db:me.document_exp_view_tree
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_id
 msgid "Document"
 msgstr "Documento"
 
@@ -339,6 +342,7 @@ msgstr "Expediente"
 
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_movement__date
+#: model:ir.model.fields,field_description:me.field_me_document_exp__date
 msgid "Date"
 msgstr "Fecha"
 
@@ -369,6 +373,7 @@ msgstr "Verdadero cuando el movimiento fue generado automáticamente al crear el
 
 #. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_movement__user_id
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "Holder"
 msgstr "Poseedor"
 
@@ -468,6 +473,7 @@ msgstr ""
 
 #. module: me
 #: constraint:me.document_movement:0
+#: model:ir.model.constraint,message:me.constraint_me_document_movement_unique_movement
 msgid ""
 "An identical movement already exists for this expediente "
 "(same origin, destination and exact date)."
@@ -541,7 +547,7 @@ msgid "Expediente number must be between 1 and 999,999 (6 digits maximum)."
 msgstr "El número de expediente debe estar entre 1 y 999.999 (máximo 6 dígitos)."
 
 #. module: me
-#: model:ir.ui.view,arch_db:me.document_exp_view_search
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "In My Possession"
 msgstr "En mi poder"
 
@@ -620,3 +626,303 @@ msgstr "Número de Legajo"
 #: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
 msgid "Unclassified"
 msgstr "Sin clasificar"
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"A licitación requires a subtype (Pública/Privada) as its specification."
+msgstr "Una licitación requiere un subtipo (Pública/Privada) como especificación."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"A source dependence is required: the selected jurisdiction has sub-"
+"dependences."
+msgstr "Se requiere una repartición: la jurisdicción seleccionada tiene reparticiones dependientes."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_type_abbr
+msgid "Abbreviation"
+msgstr "Abreviatura"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__allowed_jurisdiction_ids
+msgid "Allowed Jurisdictions"
+msgstr "Jurisdicciones Permitidas"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__allowed_secondary_topic_ids
+msgid "Allowed Secondary Topics"
+msgstr "Subtemas Permitidos"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__create_uid
+#: model:ir.model.fields,field_description:me.field_me_document_movement__create_uid
+msgid "Created by"
+msgstr "Creado por"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__create_date
+#: model:ir.model.fields,field_description:me.field_me_document_movement__create_date
+msgid "Created on"
+msgstr "Creado el"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__current_location_dependence_id
+msgid ""
+"Current internal location office: destination dependence of the last "
+"registered movement, only when that destination is internal "
+"(is_internal=True). False when there are no movements or the expediente has "
+"left the Tribunal (last movement to a non-internal dependence)."
+msgstr "Oficina interna de destino actual: dependencia de destino del último pase registrado, solo cuando ese destino es interno (is_internal=True). Falso si no hay pases o si el expediente salió del Tribunal (último pase a una dependencia no interna)."
+
+#. module: me
+#: model:ir.model,name:me.model_tmc_dependence
+#: model:ir.model.fields,field_description:me.field_me_document_exp__dependence_id
+msgid "Dependence"
+msgstr "Dependencia"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__current_location_dependence_id
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_search
+msgid "Destination Office"
+msgstr "Oficina de Destino"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__display_name
+#: model:ir.model.fields,field_description:me.field_me_document_movement__display_name
+#: model:ir.model.fields,field_description:me.field_tmc_dependence__display_name
+msgid "Display Name"
+msgstr "Nombre para Mostrar"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_object_required
+msgid "Document Object Required"
+msgstr "Objeto del Documento Requerido"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_topic_ids
+msgid "Document Topic"
+msgstr "Tema del Documento"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_type_id
+msgid "Document Type"
+msgstr "Tipo de Documento"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__entry_date
+msgid "Entry Date"
+msgstr "Fecha de Entrada"
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"Existing expedientes can only be modified by an Intake Register manager."
+msgstr "Los expedientes existentes solo pueden ser modificados por un responsable de Mesa de Entrada."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_movement.py:0
+msgid "Existing movements can only be modified by an Intake Register manager."
+msgstr "Los pases existentes solo pueden ser modificados por un responsable de Mesa de Entrada."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__highest_highlight
+msgid "Highest Highlight"
+msgstr "Destacado Máximo"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__highlight_ids
+msgid "Highlight"
+msgstr "Destacado"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__highlights_count
+msgid "Highlights Count"
+msgstr "Cantidad de Destacados"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__id
+#: model:ir.model.fields,field_description:me.field_me_document_movement__id
+#: model:ir.model.fields,field_description:me.field_tmc_dependence__id
+msgid "ID"
+msgstr "ID"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__important
+msgid "Important"
+msgstr "Importante"
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"Invalid jurisdiction: it is not a valid DEM jurisdiction in the nomenclador."
+msgstr "Jurisdicción inválida: no es una jurisdicción DEM válida del nomenclador."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"Invalid source dependence: it is not a sub-dependence of the selected "
+"jurisdiction."
+msgstr "Repartición inválida: no depende de la jurisdicción seleccionada."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__is_automatic
+msgid "Is Automatic"
+msgstr "Es Automático"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__jurisdiction_dependence
+msgid ""
+"Jurisdiction dependence for this expediente. For DEM origin it is left empty"
+" at intake and written later by JUNCO via action_set_origin_from_junco() "
+"(EPIC-004). TMC/CM auto-assign it in create()."
+msgstr "Dependencia de jurisdicción de este expediente. En origen DEM queda vacía al ingreso y la completa JUNCO después mediante action_set_origin_from_junco() (EPIC-004). TMC/CM la asignan solos en create()."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__write_uid
+#: model:ir.model.fields,field_description:me.field_me_document_movement__write_uid
+msgid "Last Updated by"
+msgstr "Última Actualización por"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__write_date
+#: model:ir.model.fields,field_description:me.field_me_document_movement__write_date
+msgid "Last Updated on"
+msgstr "Última Actualización el"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__current_legajo_number
+msgid ""
+"Legajo file number when the expediente is currently in a Legajo: the "
+"legajo_number of the LAST movement, only when that destination is 'Adjunto a"
+" Legajo' (LEG). Empty otherwise. Non-stored (display label)."
+msgstr "Número de legajo cuando el expediente está actualmente en un Legajo: el legajo_number del ÚLTIMO pase, solo cuando ese destino es «Adjunto a Legajo» (LEG). Vacío en otro caso. No almacenado (etiqueta de visualización)."
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.tmc_dependence_form_view_me_inherit
+msgid "ME Configuration"
+msgstr "Configuración de ME"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__main_topic_ids
+msgid "Main Topic"
+msgstr "Tema Principal"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__reference_model
+msgid "Model"
+msgstr "Modelo"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__name
+msgid "Name"
+msgstr "Nombre"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__number
+msgid "Number"
+msgstr "Número"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__document_object
+msgid "Object"
+msgstr "Objeto"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__period
+msgid "Period"
+msgstr "Período"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__reference_document
+msgid "Reference Document"
+msgstr "Documento de Referencia"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__related_document_ids
+msgid "Related Document"
+msgstr "Documento Relacionado"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__related_to_dictamen
+msgid "Related To Dictamen"
+msgstr "Relacionado con Dictamen"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Save"
+msgstr "Guardar"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Save changes"
+msgstr "Guardar cambios"
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__secondary_topic_ids
+msgid "Secondary Topic"
+msgstr "Subtema"
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid "The JUNCO origin write may only set the jurisdiction and source."
+msgstr "La escritura de origen desde JUNCO solo puede establecer la jurisdicción y la repartición."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"The origin can only be set from JUNCO on DEM expedientes (this expediente's "
+"origin is %s)."
+msgstr "El origen solo puede establecerse desde JUNCO en expedientes DEM (el origen de este expediente es %s)."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid ""
+"The selected jurisdiction has no sub-dependences; a source dependence must "
+"not be provided."
+msgstr "La jurisdicción seleccionada no tiene reparticiones dependientes; no se debe indicar una repartición."
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__current_holder_id
+msgid ""
+"The user designated as responsible in the last registered movement (movement"
+" with the highest id). False when no movements exist."
+msgstr "Usuario designado como poseedor en el último pase registrado (el de mayor id). Falso si no hay pases."
+
+#. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__topics_display_name
+msgid "Topics"
+msgstr "Temas"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__is_nota
+msgid ""
+"True when the expediente's main topic is Nota. Notas never reach JUNCO (it "
+"only offers purchase topics), so for DEM origin ME loads the "
+"jurisdiction/source itself at intake instead of ceding them "
+"(EPIC-004/TASK-002)."
+msgstr "Verdadero cuando el tema principal del expediente es Nota. Las Notas nunca llegan a JUNCO (solo ofrece temas de compra), por lo que en origen DEM ME carga la jurisdicción y la repartición en el ingreso en lugar de cederlas (EPIC-004/TASK-002)."
+
+#. module: me
+#: model:ir.model.fields,help:me.field_tmc_dependence__default_responsible_id
+msgid ""
+"User pre-filled as responsible (user_id) when this internal dependence is "
+"selected as destination in a new movement. Editable before saving. Only "
+"applies to internal dependences (is_internal=True)."
+msgstr "Usuario que se completa como responsable (user_id) cuando esta dependencia interna se elige como destino en un nuevo pase. Editable antes de guardar. Solo aplica a dependencias internas (is_internal=True)."
+
+#. module: me
+#. odoo-python
+#: code:addons/me/models/document_exp.py:0
+msgid "undefined"
+msgstr "indefinida"

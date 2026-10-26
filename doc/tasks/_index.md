@@ -35,6 +35,7 @@ Nomenclatura:
 | EPIC-007/TASK-004 | Período del wizard de RAA calculado al abrirlo | sin asignar | S | Draft | Hoy se fija al arrancar Odoo. Criterios propuestos, a confirmar. Conviene antes del 31/12 |
 | EPIC-007/TASK-005 | Contratación Directa no ofrece subtemas | Ale Gallo | S | Done | Decisión del usuario. Suite 259/0/0; UI verificada |
 | EPIC-007/TASK-006 | Regla de poseedor también al crear un movimiento directo | Ale Gallo | L | Done | Opción (a) de IDEA 8. Suite 265/0/0 |
+| EPIC-007/TASK-007 | Completar las traducciones `es_AR` de `me` | Ale Gallo | S | Done | Filtros, etiquetas y mensajes en inglés; UI verificada |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).
