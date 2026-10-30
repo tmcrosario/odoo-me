@@ -15,3 +15,4 @@
 | TASK-007 | Completar las traducciones `es_AR` de `me` | Ale Gallo | S | Done | 50 entradas nuevas + prefijo `model_terms` corregido; UI verificada |
 | TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | Done | `no_open` en `user_id`; UI verificada |
 | TASK-009 | Documentar que ser poseedor no da permisos | Ale Gallo | XS | Done | Solo doc; decisión del usuario, sin cambios de código |
+| TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | En progreso | Reingreso falso por SEC/CF; datos + migración 19.0.1.0.1. Suite 268/0/0 |

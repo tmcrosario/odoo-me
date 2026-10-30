@@ -15,7 +15,13 @@
     <record id="tmc_data.tmc_dependence_voc" model="tmc.dependence">
         <field name="is_internal" eval="True"/>
     </record>
+    <record id="tmc_data.tmc_dependence_sec" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
     <record id="tmc_data.tmc_dependence_fc" model="tmc.dependence">
+        <field name="is_internal" eval="True"/>
+    </record>
+    <record id="tmc_data.tmc_dependence_cf" model="tmc.dependence">
         <field name="is_internal" eval="True"/>
     </record>
     <record id="tmc_data.tmc_dependence_dal" model="tmc.dependence">

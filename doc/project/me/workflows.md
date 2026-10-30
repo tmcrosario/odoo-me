@@ -340,7 +340,8 @@ desde la pestaña "Movimientos" en el formulario.
 Cada `tmc.dependence` tiene un campo `is_internal` (Boolean, default=False)
 agregado por el módulo `me` vía `_inherit`. Las dependencias del Tribunal
 están marcadas como `is_internal=True` en `me/data/dependence_data.xml`:
-TMC, ME, VOC, FC, DAL, DAT, DCD, DAF, DIC, AFC, **ARCH** y **LEG** (12 en total).
+TMC, ME, VOC, **SEC**, FC, **CF**, DAL, DAT, DCD, DAF, DIC, AFC, **ARCH** y **LEG** (14 en total; SEC y CF se
+agregaron en EPIC-007/TASK-010: sin ellas, un pase DCD → SEC contaba como salida del Tribunal).
 Todo lo demás (DEM, CM, jurisdicciones municipales) queda como externo.
 
 Esta clasificación alimenta `has_reentry` en `me.document_exp`:
@@ -361,6 +362,11 @@ False para todos los expedientes históricos. El filtro "Con Reingreso Instituci
 requiere que ambas condiciones estén saneadas: valores de `is_internal` correctos y
 un recompute explícito de `has_reentry`. En una instalación nueva el comportamiento
 es correcto sin intervención adicional.
+
+Una dependencia agregada después a `dependence_data.xml` tampoco se aplica con `-u` en las bases ya
+instaladas (mismo `noupdate`): hace falta un script de migración. SEC y CF lo tienen
+(`me/migrations/19.0.1.0.1/post-migration.py`, versión 19.0.1.0.1); al escribir `is_internal` por ORM,
+`has_reentry` se recalcula solo para los expedientes con movimientos hacia esa dependencia.
 
 
 --------------------------------------------------

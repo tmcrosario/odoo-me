@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-10-26: 27 clases, 265 métodos de test**, suite verde.
+**Estado al 2026-10-30: 27 clases, 268 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **265** | `odoo.tests.result: 0 failed, 0 error(s) of 265 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **268** | `odoo.tests.result: 0 failed, 0 error(s) of 268 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -70,7 +70,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestDocumentTopicsTMC` | 5 | topics/clasificación TMC | — |
 | `TestFojasLock` | 21 | matriz de permisos + bloqueo de `fojas` post-creación | #018 |
 | `TestJurisdictionConditional012` | 8 | jurisdicción condicional por origen (TMC/CM auto, DEM) | #012 |
-| `TestHasReentry021` | 7 | reingreso institucional (`is_internal` / `has_reentry`) | #021 |
+| `TestHasReentry021` | 10 | reingreso institucional (`is_internal` / `has_reentry`) | #021 |
 | `TestSearchFilters022023024` | 12 | filtros de búsqueda de expedientes; **EPIC-004/TASK-006**: el filtro "Sin clasificar" (`main_topic_ids = False`) encuentra los expedientes sin tema | #022/#023/#024 |
 | `TestArchivoDependence025` | 6 | "Archivo" como destino de movimiento | #025 |
 | `TestLegajoDependence026` | 14 | movimiento a Legajo + `legajo_number`; **EPIC-006/TASK-002**: `current_legajo_number` (indicador "En Legajo Nº X" del último movimiento — en legajo/se movió/varios/sin legajo) + domain del filtro "Adjuntos a Legajo" | #026 |

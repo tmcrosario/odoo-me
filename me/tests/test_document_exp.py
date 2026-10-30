@@ -1756,6 +1756,33 @@ class TestHasReentry021(TransactionCase):
             'destination_dependence_id': destination.id,
         })
 
+    def test_secretaria_vocalia_is_internal(self):
+        """Secretaría de Vocalía es del Tribunal: me la marca is_internal."""
+        sec = self.env.ref('tmc_data.tmc_dependence_sec', raise_if_not_found=False)
+        if not sec:
+            self.skipTest("Secretaría de Vocalía no disponible en esta DB")
+        self.assertTrue(sec.is_internal)
+
+    def test_contadores_fiscales_is_internal(self):
+        cf = self.env.ref('tmc_data.tmc_dependence_cf', raise_if_not_found=False)
+        if not cf:
+            self.skipTest("Contadores Fiscales no disponible en esta DB")
+        self.assertTrue(cf.is_internal)
+
+    def test_pass_through_secretaria_vocalia_is_not_reentry(self):
+        """DCD → SEC → VOC se queda dentro del Tribunal: no hay salida ni reingreso."""
+        r = self.env.ref
+        dcd = r('tmc_data.tmc_dependence_dcd', raise_if_not_found=False)
+        sec = r('tmc_data.tmc_dependence_sec', raise_if_not_found=False)
+        voc = r('tmc_data.tmc_dependence_voc', raise_if_not_found=False)
+        if not (dcd and sec and voc):
+            self.skipTest("Dependencias del Tribunal no disponibles en esta DB")
+        exp = self._make_expediente(33010)
+        exp.document_movement_ids.unlink()
+        self._add_movement(exp, dcd, sec)
+        self._add_movement(exp, sec, voc)
+        self.assertFalse(exp.has_reentry)
+
     def test_no_movements_has_no_reentry(self):
         """Expediente sin movimientos: has_reentry = False."""
         exp = self._make_expediente(33001)
