@@ -1,6 +1,6 @@
 # EPIC-007 / TASK-010 — Secretaría de Vocalía y Contadores Fiscales como dependencias internas
 
-Estado: En progreso (implementado; falta el commit)
+Estado: Done
 Modo: L
 Riesgo: medio (datos XML + script de migración; cambia qué expedientes figuran con reingreso)
 Módulo: `me`
@@ -61,8 +61,8 @@ no se marcó.
 
 ## Estado / próximo paso
 
-Falta el commit (a pedido). Para `migracion` basta un `-u me` con esta versión.
+Cerrada. Para `migracion` basta un `-u me` con esta versión.
 
 ## Resultado
 
-Pendiente.
+SEC y CF dejan de contar como salida del Tribunal; las bases ya instaladas se corrigen con `-u me`.

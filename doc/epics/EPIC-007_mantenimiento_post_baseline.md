@@ -61,7 +61,7 @@ No incluye:
 | TASK-007 | Completar las traducciones `es_AR` de `me` | Ale Gallo | S | `me` | Done |
 | TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | `me` | Done |
 | TASK-009 | Documentar que ser poseedor no da permisos | Ale Gallo | XS | `me` | Done |
-| TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | `me` | En progreso |
+| TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | `me` | Done |
 | TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | `me` | Done |
 
 ## Preguntas abiertas
