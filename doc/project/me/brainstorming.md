@@ -385,6 +385,10 @@ aplica **de acá en adelante**. El código existente de `me` tiene comentarios q
 - [ ] **`raa.entry.period` se calcula al levantar el servidor** (`raa/wizards/entry.py:25`,
       `default=str(date.today().year)` sin lambda): después de Año Nuevo el wizard sigue proponiendo
       el año anterior hasta reiniciar Odoo. Candidato: default con lambda / `context_today`.
+- [ ] **`_check_date_not_before_intake` compara la fecha UTC del pase con `intake_date`** (que es una fecha
+      local). UTC va 3 horas adelante de Argentina: un pase cargado entre las 21:00 y las 24:00 del día
+      anterior al ingreso ya tiene fecha UTC igual al ingreso y se acepta. Sale de leer el código; no se
+      reprodujo en vivo. Candidato: convertir la fecha del pase a la del usuario antes de comparar.
 
 ## IDEA 8 - Regla de poseedor: ¿también al crear un movimiento directo?
 
@@ -425,4 +429,50 @@ tienen los campos de dependencia de la misma grilla). Es solo de vista (S).
 
 - [x] Aplicada a la lista y al popup de movimiento del formulario del expediente. Las vistas propias de
       `me.document_movement` (`movement_views.xml`) no se tocaron: no tienen menú ni acción.
+
+## IDEA 10 - Textos de UI cuyo original está en español (hallazgo, 2026-10-26)
+
+> Registrada 2026-10-26 en la revisión de traducciones (EPIC-007/TASK-007). **Sin decidir ni implementar.**
+
+### Resumen
+
+La convención es que todo string de UI va en **inglés** en el código y se traduce a es_AR por `.po`. Estos
+quedaron con el original en español: en es_AR se ven bien, pero en una instancia en inglés se verían en
+español.
+
+### Pendiente
+
+- [ ] **`me`:** `string="Nota"` del campo `is_nota` (`document_exp.py`), `string="Origen"` del panel de
+      búsqueda (`document_exp_views.xml`) y la descripción `Mesa de Entrada` de la categoría
+      (`me_groups.xml`). Pasar el original a inglés (`Note`, `Origin`, `Intake Register`) y ajustar el `.po`;
+      revisar tests que busquen esas cadenas.
+- [ ] **`raa`** (derivar al dev de `raa`): `string="Dependencia"` y `string="Período"` en
+      `registry_aa_views.xml`, y `"Buscar por Numeración Máxima"` en `search_missing_views.xml`, que además
+      no tiene traducción (`msgstr` vacío).
+
+## IDEA 11 - Aviso al elegir un poseedor sin permiso ME / User (mejora posible, 2026-10-26)
+
+> Registrada 2026-10-26. Descartada la validación dura (decisión del usuario, EPIC-007/TASK-009); queda
+> como mejora opcional. **Sin decidir ni implementar.**
+
+### Resumen
+
+El poseedor de un pase se elige entre todos los usuarios, sin filtro. Si se elige a alguien sin ME / User,
+el expediente queda a su nombre y solo un manager puede moverlo. Hoy nada avisa en el momento de elegir.
+
+### Pendiente
+
+- [ ] ¿Un aviso **no bloqueante** al elegir un poseedor sin permiso de escritura en ME (por ejemplo un
+      `warning` en el onchange de `user_id`)? Es solo de vista/onchange, sin ACL ni validación backend.
+
+## IDEA 12 - Nodo `tmc_dependence_tmc_sub` sin marcar como interno (2026-10-30)
+
+> Registrada 2026-10-30 al revisar el nomenclador (EPIC-007/TASK-010). **Sin decidir.**
+
+### Pendiente
+
+- [ ] Las dependencias del Tribunal son las del código 1.13.xx; SEC y Contadores Fiscales ya se marcaron
+      como internas. Queda `tmc_dependence_tmc_sub` (1.13.01, sin abreviatura), con `is_internal` vacío.
+      Confirmar si es una dependencia a la que se hacen pases o solo un nodo del árbol; si lo primero,
+      marcarlo igual que las otras (dato + migración).
 
