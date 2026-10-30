@@ -122,11 +122,13 @@
                             <field name="document_movement_ids" mode="list,form" context="{'default_expediente_id': id}">
                                 <list>
                                     <field name="is_automatic" column_invisible="1"/>
+                                    <field name="destination_is_internal" column_invisible="1"/>
                                     <field name="date" options="{'numeric': true}"/>
                                     <field name="origin_dependence_id" options="{'no_open': True}"/>
                                     <field name="destination_dependence_id" options="{'no_open': True}"/>
                                     <field name="fojas" readonly="is_automatic"/>
-                                    <field name="user_id" readonly="is_automatic" options="{'no_open': True}"/>
+                                    <field name="user_id" readonly="is_automatic or not destination_is_internal"
+                                           options="{'no_open': True}"/>
                                     <!-- SIN readonly: un campo readonly en el <list> de un o2m se
                                          descarta al guardar el padre aunque se haya cargado en el
                                          popup → el valor se pierde y salta "File number is required".
@@ -138,6 +140,7 @@
                                     <group>
                                         <field name="is_automatic" invisible="1"/>
                                         <field name="destination_abbreviation" invisible="1"/>
+                                        <field name="destination_is_internal" invisible="1"/>
                                         <field name="date" options="{'numeric': true}"/>
                                         <field name="origin_dependence_id" options="{'no_open': True}"/>
                                         <field name="destination_dependence_id" options="{'no_open': True}"/>
@@ -145,7 +148,8 @@
                                                invisible="destination_abbreviation != 'LEG'"
                                                required="destination_abbreviation == 'LEG'"/>
                                         <field name="fojas" readonly="is_automatic"/>
-                                        <field name="user_id" readonly="is_automatic" options="{'no_open': True}"/>
+                                        <field name="user_id" readonly="is_automatic or not destination_is_internal"
+                                           options="{'no_open': True}"/>
                                     </group>
                                 </form>
                             </field>

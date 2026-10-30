@@ -379,12 +379,15 @@ class TestResponsibleUser011(TransactionCase):
         })
 
     def test_user_id_default_is_session_user(self):
-        """Nuevo movimiento manual: user_id defaultea al usuario de sesión."""
+        """Nuevo movimiento manual a una oficina interna: user_id defaultea al usuario de sesión."""
+        internal = self.env['tmc.dependence'].create(
+            {'name': 'Interna 011 Default Test', 'abbreviation': 'ID011', 'is_internal': True}
+        )
         mov = self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': self.now,
             'origin_dependence_id': self.dep_dem.id,
-            'destination_dependence_id': self.dep_other.id,
+            'destination_dependence_id': internal.id,
         })
         self.assertEqual(mov.user_id, self.env.user)
 
@@ -398,11 +401,14 @@ class TestResponsibleUser011(TransactionCase):
         if not other_user:
             self.skipTest("No hay otro usuario disponible para este test")
 
+        internal = self.env['tmc.dependence'].create(
+            {'name': 'Interna 011 Test', 'abbreviation': 'IN011', 'is_internal': True}
+        )
         mov = self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': self.now,
             'origin_dependence_id': self.dep_dem.id,
-            'destination_dependence_id': self.dep_other.id,
+            'destination_dependence_id': internal.id,
             'user_id': other_user.id,
         })
         self.assertEqual(mov.user_id, other_user)

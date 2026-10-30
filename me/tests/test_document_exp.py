@@ -2683,6 +2683,59 @@ class TestMovementPoseedor027(TransactionCase):
             'fojas': 1,
         }
 
+    def test_external_destination_clears_holder_on_create(self):
+        """Un pase a una dependencia externa no lleva poseedor, aunque se lo cargue."""
+        external = self.env['tmc.dependence'].create(
+            {'name': 'Externa 027 Test', 'abbreviation': 'EX027', 'is_internal': False}
+        )
+        vals = dict(self._direct_movement_vals(), destination_dependence_id=external.id,
+                    user_id=self.operator_a.id)
+        movement = self.env['me.document_movement'].with_user(self.operator_a).create(vals)
+        self.assertFalse(movement.user_id)
+        self.assertFalse(self.expediente.current_holder_id)
+
+    def test_external_destination_without_user_id_does_not_default_to_session_user(self):
+        """La vista no envía el poseedor (readonly): el default no debe llenarlo."""
+        external = self.env['tmc.dependence'].create(
+            {'name': 'Externa 027 Test', 'abbreviation': 'EX027', 'is_internal': False}
+        )
+        vals = dict(self._direct_movement_vals(), destination_dependence_id=external.id)
+        self.assertNotIn('user_id', vals)
+        movement = self.env['me.document_movement'].with_user(self.operator_a).create(vals)
+        self.assertFalse(movement.user_id)
+
+    def test_external_destination_via_form_write_has_no_holder(self):
+        """Camino del formulario: el pase llega sin user_id y queda sin poseedor."""
+        external = self.env['tmc.dependence'].create(
+            {'name': 'Externa 027 Test', 'abbreviation': 'EX027', 'is_internal': False}
+        )
+        cmd = self._movement_cmd()
+        cmd[2]['destination_dependence_id'] = external.id
+        self.expediente.with_user(self.operator_a).write({'document_movement_ids': [cmd]})
+        self.assertFalse(self.expediente.current_holder_id)
+
+    def test_external_destination_clears_holder_on_write(self):
+        external = self.env['tmc.dependence'].create(
+            {'name': 'Externa 027 Test', 'abbreviation': 'EX027', 'is_internal': False}
+        )
+        movement = self.env['me.document_movement'].with_user(self.operator_a).create(
+            dict(self._direct_movement_vals(), origin_dependence_id=self.dep_dem.id,
+                 destination_dependence_id=self.dep_me.id)
+        )
+        self.assertEqual(movement.user_id, self.operator_a)
+        movement.with_user(self.manager_user).write({'destination_dependence_id': external.id})
+        self.assertFalse(movement.user_id)
+        movement.with_user(self.manager_user).write({'user_id': self.operator_b.id})
+        self.assertFalse(movement.user_id)
+
+    def test_internal_destination_keeps_holder(self):
+        movement = self.env['me.document_movement'].with_user(self.operator_a).create(
+            dict(self._direct_movement_vals(), origin_dependence_id=self.dep_dem.id,
+                 destination_dependence_id=self.dep_me.id)
+        )
+        self.assertTrue(movement.destination_is_internal)
+        self.assertEqual(movement.user_id, self.operator_a)
+
     def test_non_poseedor_cannot_create_movement_directly(self):
         """IDEA 8: create() directo por ORM de un no-poseedor recibe AccessError."""
         count_before = len(self.expediente.document_movement_ids)
@@ -2817,8 +2870,8 @@ class TestMovementCorrection028(TransactionCase):
         self.manual_mov = self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': fields.Datetime.now(),
-            'origin_dependence_id': self.dep_me.id,
-            'destination_dependence_id': self.dep_dem.id,
+            'origin_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': self.dep_me.id,
             'fojas': 2,
             'user_id': self.operator_a.id,
         })
@@ -2886,7 +2939,7 @@ class TestMovementCorrection028(TransactionCase):
         self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': fields.Datetime.now(),
-            'origin_dependence_id': self.dep_dem.id,
+            'origin_dependence_id': self.dep_me.id,
             'destination_dependence_id': self.dep_me.id,
             'fojas': 3,
             'user_id': self.operator_b.id,
@@ -2966,7 +3019,7 @@ class TestMovementCorrection028(TransactionCase):
         self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': fields.Datetime.now(),
-            'origin_dependence_id': self.dep_dem.id,
+            'origin_dependence_id': self.dep_me.id,
             'destination_dependence_id': self.dep_me.id,
             'fojas': 3,
             'user_id': self.operator_b.id,
@@ -3068,11 +3121,14 @@ class TestCurrentHolder029(TransactionCase):
 
     def test_holder_follows_last_movement_not_first(self):
         """El holder es el user_id del movimiento con mayor id, no del primero."""
+        internal = self.env['tmc.dependence'].create(
+            {'name': 'Interna 029 Test', 'abbreviation': 'IN029', 'is_internal': True}
+        )
         self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': fields.Datetime.now(),
             'origin_dependence_id': self.dep_me.id,
-            'destination_dependence_id': self.dep_dem.id,
+            'destination_dependence_id': internal.id,
             'fojas': 3,
             'user_id': self.user_b.id,
         })
@@ -3080,7 +3136,7 @@ class TestCurrentHolder029(TransactionCase):
         self.env['me.document_movement'].create({
             'expediente_id': self.expediente.id,
             'date': fields.Datetime.now(),
-            'origin_dependence_id': self.dep_dem.id,
+            'origin_dependence_id': internal.id,
             'destination_dependence_id': self.dep_me.id,
             'fojas': 4,
             'user_id': self.user_a.id,

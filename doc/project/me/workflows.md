@@ -317,6 +317,8 @@ desde la pestaña "Movimientos" en el formulario.
   · Destino interno con config → user_id = default_responsible_id.
   · Destino externo o sin destino → user_id = False.
   · Destino interno sin config → user_id sin cambio.
+  El backend lo hace cumplir (EPIC-007/TASK-011): `create()` / `write()` vacían `user_id` si el destino es
+  externo, y la vista lo deja de solo lectura en ese caso.
   La lógica de poseedor (#027/#028/#029) no cambia: solo cambia cómo se popula
   user_id al crear el movimiento, no el comportamiento post-guardado.
   → `me/models/document_movement.py` `_onchange_destination_dependence_id`

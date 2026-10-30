@@ -16,3 +16,4 @@
 | TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | Done | `no_open` en `user_id`; UI verificada |
 | TASK-009 | Documentar que ser poseedor no da permisos | Ale Gallo | XS | Done | Solo doc; decisión del usuario, sin cambios de código |
 | TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | En progreso | Reingreso falso por SEC/CF; datos + migración 19.0.1.0.1. Suite 268/0/0 |
+| TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | Done | Vista readonly + backend vacía `user_id`. Suite 273/0/0; UI verificada |

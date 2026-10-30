@@ -135,6 +135,7 @@ delegados por `_inherits` desde `tmc.document` (`name`, `dependence_id`, `docume
 | `is_automatic` | Boolean | sí | no | Movimiento generado al crear el expediente |
 | `legajo_number` | Char | sí | no | Nº de legajo; obligatorio si el destino es Legajo (`LEG`) |
 | `destination_abbreviation` | Char | no | no | Abreviatura del destino, para condiciones de vista |
+| `destination_is_internal` | Boolean (related) | no | no | `destination_dependence_id.is_internal`, para el `readonly` del poseedor en la vista |
 
 ### `tmc.dependence` (extensión por `_inherit`)
 

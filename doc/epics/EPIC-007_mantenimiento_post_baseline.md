@@ -1,6 +1,6 @@
 # EPIC-007 — Mantenimiento y endurecimiento post-baseline
 
-Estado: En progreso (sobre develop) — TASK-001..003, 005 a 009 Done, TASK-004 Draft (derivada al dev de `raa`)
+Estado: En progreso (sobre develop) — TASK-001..003 y 005 a 011 Done, TASK-004 Draft (derivada al dev de `raa`)
 Riesgo global: medio (TASK-001 toca seguridad/ACL; el resto es acotado)
 Módulo: `me` (+ `raa`)
 Owner: sin asignar
@@ -62,6 +62,7 @@ No incluye:
 | TASK-008 | Poseedor no clickeable en la grilla de movimientos | Ale Gallo | XS | `me` | Done |
 | TASK-009 | Documentar que ser poseedor no da permisos | Ale Gallo | XS | `me` | Done |
 | TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | `me` | En progreso |
+| TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | `me` | Done |
 
 ## Preguntas abiertas
 

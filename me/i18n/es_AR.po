@@ -492,6 +492,11 @@ msgid "Destination Abbreviation"
 msgstr "Abreviación del Destino"
 
 #. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_movement__destination_is_internal
+msgid "Destination Is Internal"
+msgstr "El Destino es Interno"
+
+#. module: me
 #. odoo-python
 #: code:addons/me/models/document_movement.py:0
 #, python-format

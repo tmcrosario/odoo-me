@@ -147,9 +147,11 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
   poseedor con solo `me.group_read_only` figura como poseedor y no puede registrar su pase (no ve
   "Add a line"; solo un manager puede moverlo). Por eso el usuario de cada área de destino debe tener
   **ME / User**: es una condición de alta de usuarios, no de código. No se eleva el permiso por ser poseedor.
-- **Destino externo → sin poseedor.** El onchange deja `user_id` vacío si el destino no es interno
-  (`is_internal=False`): ningún no-manager puede registrar el pase siguiente, y el reingreso lo carga un
-  manager (el encargado de Mesa de Entradas).
+- **Destino externo → sin poseedor** (EPIC-007/TASK-011). Un pase a una dependencia no interna
+  (`is_internal=False`) nunca lleva poseedor: el formulario deja `user_id` de solo lectura y vacío, y
+  `me.document_movement.create()` / `write()` lo vacían aunque se lo pase por ORM/RPC. Ningún no-manager puede
+  registrar el pase siguiente: el reingreso lo carga un manager (el encargado de Mesa de Entradas). Los pases
+  anteriores a esta regla conservan el `user_id` que tenían.
 - Corrección del último movimiento manual restringida por poseedor + campos editables (#028).
 - `fojas` queda bloqueado post-creación salvo manager / campo editable del último movimiento (#018).
 

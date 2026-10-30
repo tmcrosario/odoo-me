@@ -45,6 +45,10 @@ class Movement(models.Model):
         compute="_compute_destination_abbreviation",
         string="Destination Abbreviation",
     )
+    destination_is_internal = fields.Boolean(
+        related="destination_dependence_id.is_internal",
+        string="Destination Is Internal",
+    )
     legajo_number = fields.Char(string="File Number")
 
     @api.onchange('destination_dependence_id')
@@ -148,7 +152,16 @@ class Movement(models.Model):
                     raise exceptions.AccessError(
                         _("Only the current holder of the expediente can register a new movement.")
                     )
-        return super().create(vals_list)
+        Dependence = self.env['tmc.dependence']
+        normalized = []
+        for vals in vals_list:
+            destination = Dependence.browse(vals.get('destination_dependence_id'))
+            # Sin la clave, el default (usuario de sesión) llenaría el poseedor: un campo
+            # readonly en la vista no viaja en el guardado.
+            if destination and not destination.is_internal:
+                vals = dict(vals, user_id=False)
+            normalized.append(vals)
+        return super().create(normalized)
 
     _OPERATOR_EDITABLE_FIELDS = frozenset({'fojas', 'user_id', 'legajo_number'})
 
@@ -187,4 +200,11 @@ class Movement(models.Model):
                     raise exceptions.AccessError(
                         _("File number can only be set on movements with destination 'Adjunto a Legajo'.")
                     )
-        return super().write(vals)
+        res = super().write(vals)
+        if 'user_id' in vals or 'destination_dependence_id' in vals:
+            outside = self.filtered(
+                lambda r: r.user_id and not r.destination_dependence_id.is_internal
+            )
+            if outside:
+                super(Movement, outside).write({'user_id': False})
+        return res
