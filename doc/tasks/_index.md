@@ -40,6 +40,7 @@ Nomenclatura:
 | EPIC-007/TASK-009 | Documentar que ser poseedor no da permisos | Ale Gallo | XS | Done | Solo doc; decisión del usuario |
 | EPIC-007/TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | Done | Reingreso falso por SEC/CF; migración 19.0.1.0.1. Suite 268/0/0 |
 | EPIC-007/TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | Done | Vista readonly + backend. Suite 273/0/0; UI verificada |
+| EPIC-007/TASK-012 | El 1er pase de las compras DEM sale de Compras y Suministros | sin asignar | L | Draft | IDEA 13. Criterios a confirmar; junco confirmó que no se ve afectado |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

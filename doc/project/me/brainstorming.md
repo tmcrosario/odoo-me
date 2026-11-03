@@ -514,5 +514,6 @@ una compra DEM), o de la jurisdicción en una Nota. La dependencia existe como `
       tema; el origen del 1er pase es un snapshot. Coordinar con `odoo-junco`.
   → **Resuelto (usuario, 2026-11-03):** JUNCO lee `exp.dependence_id` (no el origen del 1er pase) y
   `action_set_origin_from_junco()` exige `dependence_id` DEM. La regla cambia **solo el origen del 1er pase**;
-  `dependence_id` del expediente sigue siendo DEM. Pendiente antes de implementar: confirmar con `demo-junco`
-  que ningún código suyo toma el origen del primer movimiento (búsqueda parcial sin hallazgos).
+  `dependence_id` del expediente sigue siendo DEM. Confirmado por `demo-junco` (2026-11-03): ningún
+  código, vista ni reporte de junco usa el origen del primer movimiento ni asume que sea DEM (solo un test
+  arma movimientos a mano, y no se ve afectado).
