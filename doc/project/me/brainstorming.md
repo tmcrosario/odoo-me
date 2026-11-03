@@ -476,3 +476,43 @@ el expediente queda a su nombre y solo un manager puede moverlo. Hoy nada avisa 
       Confirmar si es una dependencia a la que se hacen pases o solo un nodo del árbol; si lo primero,
       marcarlo igual que las otras (dato + migración).
 
+## IDEA 13 - Licitación: el 1er pase sale de Compras y Suministros (pedido del usuario, 2026-11-03)
+
+> Registrada 2026-11-03. **Sin decidir ni implementar.**
+
+### Resumen
+
+Pedido: si el expediente es una **Licitación**, el primer movimiento debería tener como origen
+**Dir. Gral. de Compras y Suministros** del nomenclador, porque todo lo que es compras viene directo de ahí,
+más allá de la jurisdicción que lo solicite.
+
+Hoy el 1er pase automático (EPIC-004) sale de la dependencia de origen del expediente (`dependence_id`, en
+una compra DEM), o de la jurisdicción en una Nota. La dependencia existe como `tmc_data.tmc_dependence_comp`.
+
+### Preguntas abiertas (dominio — no asumir)
+
+- [x] ¿Solo **Licitación**, o también Concurso de Precios y Contratación Directa ("todo lo que es compras")?
+  → **Resuelto (usuario, 2026-11-03):** los **3 tipos** (Licitación, Concurso de Precios y Contratación Directa).
+- [x] ¿Se aplica al pase automático DEM → TMC del alta? ¿Reemplaza el origen DEM?
+  → **Resuelto (usuario, 2026-11-03):** reemplaza al DEM como origen del 1er pase.
+- [x] ¿Qué dice el circuito real (PRO-11, Decreto 438)? Revisado: el 438 ubica la apertura de la pública en el
+      Despacho de la Secretaría solicitante (Anexo V.3) y solo la privada central en Compras y Suministros
+      (Anexo II), pero eso habla del lugar de apertura, no de quién remite al TMC.
+  → **Resuelto (usuario, 2026-11-03):** en la práctica **todas** vienen desde Compras y Suministros, más allá
+  de lo que dice el 438.
+- [x] ¿Y si la compra no viene del DEM (CM, TMC)? Hoy CM y TMC tienen su propio 1er pase.
+  → **Resuelto (usuario, 2026-11-03):** aplica **solo al DEM**; CM y TMC quedan como están.
+- [x] El tema se elige en la vista, pero no es obligatorio en el backend: si el alta no trae tema, el 1er pase
+      sale de la dependencia de origen como hoy. ¿Está bien? ¿Y si el tema se carga o cambia después del alta?
+  → **Resuelto (usuario, 2026-11-03):** la regla se evalúa una sola vez, al ingreso, con el tema que haya en
+  ese momento. Sin tema el pase sale como hoy; si el tema cambia después, el pase existente no se toca
+  (corrección manual de Mesa de Entradas).
+- [x] ¿Los expedientes ya cargados no cambian (el pase ya existe)?
+  → **Resuelto (usuario, 2026-11-03):** la regla corre solo en el alta de expedientes nuevos; los pases ya
+  existentes quedan con DEM como origen, sin migración.
+- [x] Interacción con JUNCO: hoy cede jurisdicción y repartición (EPIC-004) y deriva el tipo de proceso del
+      tema; el origen del 1er pase es un snapshot. Coordinar con `odoo-junco`.
+  → **Resuelto (usuario, 2026-11-03):** JUNCO lee `exp.dependence_id` (no el origen del 1er pase) y
+  `action_set_origin_from_junco()` exige `dependence_id` DEM. La regla cambia **solo el origen del 1er pase**;
+  `dependence_id` del expediente sigue siendo DEM. Pendiente antes de implementar: confirmar con `demo-junco`
+  que ningún código suyo toma el origen del primer movimiento (búsqueda parcial sin hallazgos).
