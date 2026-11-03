@@ -241,14 +241,17 @@ class TestNotaOrigin(TransactionCase):
         self.assertTrue(first, 'debe existir el 1er movimiento origen→TMC')
         self.assertEqual(first.origin_dependence_id, self.jur)
 
-    def test_purchase_first_movement_origin_is_dependence(self):
-        """No-regresión: en compras (jurisdicción vacía al ingreso, la completa JUNCO
-        después) el 1er movimiento sigue saliendo de dependence_id (DEM)."""
+    def test_purchase_first_movement_origin_is_purchasing_not_jurisdiction(self):
+        """En compras DEM (jurisdicción vacía al ingreso, la completa JUNCO después) el
+        1er movimiento sale de Compras y Suministros (EPIC-007/TASK-012), no de la
+        jurisdicción; dependence_id del expediente sigue siendo DEM."""
+        purchasing = self.env.ref('tmc_data.tmc_dependence_comp')
         exp = self.env['me.document_exp'].create(
             self._vals(99821, self.topic_licitacion))
         first = self._first_auto_movement_to_tmc(exp)
         self.assertTrue(first)
-        self.assertEqual(first.origin_dependence_id, self.dep_dem)
+        self.assertEqual(first.origin_dependence_id, purchasing)
+        self.assertEqual(exp.dependence_id, self.dep_dem)
 
     # --- Dato preexistente (protege el update de producción) ---
 

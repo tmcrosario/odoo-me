@@ -1,14 +1,15 @@
 # EPIC-007 / TASK-012 — El 1er pase de las compras DEM sale de Compras y Suministros
 
-Estado: Draft
+Estado: Done
 Modo: L
 Riesgo: medio (cambia la lógica de los movimientos automáticos del alta; no toca modelos, ACL ni datos)
 Módulo: `me`
-Responsable: sin asignar
+Responsable: Ale Gallo
 
 ## Asignación
 
-- Estado de toma: sin tomar
+- Estado de toma: tomada
+- Fecha de toma: 2026-11-03
 - Notas de coordinación: `demo-junco` confirmó (2026-11-03) que junco no lee el origen del 1er pase ni asume
   que sea DEM. `exp.dependence_id` sigue siendo DEM. Origen: IDEA 13 de `doc/project/me/brainstorming.md`.
 
@@ -44,36 +45,37 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] Una Licitación con origen DEM crea el 1er pase Compras y Suministros → TMC y el 2.º TMC → ME, ambos
+- [x] Una Licitación con origen DEM crea el 1er pase Compras y Suministros → TMC y el 2.º TMC → ME, ambos
       automáticos.
-- [ ] Un Concurso de Precios y una Contratación Directa con origen DEM hacen lo mismo.
-- [ ] `dependence_id` del expediente sigue siendo DEM.
-- [ ] Una compra con origen CM conserva CM → TMC; una con origen TMC solo crea TMC → ME.
-- [ ] Una Nota con origen DEM conserva jurisdicción → TMC.
-- [ ] Un alta DEM sin tema crea DEM → TMC, como hoy.
-- [ ] Cambiar el tema después del alta no modifica los pases existentes.
-- [ ] Los expedientes ya cargados no cambian y no hay migración.
-- [ ] `has_reentry` y el poseedor se comportan igual que antes (el destino del 1er pase sigue siendo TMC).
-- [ ] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
-- [ ] Prueba manual de UI: alta de una Licitación DEM y revisión del historial de movimientos.
+- [x] Un Concurso de Precios y una Contratación Directa con origen DEM hacen lo mismo.
+- [x] `dependence_id` del expediente sigue siendo DEM.
+- [x] Una compra con origen CM conserva CM → TMC; una con origen TMC solo crea TMC → ME.
+- [x] Una Nota con origen DEM conserva jurisdicción → TMC.
+- [x] Un alta DEM sin tema crea DEM → TMC, como hoy.
+- [x] Cambiar el tema después del alta no modifica los pases existentes.
+- [x] Los expedientes ya cargados no cambian y no hay migración (no se tocan datos).
+- [x] `has_reentry` y el poseedor se comportan igual que antes (el destino del 1er pase sigue siendo TMC).
+- [x] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
+- [x] Prueba manual de UI: alta de una Licitación DEM y revisión del historial de movimientos (OK del usuario, 2026-11-03).
 
 ## Riesgos y preguntas abiertas
 
-- Verificar que ninguna validación de movimientos exija que el origen del 1er pase coincida con
-  `dependence_id` o con la última posición (se espera que no, pero hay que comprobarlo antes de codificar).
-- Los tests existentes que asumen DEM → TMC en compras deberán ajustarse.
-- Si la dependencia `tmc_data.tmc_dependence_comp` no existe en una DB, definir el fallback (se propone
-  DEM → TMC como hoy) y no fallar el alta.
+- Verificado: ninguna validación de movimientos exige que el origen del 1er pase coincida con `dependence_id`.
+- Se ajustó el único test existente que fijaba DEM → TMC en compras (`test_nota_origin`).
+- Fallback (aprobado): si `tmc_data.tmc_dependence_comp` no existe en la DB, el 1er pase sale de
+  `dependence_id` como antes y el alta no falla.
 - Conviene avisar a `demo-junco` al cerrar; la DB `migracion` carga su propio 1er pase y no depende de esto.
 
 ## Tests evidenciados
 
-PENDIENTE USER-RUN.
+- Suite `/me` en `me_test`: `0 failed, 0 error(s) of 282 tests` (273 previos + 9 nuevos en
+  `TestPurchaseFirstMovement`).
+- Prueba manual de UI: OK del usuario (2026-11-03).
 
 ## Estado / próximo paso
 
-Draft. Falta el OK del usuario a los criterios y asignar la task antes de implementar. Sin código tocado.
+Cerrada. Sin pendientes.
 
 ## Resultado
 
-(pendiente)
+En las compras con origen DEM el 1er pase sale de Compras y Suministros; `dependence_id` sigue siendo DEM.

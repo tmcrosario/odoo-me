@@ -8,7 +8,7 @@
 > a #030 incorporados: **EPIC-004** (en DEM, `jurisdiction_dependence`/`source_dependence_id`
 > los completa JUNCO vía `action_set_origin_from_junco()` — **salvo en Notas**, que se cargan
 > en ME al ingreso (TASK-002); el 1er movimiento automático usa `dependence_id` como origen, o
-> la jurisdicción en una Nota (TASK-003) — ver Workflow 1, Workflow 4 y `business_rules.md`);
+> la jurisdicción en una Nota (TASK-003), o Compras y Suministros en una compra DEM (EPIC-007/TASK-012) — ver Workflow 1, Workflow 4 y `business_rules.md`);
 > **EPIC-003** (campo `current_location_dependence_id` = oficina interna actual, + filtros
 > por poseedor y por oficina de destino en la search view); **EPIC-004/TASK-004..006**
 > (tema/subtema — Workflow 8); **EPIC-006/TASK-002** (indicador de legajo — Workflow 5).
@@ -192,8 +192,11 @@ El número y recorrido depende de la dependencia de origen (`dependence_id`).
    - origen: **`dependence_id`** (DEM) — EPIC-004, opción A (antes era `jurisdiction_dependence`).
      **En una Nota con jurisdicción cargada**, el origen es `jurisdiction_dependence`
      (EPIC-004/TASK-003); si faltara, cae a `dependence_id`.
+   - **En una compra DEM** (Licitación, Concurso de Precios o Contratación Directa), el origen
+     es **Compras y Suministros** (`tmc_data.tmc_dependence_comp`), no DEM (EPIC-007/TASK-012);
+     `dependence_id` sigue siendo DEM. Si ese nodo no existe en la DB, cae a `dependence_id`.
    - el origen es un **snapshot** al crear: si JUNCO completa después la jurisdicción de una
-     compra, el Movimiento 1 no cambia.
+     compra, o el tema cambia, el Movimiento 1 no cambia.
    - destino: TMC
    - `fojas`: `record.fojas` (snapshot en el momento de creación)
    - `is_automatic`: True

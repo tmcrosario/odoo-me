@@ -69,6 +69,12 @@ class DocumentExp(models.Model):
         'tmc_data.tmc_document_topic_concurso_precios',
     )
 
+    _PURCHASE_TOPIC_XMLIDS = (
+        'tmc_data.tmc_document_topic_licitacion',
+        'tmc_data.tmc_document_topic_concurso_precios',
+        'tmc_data.tmc_document_topic_contratacion_directa',
+    )
+
     allowed_exp_topic_ids = fields.Many2many(
         comodel_name='tmc.document_topic',
         compute='_compute_allowed_exp_topic_ids',
@@ -777,6 +783,7 @@ class DocumentExp(models.Model):
             record.sudo()._update_document_date(date_val)
         tmc_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'TMC')], limit=1)
         mesa_entrada_dependence = env_create['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1)
+        purchasing_dependence = env_create.ref('tmc_data.tmc_dependence_comp', raise_if_not_found=False)
         for record in records:
             # Crear registro en RAA (acoplamiento implícito — raa no está en __manifest__.py).
             # sudo() necesario: la creación RAA es un efecto interno del sistema;
@@ -807,6 +814,8 @@ class DocumentExp(models.Model):
                     if record.is_nota and record.jurisdiction_dependence
                     else record.dependence_id
                 )
+                if record._is_dem_purchase():
+                    origin_dependence = purchasing_dependence or origin_dependence
                 env_create['me.document_movement'].create({
                     'expediente_id': record.id,
                     'date': fields.Datetime.now(),
@@ -831,6 +840,15 @@ class DocumentExp(models.Model):
         # Return records in the CALLER's environment (without me_create_in_progress)
         # so subsequent operations on the returned objects are correctly guarded.
         return records.with_env(self.env)
+
+    def _is_dem_purchase(self):
+        self.ensure_one()
+        if self.dependence_id.abbreviation != 'DEM':
+            return False
+        topics = self.env['tmc.document_topic']
+        for xmlid in self._PURCHASE_TOPIC_XMLIDS:
+            topics |= self.env.ref(xmlid, raise_if_not_found=False) or topics
+        return bool(topics & self.main_topic_ids)
 
     def _update_document_date(self, date_val):
         """Actualizar la fecha del documento padre evitando la validación problemática"""

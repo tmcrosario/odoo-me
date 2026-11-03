@@ -3459,3 +3459,93 @@ class TestDefaultResponsible030(TransactionCase):
             'user_id': self.responsible_user.id,
         })
         self.assertEqual(exp.current_holder_id, self.responsible_user)
+
+
+@tagged('post_install', '-at_install')
+class TestPurchaseFirstMovement(TransactionCase):
+    """EPIC-007/TASK-012: el 1er pase de las compras DEM sale de Compras y Suministros."""
+
+    def setUp(self):
+        super().setUp()
+        Dep = self.env['tmc.dependence']
+        self.dem = Dep.search([('abbreviation', '=', 'DEM')], limit=1)
+        self.cm = Dep.search([('abbreviation', '=', 'CM')], limit=1)
+        self.tmc = Dep.search([('abbreviation', '=', 'TMC')], limit=1)
+        self.mesa = Dep.search([('abbreviation', '=', 'ME')], limit=1)
+        self.comp = self.env.ref('tmc_data.tmc_dependence_comp', raise_if_not_found=False)
+        if not (self.dem and self.cm and self.tmc and self.mesa and self.comp):
+            self.skipTest("Faltan dependencias del nomenclador en esta DB")
+        self.doc_type = self.env['tmc.document_type'].search([('abbreviation', '=', 'EXP')], limit=1)
+        self.number = 77000
+
+    def _topic(self, name):
+        return self.env.ref('tmc_data.tmc_document_topic_%s' % name)
+
+    def _create(self, origin, topic=None, **extra):
+        self.number += 1
+        vals = {
+            'dependence_id': origin.id,
+            'document_type_id': self.doc_type.id,
+            'number': self.number,
+            'period': str(fields.Date.today().year),
+            'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
+        }
+        if topic:
+            vals['main_topic_ids'] = [(4, topic.id)]
+        vals.update(extra)
+        return self.env['me.document_exp'].create(vals)
+
+    def _pairs(self, exp):
+        return [
+            (m.origin_dependence_id, m.destination_dependence_id)
+            for m in exp.document_movement_ids.sorted('id')
+        ]
+
+    def _assert_from_purchasing(self, exp):
+        self.assertEqual(self._pairs(exp), [(self.comp, self.tmc), (self.tmc, self.mesa)])
+        self.assertTrue(all(exp.document_movement_ids.mapped('is_automatic')))
+        self.assertEqual(exp.dependence_id, self.dem)
+
+    def test_licitacion_dem_first_pass_from_purchasing(self):
+        exp = self._create(
+            self.dem, self._topic('licitacion'),
+            secondary_topic_ids=[(4, self._topic('licitacion_publica').id)],
+        )
+        self._assert_from_purchasing(exp)
+
+    def test_concurso_precios_dem_first_pass_from_purchasing(self):
+        self._assert_from_purchasing(self._create(self.dem, self._topic('concurso_precios')))
+
+    def test_contratacion_directa_dem_first_pass_from_purchasing(self):
+        self._assert_from_purchasing(self._create(self.dem, self._topic('contratacion_directa')))
+
+    def test_purchase_from_cm_keeps_cm_first_pass(self):
+        exp = self._create(self.cm, self._topic('concurso_precios'))
+        self.assertEqual(self._pairs(exp), [(self.cm, self.tmc), (self.tmc, self.mesa)])
+
+    def test_purchase_from_tmc_only_creates_tmc_to_mesa(self):
+        exp = self._create(self.tmc, self._topic('concurso_precios'))
+        self.assertEqual(self._pairs(exp), [(self.tmc, self.mesa)])
+
+    def test_dem_without_topic_keeps_dem_first_pass(self):
+        exp = self._create(self.dem)
+        self.assertEqual(self._pairs(exp), [(self.dem, self.tmc), (self.tmc, self.mesa)])
+
+    def test_dem_nota_keeps_jurisdiction_first_pass(self):
+        jurisdiction = self.env['tmc.dependence'].create({'name': 'Jurisdiccion Nota Test', 'abbreviation': 'JNT'})
+        exp = self._create(
+            self.dem, self._topic('nota'),
+            jurisdiction_dependence=jurisdiction.id,
+        )
+        self.assertEqual(self._pairs(exp)[0], (jurisdiction, self.tmc))
+
+    def test_changing_topic_after_intake_keeps_first_pass(self):
+        exp = self._create(self.dem)
+        exp.write({'main_topic_ids': [(6, 0, [self._topic('concurso_precios').id])]})
+        self.assertEqual(self._pairs(exp)[0], (self.dem, self.tmc))
+
+    def test_purchase_first_pass_does_not_flag_reentry_or_holder_out_of_chain(self):
+        exp = self._create(self.dem, self._topic('contratacion_directa'))
+        self.assertFalse(exp.has_reentry)
+        self.assertEqual(exp.current_holder_id, self.env.user)

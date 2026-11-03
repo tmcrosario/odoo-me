@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-10-30: 27 clases, 273 métodos de test**, suite verde.
+**Estado al 2026-11-03: 28 clases, 282 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **273** | `odoo.tests.result: 0 failed, 0 error(s) of 273 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **282** | `odoo.tests.result: 0 failed, 0 error(s) of 282 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -112,7 +112,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
-| `TestNotaOrigin` | 18 | DEM + tema Nota carga jurisdicción/origen en ME: `is_nota` (m2m del padre **y** el proxy `main_topic_id`, para que reaccione antes de guardar); carga y obligatoriedad backend; **no-regresión de EPIC-004** (temas de compra siguen cediendo a JUNCO, `action_set_origin_from_junco` sigue OK para compras); **guarda defensiva** (rechaza Nota, no pisa lo cargado); **tema cambiado post-alta** (poner Nota exige jurisdicción; sacarla la libera; editar algo ajeno al tema no bloquea); aviso de duplicado no se autodetecta; el operativo **no** puede tocar el origen post-alta; dato viejo (Nota sin jurisdicción) **sobrevive al recompute** de `-u`; **TASK-003:** el 1er movimiento de una Nota sale de la **jurisdicción** y el de compras de `dependence_id` | EPIC-004/TASK-002 + TASK-003 |
+| `TestNotaOrigin` | 18 | DEM + tema Nota carga jurisdicción/origen en ME: `is_nota` (m2m del padre **y** el proxy `main_topic_id`, para que reaccione antes de guardar); carga y obligatoriedad backend; **no-regresión de EPIC-004** (temas de compra siguen cediendo a JUNCO, `action_set_origin_from_junco` sigue OK para compras); **guarda defensiva** (rechaza Nota, no pisa lo cargado); **tema cambiado post-alta** (poner Nota exige jurisdicción; sacarla la libera; editar algo ajeno al tema no bloquea); aviso de duplicado no se autodetecta; el operativo **no** puede tocar el origen post-alta; dato viejo (Nota sin jurisdicción) **sobrevive al recompute** de `-u`; **TASK-003:** el 1er movimiento de una Nota sale de la **jurisdicción** y el de compras de **Compras y Suministros** (TASK-012; antes `dependence_id`) | EPIC-004/TASK-002 + TASK-003 |
 
 > ⚠️ Varios de estos tests documentan **por qué NO** cierta forma más simple: la validación
 > vive en `create()`/`write()` y **no** en `@api.constrains('is_nota')` (al ser stored,
@@ -124,6 +124,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | Clase | # | Qué prueba | Semilla |
 | --- | ---: | --- | --- |
 | `TestLicitacionSubtopic` | 13 | **TASK-004:** el subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids` (solo esos 2, no los 25 de GD; una "etapa" no se ofrece pero sigue colgando de Licitación — guardrail junco; reacciona al proxy; no-regresión; Concurso vacío/oculto). **TASK-005:** subtema **requerido** para Licitación (sin subtema→raise, con→ok, concurso/directa→ok, reclasificar/quitar subtema→raise, y **licitación vieja sin subtema sobrevive al `-u` y es editable** — validación en create/write, no `@api.constrains`) | EPIC-004/TASK-004 + TASK-005 |
+| `TestPurchaseFirstMovement` | 9 | **EPIC-007/TASK-012:** el 1er pase de Licitación / Concurso de Precios / Contratación Directa con origen DEM sale de Compras y Suministros (`dependence_id` sigue DEM, ambos pases automáticos); CM y TMC no cambian; DEM sin tema y Nota conservan su origen; cambiar el tema después no toca el pase; sin reentry | EPIC-007/TASK-012 |
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que
