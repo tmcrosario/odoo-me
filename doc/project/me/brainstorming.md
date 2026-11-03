@@ -29,7 +29,8 @@ vive en ME o en JUNCO (que ahora gestiona esos datos para DEM)?
 
 ### Puntos a explorar
 
-- [ ] ¿El uso real de "buscar por jurisdicción/procedencia" es frecuente en ME?
+- [x] ¿El uso real de "buscar por jurisdicción/procedencia" es frecuente en ME?
+  → **Cerrado (2026-11-03):** ya no hace falta contestarla; la función existe (campo buscable + group-by).
 - [x] Si se agrega, ¿confunde mostrar como filtro un campo que se ocultó en la carga?
   → **Resuelto (EPIC-003/TASK-004):** se muestra igual; para compras queda en el grupo *None* hasta que JUNCO carga la jurisdicción.
 - [x] ¿Alcanza con un campo buscable, o se quiere group-by / searchpanel?
@@ -37,7 +38,8 @@ vive en ME o en JUNCO (que ahora gestiona esos datos para DEM)?
 
 ### Preguntas abiertas
 
-- [ ] (a) ¿Alguien busca expedientes por jurisdicción/procedencia en ME?
+- [x] (a) ¿Alguien busca expedientes por jurisdicción/procedencia en ME?
+  → **Cerrado (2026-11-03):** ídem; la búsqueda quedó implementada (EPIC-003/TASK-004).
 - [x] (b) Si sí, ¿se agrega el buscable/filtro aunque el campo esté oculto en el form?
   → **Resuelto (EPIC-003/TASK-004):** sí, buscable y group-by aunque el campo no se cargue en el form.
 - [x] (c) ¿O esa búsqueda se hace en JUNCO, que ahora gestiona esos datos para DEM?
@@ -224,7 +226,8 @@ hecho visible; convive con la nube del breadcrumb (redundancia a favor del usuar
 ### Preguntas abiertas
 
 - [x] ¿Lo adopta `me`? **Sí** — EPIC-006/TASK-001, solo `document_exp` por ahora.
-- [ ] ¿Esparcir a otros forms (movimiento, raa)? Diferido; se evalúa caso por caso (nueva task en EPIC-006).
+- [x] ¿Esparcir a otros forms (movimiento, raa)? Diferido; se evalúa caso por caso (nueva task en EPIC-006).
+  → **Cerrado (2026-11-03):** no se pidió; si aparece la necesidad, va en una task nueva de EPIC-006.
 
 ### Relación con otras ideas / reglas
 
@@ -268,9 +271,13 @@ real** que originó el expediente: `jurisdicción → TMC` en vez del genérico 
       al ingreso). ¿Está bien que Notas y compras difieran en el 1er origen? (parece sí:
       Notas tienen el dato, compras no).
   → **Resuelto (EPIC-004/TASK-003):** las compras siguen con `dependence_id`.
-- [ ] **`is_internal` de las jurisdicciones** está inconsistente en el dato (en me2: 3 con
+  *(Actualizado 2026-11-03: las compras DEM con tema Licitación / Concurso / Contratación Directa ya no salen
+  de `dependence_id` sino de Compras y Suministros — EPIC-007/TASK-012.)*
+- [x] **`is_internal` de las jurisdicciones** está inconsistente en el dato (en me2: 3 con
       `true`, 31 con `NULL`) — no bloquea (nada computa sobre origin.is_internal), pero conviene
       entender qué significa antes de mostrarla como origen.
+  → **Cerrado (2026-11-03):** descartado; nada en `me` calcula sobre el `is_internal` del origen (solo el del
+  destino), así que la inconsistencia no afecta.
 - [x] Defensivo: si una Nota no tuviera jurisdicción (no debería, es obligatoria), caer a
       `dependence_id`.
   → **Hecho (EPIC-004/TASK-003):** si falta la jurisdicción, cae a `dependence_id`.
@@ -478,7 +485,8 @@ el expediente queda a su nombre y solo un manager puede moverlo. Hoy nada avisa 
 
 ## IDEA 13 - Licitación: el 1er pase sale de Compras y Suministros (pedido del usuario, 2026-11-03)
 
-> Registrada 2026-11-03. **Sin decidir ni implementar.**
+> Registrada 2026-11-03. **IMPLEMENTADO** → ver **EPIC-007/TASK-012** (Done, 2026-11-03, commit `fdb32ab`).
+> Se deja acá como referencia (el análisis de abajo es el registro de las decisiones).
 
 ### Resumen
 
