@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-11-03: 28 clases, 282 métodos de test**, suite verde.
+**Estado al 2026-11-03: 29 clases, 288 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **282** | `odoo.tests.result: 0 failed, 0 error(s) of 282 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **288** | `odoo.tests.result: 0 failed, 0 error(s) of 288 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -125,6 +125,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | --- | ---: | --- | --- |
 | `TestLicitacionSubtopic` | 13 | **TASK-004:** el subtema de Licitación se acota a Privada/Pública vía `allowed_secondary_topic_ids` (solo esos 2, no los 25 de GD; una "etapa" no se ofrece pero sigue colgando de Licitación — guardrail junco; reacciona al proxy; no-regresión; Concurso vacío/oculto). **TASK-005:** subtema **requerido** para Licitación (sin subtema→raise, con→ok, concurso/directa→ok, reclasificar/quitar subtema→raise, y **licitación vieja sin subtema sobrevive al `-u` y es editable** — validación en create/write, no `@api.constrains`) | EPIC-004/TASK-004 + TASK-005 |
 | `TestPurchaseFirstMovement` | 9 | **EPIC-007/TASK-012:** el 1er pase de Licitación / Concurso de Precios / Contratación Directa con origen DEM sale de Compras y Suministros (`dependence_id` sigue DEM, ambos pases automáticos); CM y TMC no cambian; DEM sin tema y Nota conservan su origen; cambiar el tema después no toca el pase; sin reentry | EPIC-007/TASK-012 |
+| `TestCurrentFojas` | 6 | **EPIC-007/TASK-013:** `current_fojas` = ingreso tras el alta; sigue al último pase sin tocar el valor de ingreso; corregir el último pase lo actualiza; sin pases cae al ingreso; no se almacena; el form lo muestra solo con el expediente guardado | EPIC-007/TASK-013 |
 
 > ⚠️ **`test_me_privilege_ladder_order` asserta el orden `[Read Only, User, Manager]` Y que los
 > ranks sean estrictamente crecientes — las dos cosas, a propósito.** El assert de ranks es el que

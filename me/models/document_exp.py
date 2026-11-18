@@ -212,6 +212,21 @@ class DocumentExp(models.Model):
             last = record.document_movement_ids.sorted('id')[-1:]
             record.current_holder_id = last.user_id if last else False
 
+    current_fojas = fields.Integer(
+        string="Current Page Count",
+        compute="_compute_current_fojas",
+        help=(
+            "Page count of the last registered movement (movement with the highest id). "
+            "Falls back to the intake page count when no movements exist."
+        ),
+    )
+
+    @api.depends('fojas', 'document_movement_ids.fojas')
+    def _compute_current_fojas(self):
+        for record in self:
+            last = record.document_movement_ids.sorted('id')[-1:]
+            record.current_fojas = last.fojas if last else record.fojas
+
     current_location_dependence_id = fields.Many2one(
         comodel_name='tmc.dependence',
         string="Destination Office",

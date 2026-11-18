@@ -1,14 +1,15 @@
 # EPIC-007 / TASK-013 — Fojas actuales del expediente
 
-Estado: Draft
+Estado: Done
 Modo: L
 Riesgo: bajo-medio (campo nuevo calculado, no almacenado; cambia qué fojas muestra la vista)
 Módulo: `me`
-Responsable: sin asignar
+Responsable: Ale Gallo
 
 ## Asignación
 
-- Estado de toma: sin tomar
+- Estado de toma: tomada
+- Fecha de toma: 2026-11-18
 - Notas de coordinación: surge de una consulta de `demo-junco` (2026-11-17) sobre si el total de fojas sigue al
   pase. `odoo-me-8a` (junco) confirmó que no toca `me`; si el campo cambia de contrato (nombre, tipo,
   almacenado) hay que avisarles. Ellos lo mostrarían con un related de solo lectura, tarea propia en junco.
@@ -44,16 +45,16 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] `current_fojas` es la `fojas` del último pase (mayor id) del expediente.
-- [ ] Al registrar un pase con más fojas, `current_fojas` pasa a ese valor sin tocar `fojas` de ingreso.
-- [ ] Un expediente sin pases devuelve el `fojas` de ingreso.
-- [ ] Corregir las fojas del último pase manual actualiza `current_fojas`.
-- [ ] En el formulario con el expediente guardado se ve `current_fojas` (solo lectura) y no el `fojas` de
+- [x] `current_fojas` es la `fojas` del último pase (mayor id) del expediente.
+- [x] Al registrar un pase con más fojas, `current_fojas` pasa a ese valor sin tocar `fojas` de ingreso.
+- [x] Un expediente sin pases devuelve el `fojas` de ingreso.
+- [x] Corregir las fojas del último pase manual actualiza `current_fojas`.
+- [x] En el formulario con el expediente guardado se ve `current_fojas` (solo lectura) y no el `fojas` de
       ingreso; al crear sigue siendo obligatorio cargar `fojas`.
-- [ ] El campo no se almacena (sin migración ni backfill).
-- [ ] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
-- [ ] Prueba manual de UI en `practica`: alta con fojas, pase con más fojas, el formulario muestra el nuevo
-      total.
+- [x] El campo no se almacena (sin migración ni backfill).
+- [x] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
+- [x] Prueba manual de UI en `practica`: alta con fojas, pase con más fojas, el formulario muestra el nuevo
+      total (OK del usuario, 2026-11-18).
 - [ ] Aviso a `odoo-me-8a` / `demo-junco` con el contrato final del campo.
 
 ## Riesgos y preguntas abiertas
@@ -64,12 +65,13 @@ No incluye:
 
 ## Tests evidenciados
 
-PENDIENTE USER-RUN.
+- Suite `/me` en `me_test`: `0 failed, 0 error(s) of 288 tests` (282 previos + 6 nuevos en `TestCurrentFojas`).
+- Aplicado a `practica` (`-u me --i18n-overwrite` + restart). Prueba manual de UI: OK del usuario (2026-11-18). Hallazgo: se pudo cargar con 0 fojas → regla nueva en TASK-014.
 
 ## Estado / próximo paso
 
-Draft. Falta el OK del usuario a los criterios y asignar la task antes de implementar. Sin código tocado.
+Cerrada. Pendiente: avisar a `odoo-me-8a` que el campo ya está commiteado (contrato sin cambios).
 
 ## Resultado
 
-(pendiente)
+El expediente muestra `current_fojas` (las del último pase, no almacenado); el valor de ingreso queda en el 1er pase.

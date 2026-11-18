@@ -113,7 +113,8 @@
                             <field name="date" string="Procedure Start Date"
                                    help="Expediente creation date (from the cover sheet). May differ from the intake date."
                                    required="1" options="{'numeric': true}"/>
-                            <field name="fojas" required="1" readonly="id"/>
+                            <field name="fojas" required="1" invisible="id"/>
+                            <field name="current_fojas" invisible="not id"/>
                             <field name="external_key"/>
                         </group>
                     </group>

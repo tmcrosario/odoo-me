@@ -110,6 +110,7 @@ delegados por `_inherits` desde `tmc.document` (`name`, `dependence_id`, `docume
 | `is_nota` | Boolean | sí | no | El tema es Nota (por XML ID `tmc_data.tmc_document_topic_nota`) |
 | `is_licitacion` | Boolean | sí | no | El tema es Licitación |
 | `current_holder_id` | M2o `res.users` | sí | no | `user_id` del último movimiento (poseedor) |
+| `current_fojas` | Integer | no (calculado, no almacenado) | sí | `fojas` del último movimiento (mayor id); sin movimientos, el `fojas` de ingreso. Es lo que muestra el form con el expediente guardado (TASK-013) |
 | `current_location_dependence_id` | M2o `tmc.dependence` | sí | no | Oficina **interna** de destino del último movimiento (EPIC-003) |
 | `current_legajo_number` | Char | no | no | `legajo_number` del último movimiento, solo si su destino es Legajo (EPIC-006/TASK-002) |
 | `is_currently_internal` | Boolean | sí | no | El último movimiento deja el expediente en una dependencia interna |

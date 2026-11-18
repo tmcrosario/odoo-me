@@ -125,6 +125,20 @@ msgid "Specific dependence within the jurisdiction that originated the expedient
 msgstr "Repartición específica dentro de la jurisdicción que originó el expediente"
 
 #. module: me
+#: model:ir.model.fields,field_description:me.field_me_document_exp__current_fojas
+msgid "Current Page Count"
+msgstr "Fojas Actuales"
+
+#. module: me
+#: model:ir.model.fields,help:me.field_me_document_exp__current_fojas
+msgid ""
+"Page count of the last registered movement (movement with the highest id). "
+"Falls back to the intake page count when no movements exist."
+msgstr ""
+"Fojas del último movimiento registrado (el de mayor id). Si no hay "
+"movimientos, vale la cantidad de fojas de ingreso."
+
+#. module: me
 #: model:ir.model.fields,field_description:me.field_me_document_exp__fojas
 msgid "Page Count"
 msgstr "Fojas"

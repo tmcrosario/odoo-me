@@ -3549,3 +3549,62 @@ class TestPurchaseFirstMovement(TransactionCase):
         exp = self._create(self.dem, self._topic('contratacion_directa'))
         self.assertFalse(exp.has_reentry)
         self.assertEqual(exp.current_holder_id, self.env.user)
+
+
+@tagged('post_install', '-at_install')
+class TestCurrentFojas(TransactionCase):
+    """EPIC-007/TASK-013: fojas actuales = las del último pase."""
+
+    def setUp(self):
+        super().setUp()
+        Dep = self.env['tmc.dependence']
+        self.dem = Dep.search([('abbreviation', '=', 'DEM')], limit=1)
+        self.mesa = Dep.search([('abbreviation', '=', 'ME')], limit=1)
+        if not (self.dem and self.mesa):
+            self.skipTest("Faltan dependencias del nomenclador en esta DB")
+        self.office = Dep.create({'name': 'Oficina Fojas Test', 'abbreviation': 'OFT', 'is_internal': True})
+        self.exp = self.env['me.document_exp'].create({
+            'dependence_id': self.dem.id,
+            'document_type_id': self.env['tmc.document_type'].search([('abbreviation', '=', 'EXP')], limit=1).id,
+            'number': 78001,
+            'period': str(fields.Date.today().year),
+            'intake_date': fields.Date.today(),
+            'date': fields.Date.today(),
+            'fojas': 100,
+        })
+
+    def _move(self, fojas):
+        return self.env['me.document_movement'].create({
+            'expediente_id': self.exp.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.mesa.id,
+            'destination_dependence_id': self.office.id,
+            'fojas': fojas,
+            'user_id': self.env.user.id,
+        })
+
+    def test_equals_intake_value_after_creation(self):
+        self.assertEqual(self.exp.current_fojas, 100)
+
+    def test_follows_last_movement_without_touching_intake_value(self):
+        self._move(130)
+        self.assertEqual(self.exp.current_fojas, 130)
+        self.assertEqual(self.exp.fojas, 100)
+
+    def test_correcting_last_movement_updates_current_fojas(self):
+        move = self._move(130)
+        move.write({'fojas': 128})
+        self.assertEqual(self.exp.current_fojas, 128)
+
+    def test_without_movements_falls_back_to_intake_value(self):
+        self.exp.document_movement_ids.unlink()
+        self.assertFalse(self.exp.document_movement_ids)
+        self.assertEqual(self.exp.current_fojas, 100)
+
+    def test_is_not_stored(self):
+        self.assertFalse(self.env['me.document_exp']._fields['current_fojas'].store)
+
+    def test_form_shows_current_fojas_only_when_saved(self):
+        arch = self.env['me.document_exp'].get_view(view_type='form')['arch']
+        self.assertIn('name="current_fojas"', arch)
+        self.assertIn('invisible="not id"', arch)

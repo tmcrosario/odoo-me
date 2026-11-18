@@ -18,5 +18,5 @@
 | TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | Done | Reingreso falso por SEC/CF; datos + migración 19.0.1.0.1. Suite 268/0/0 |
 | TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | Done | Vista readonly + backend vacía `user_id`. Suite 273/0/0; UI verificada |
 | TASK-012 | El 1er pase de las compras DEM sale de Compras y Suministros | Ale Gallo | L | Done | IDEA 13. Suite 282/0/0; UI verificada. Junco confirmó que no se ve afectado |
-| TASK-013 | Fojas actuales del expediente | sin asignar | L | Draft | `current_fojas` calculado (último pase), no almacenado; criterios a confirmar |
+| TASK-013 | Fojas actuales del expediente | Ale Gallo | L | Done | `current_fojas` calculado, no almacenado. Suite 288/0/0; UI verificada |
 | TASK-014 | El Responsable corrige las fojas de ingreso | sin asignar | L | Draft | Cambia la regla de bloqueo + propaga a los pases automáticos; sin historial (IDEA 14); después de TASK-013 |
