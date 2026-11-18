@@ -549,3 +549,26 @@ de junco, visible solo para el Responsable de ME (`me.group_manager`).
 
 - [ ] ¿Se implementa? (decisión pendiente del usuario; por ahora no)
 - [ ] Si se hace: ¿solo fojas o todos los cambios del expediente? (hoy: solo fojas)
+
+## IDEA 15 - No admitir el ingreso de un expediente con 0 fojas (2026-11-18)
+
+> Registrada 2026-11-18. **Solo idea: el usuario prefiere dejarla así; quizás no sea un problema.**
+
+### Resumen
+
+Probando EPIC-007/TASK-013 en `practica` se pudo crear un expediente con `fojas` en 0: el campo es obligatorio en la
+vista pero 0 cuenta como valor, y no hay validación de mínimo en el backend. El usuario dijo que no debería poder
+cargarse con 0, y después decidió dejarlo como idea.
+
+### Alternativas vistas
+
+- **Estricta:** `fojas` ≤ 0 falla siempre. Rompe los tests de `odoo-junco` (20 archivos, 25 altas por ORM que omiten
+  `fojas`, default 0) y las cargas por script / migración; exige coordinar con junco.
+- **Solo lo enviado:** se rechaza `fojas` ≤ 0 únicamente cuando viene explícito (la pantalla siempre lo envía). Cubre el
+  caso de la UI sin romper a junco; un alta por ORM que omite el campo queda en 0.
+- Validar en `create()`/`write()` y no con `@api.constrains`, para que un expediente viejo con 0 siga editable.
+
+### Preguntas abiertas
+
+- [ ] ¿Se hace? (decisión pendiente del usuario)
+- [ ] Si se hace: ¿estricta o solo lo enviado?
