@@ -1287,6 +1287,51 @@ class TestFojasLock(TransactionCase):
         with self.assertRaises(AccessError):
             self.expediente.with_user(self.operator_user).write({'fojas': 10})
 
+    def _automatic_fojas(self):
+        return self.expediente.document_movement_ids.filtered('is_automatic').mapped('fojas')
+
+    def test_fojas_correction_updates_both_automatic_movements(self):
+        """EPIC-007/TASK-014: corregir las fojas de ingreso alinea los dos pases automáticos."""
+        self.assertEqual(self._automatic_fojas(), [3, 3])
+        self.expediente.with_user(self.manager_user).write({'fojas': 10})
+        self.assertEqual(self._automatic_fojas(), [10, 10])
+        self.assertEqual(self.expediente.current_fojas, 10)
+
+    def test_fojas_correction_keeps_manual_movements(self):
+        office = self.env['tmc.dependence'].create({
+            'name': 'Oficina Fojas Corr Test', 'abbreviation': 'OFC', 'is_internal': True,
+        })
+        manual = self.env['me.document_movement'].create({
+            'expediente_id': self.expediente.id,
+            'date': fields.Datetime.now(),
+            'origin_dependence_id': self.env['tmc.dependence'].search([('abbreviation', '=', 'ME')], limit=1).id,
+            'destination_dependence_id': office.id,
+            'fojas': 40,
+            'user_id': self.manager_user.id,
+        })
+        self.expediente.with_user(self.manager_user).write({'fojas': 10})
+        self.assertEqual(manual.fojas, 40)
+        self.assertEqual(self._automatic_fojas(), [10, 10])
+        self.assertEqual(self.expediente.current_fojas, 40)
+
+    def test_save_without_changing_fojas_does_not_rewrite_movements(self):
+        auto = self.expediente.document_movement_ids.filtered('is_automatic')
+        auto.sudo().write({'fojas': 7})
+        self.expediente.with_user(self.manager_user).write({'fojas': 3, 'document_object': 'Sin cambio de fojas'})
+        self.assertEqual(self._automatic_fojas(), [7, 7])
+
+    def test_operator_still_cannot_change_fojas_or_movements_through_it(self):
+        with self.assertRaises(AccessError):
+            self.expediente.with_user(self.operator_user).write({'fojas': 10})
+        self.assertEqual(self._automatic_fojas(), [3, 3])
+
+    def test_form_shows_intake_fojas_only_to_managers(self):
+        Exp = self.env['me.document_exp']
+        manager_arch = Exp.with_user(self.manager_user).get_view(view_type='form')['arch']
+        operator_arch = Exp.with_user(self.operator_user).get_view(view_type='form')['arch']
+        self.assertIn('Intake Page Count', manager_arch)
+        self.assertNotIn('Intake Page Count', operator_arch)
+
     def test_operator_can_create_expediente(self):
         """me.group_user puede crear expedientes (perm_create=1)."""
         new_exp = self.env['me.document_exp'].with_user(self.operator_user).create({

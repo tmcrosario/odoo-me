@@ -237,6 +237,11 @@ msgstr "Referencia"
 
 #. module: me
 #: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
+msgid "Intake Page Count"
+msgstr "Fojas de Ingreso"
+
+#. module: me
+#: model_terms:ir.ui.view,arch_db:me.document_exp_view_form
 msgid "Procedure Start Date"
 msgstr "Fecha de inicio del trámite"
 

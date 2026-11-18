@@ -153,7 +153,7 @@ Si el usuario **no** es manager (y no `me_create_in_progress`), al corregir un m
   registrar el pase siguiente: el reingreso lo carga un manager (el encargado de Mesa de Entradas). Los pases
   anteriores a esta regla conservan el `user_id` que tenían.
 - Corrección del último movimiento manual restringida por poseedor + campos editables (#028).
-- `fojas` queda bloqueado post-creación salvo manager / campo editable del último movimiento (#018).
+- `fojas` de ingreso queda bloqueado post-creación para el operativo; el **Responsable** (`me.group_manager`) lo ve y lo corrige con el expediente guardado y el cambio se copia a los 2 pases automáticos (EPIC-007/TASK-014). Sigue vigente: el poseedor corrige la `fojas` de su último pase manual (#018).
 
 ## `sudo()` — elevaciones deliberadas (fronteras de privilegio)
 

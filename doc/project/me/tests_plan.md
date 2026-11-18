@@ -3,7 +3,7 @@
 Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011`,
 `junco:EPIC-015` (+ fix del bypass SQL de `_update_document_date`, 2026-08-14),
 `EPIC-006/TASK-001/002`, `EPIC-004/TASK-002..006` + `EPIC-003/TASK-003/004`.
-**Estado al 2026-11-03: 29 clases, 288 métodos de test**, suite verde.
+**Estado al 2026-11-03: 29 clases, 293 métodos de test**, suite verde.
 
 > ⚠️ **Flaky conocido:** `TestHasReentry021.test_is_internal_change_triggers_recompute` muta
 > `is_internal` de una dependencia compartida y recomputa → puede errar en el run completo según
@@ -14,7 +14,7 @@ Baseline de tests relevado en EPIC-001/TASK-003; revalidado tras `junco:EPIC-011
 
 | Métrica | Valor | De dónde sale |
 | --- | ---: | --- |
-| **Línea de resultado** (la que usamos) | **288** | `odoo.tests.result: 0 failed, 0 error(s) of 288 tests`. Coincide con contar `def test_` en el fuente |
+| **Línea de resultado** (la que usamos) | **293** | `odoo.tests.result: 0 failed, 0 error(s) of 293 tests`. Coincide con contar `def test_` en el fuente |
 | `stats` | 312 | `odoo.tests.stats: me: 312 tests` — cuenta distinto |
 
 Citar siempre **la línea de resultado** y decir qué métrica es. Las cifras históricas de ME
@@ -68,7 +68,7 @@ recolecta > 0). Framework: `odoo.tests.common.TransactionCase`, tags
 | `TestTopicProxyFields` | 8 | proxies `main_topic_id` / `secondary_topic_id` sobre `tmc.document`; 2 de los 8 cubren `allowed_exp_topic_ids` | — |
 | `TestRequiredFields017` | 8 | campos obligatorios Fase 2; fecha required; jurisdicción DEM; `computed_name` | #017 |
 | `TestDocumentTopicsTMC` | 5 | topics/clasificación TMC | — |
-| `TestFojasLock` | 21 | matriz de permisos + bloqueo de `fojas` post-creación | #018 |
+| `TestFojasLock` | 26 | matriz de permisos + bloqueo de `fojas` post-creación; **EPIC-007/TASK-014:** el Responsable corrige la `fojas` de ingreso y se alinean los 2 pases automáticos (no los manuales; sin cambio no reescribe; el operativo sigue sin acceso; el form muestra la de ingreso solo al Responsable) | #018 + EPIC-007/TASK-014 |
 | `TestJurisdictionConditional012` | 8 | jurisdicción condicional por origen (TMC/CM auto, DEM) | #012 |
 | `TestHasReentry021` | 10 | reingreso institucional (`is_internal` / `has_reentry`) | #021 |
 | `TestSearchFilters022023024` | 12 | filtros de búsqueda de expedientes; **EPIC-004/TASK-006**: el filtro "Sin clasificar" (`main_topic_ids = False`) encuentra los expedientes sin tema | #022/#023/#024 |

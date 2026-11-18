@@ -42,7 +42,7 @@ Nomenclatura:
 | EPIC-007/TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | Done | Vista readonly + backend. Suite 273/0/0; UI verificada |
 | EPIC-007/TASK-012 | El 1er pase de las compras DEM sale de Compras y Suministros | Ale Gallo | L | Done | IDEA 13. Suite 282/0/0; UI verificada. Junco confirmó que no se ve afectado |
 | EPIC-007/TASK-013 | Fojas actuales del expediente | Ale Gallo | L | Done | `current_fojas` calculado, no almacenado. Suite 288/0/0; UI verificada |
-| EPIC-007/TASK-014 | El Responsable corrige las fojas de ingreso | sin asignar | L | Draft | Cambia regla de bloqueo + propaga a pases automáticos; después de TASK-013 |
+| EPIC-007/TASK-014 | El Responsable corrige las fojas de ingreso | Ale Gallo | L | Done | Suite 293/0/0; UI verificada. Cambia regla de bloqueo + propaga a pases automáticos |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

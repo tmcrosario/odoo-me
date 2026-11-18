@@ -398,7 +398,7 @@ según el estado de completitud de la Fase 1 del expediente.
    ofrecibles), `document_object` (rotulado "Reference"), `jurisdiction_dependence` y
    `source_dependence_id` (obligatorio si la jurisdicción tiene reparticiones, salvo CM/TMC;
    filtrado a hijos de la jurisdicción); a la derecha `intake_date`, `date` (rotulada
-   "Procedure Start Date", obligatoria), `fojas` (obligatoria, readonly una vez guardado) y
+   "Procedure Start Date", obligatoria), `fojas` (obligatoria al crear; con el expediente guardado el form muestra `current_fojas` y solo el Responsable ve la de ingreso, editable — TASK-013/014) y
    `external_key`. Jurisdicción y repartición dependen del origen y del tema: ver Workflow 1,
    paso 6; tema y subtema: Workflow 8.
 

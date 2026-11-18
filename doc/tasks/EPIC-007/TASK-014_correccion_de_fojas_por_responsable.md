@@ -1,14 +1,15 @@
 # EPIC-007 / TASK-014 — El Responsable corrige las fojas de ingreso
 
-Estado: Draft
+Estado: Done
 Modo: L
 Riesgo: medio-alto (cambia una regla de negocio: hoy `fojas` es de solo lectura al guardar, también para el Responsable; además reescribe pases automáticos)
 Módulo: `me`
-Responsable: sin asignar
+Responsable: Ale Gallo
 
 ## Asignación
 
-- Estado de toma: sin tomar
+- Estado de toma: tomada
+- Fecha de toma: 2026-11-18
 - Dependencia: conviene después de TASK-013 (`current_fojas`), porque la corrección se ve a través de ese campo.
 - Notas de coordinación: ninguna con junco (no cambia contratos que ellos usen).
 
@@ -44,15 +45,15 @@ No incluye:
 
 ## Acceptance criteria
 
-- [ ] Un Responsable ve y edita `fojas` de ingreso con el expediente guardado.
-- [ ] Un usuario sin rol Responsable no lo ve ni lo puede escribir (ORM/API incluidos).
-- [ ] Al guardar un cambio de `fojas`, los dos pases automáticos quedan con el valor nuevo.
-- [ ] Los pases manuales conservan su `fojas`.
-- [ ] En un expediente con solo los pases automáticos, `current_fojas` muestra el valor corregido.
-- [ ] Guardar sin cambiar `fojas` no reescribe pases.
-- [ ] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
-- [ ] Prueba manual de UI en `practica` con un usuario Responsable y uno operativo.
-- [ ] Documentada la regla nueva (reemplaza el bloqueo post-creación para el Responsable).
+- [x] Un Responsable ve y edita `fojas` de ingreso con el expediente guardado.
+- [x] Un usuario sin rol Responsable no lo ve ni lo puede escribir (ORM/API incluidos).
+- [x] Al guardar un cambio de `fojas`, los dos pases automáticos quedan con el valor nuevo.
+- [x] Los pases manuales conservan su `fojas`.
+- [x] En un expediente con solo los pases automáticos, `current_fojas` muestra el valor corregido.
+- [x] Guardar sin cambiar `fojas` no reescribe pases.
+- [x] Suite `/me` verde, con evidencia (`... of N tests`, N > 0).
+- [x] Prueba manual de UI en `practica` con un usuario Responsable y uno operativo (OK del usuario, 2026-11-18).
+- [x] Documentada la regla nueva (reemplaza el bloqueo post-creación para el Responsable).
 
 ## Riesgos y preguntas abiertas
 
@@ -62,12 +63,13 @@ No incluye:
 
 ## Tests evidenciados
 
-PENDIENTE USER-RUN.
+- Suite `/me` en `me_test`: `0 failed, 0 error(s) of 293 tests` (288 previos + 5 nuevos en `TestFojasLock`).
+- Aplicado a `practica` (`-u me --i18n-overwrite` + restart). Prueba manual de UI: OK del usuario (2026-11-18).
 
 ## Estado / próximo paso
 
-Draft. Falta el OK del usuario a los criterios y asignar la task antes de implementar. Sin código tocado.
+Cerrada. Sin pendientes.
 
 ## Resultado
 
-(pendiente)
+El Responsable corrige las fojas de ingreso y el valor se copia a los dos pases automáticos; el operativo sigue sin acceso.

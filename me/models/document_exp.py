@@ -996,8 +996,17 @@ class DocumentExp(models.Model):
         if date_val is not None:
             self._update_document_date(date_val)
 
+        fojas_changed = (
+            self.filtered(lambda r: r.fojas != vals['fojas']) if 'fojas' in vals else self.browse()
+        )
+
         # Llamar al super().write() solo con campos propios de me_document_exp
         res = super().write(vals)
+
+        # Los pases automáticos del ingreso guardan el valor de ingreso (create()): al corregirlo
+        # se alinean; los pases manuales son fotos de cada poseedor y no se tocan.
+        if fojas_changed:
+            fojas_changed.document_movement_ids.filtered('is_automatic').write({'fojas': vals['fojas']})
 
         # EPIC-004/TASK-002: el tema puede cambiar DESPUÉS del alta (un expediente
         # guardado sin tema al que luego se le pone "Nota"). Sin esto quedaba is_nota=True

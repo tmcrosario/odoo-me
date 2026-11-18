@@ -114,6 +114,8 @@
                                    help="Expediente creation date (from the cover sheet). May differ from the intake date."
                                    required="1" options="{'numeric': true}"/>
                             <field name="fojas" required="1" invisible="id"/>
+                            <field name="fojas" string="Intake Page Count" required="1"
+                                   groups="me.group_manager" invisible="not id"/>
                             <field name="current_fojas" invisible="not id"/>
                             <field name="external_key"/>
                         </group>
