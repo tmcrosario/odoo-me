@@ -41,6 +41,8 @@ Nomenclatura:
 | EPIC-007/TASK-010 | Secretaría de Vocalía y Contadores Fiscales como dependencias internas | Ale Gallo | L | Done | Reingreso falso por SEC/CF; migración 19.0.1.0.1. Suite 268/0/0 |
 | EPIC-007/TASK-011 | Un pase a una oficina externa no lleva poseedor | Ale Gallo | L | Done | Vista readonly + backend. Suite 273/0/0; UI verificada |
 | EPIC-007/TASK-012 | El 1er pase de las compras DEM sale de Compras y Suministros | Ale Gallo | L | Done | IDEA 13. Suite 282/0/0; UI verificada. Junco confirmó que no se ve afectado |
+| EPIC-007/TASK-013 | Fojas actuales del expediente | sin asignar | L | Draft | `current_fojas` calculado, no almacenado. Criterios a confirmar |
+| EPIC-007/TASK-014 | El Responsable corrige las fojas de ingreso | sin asignar | L | Draft | Cambia regla de bloqueo + propaga a pases automáticos; después de TASK-013 |
 
 > EPIC-002 (Integración ME ↔ JUNCO) está gobernada en `odoo-junco` (puntero local,
 > sin tasks de integración acá).

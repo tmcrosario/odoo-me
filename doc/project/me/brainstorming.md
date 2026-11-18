@@ -525,3 +525,27 @@ una compra DEM), o de la jurisdicción en una Nota. La dependencia existe como `
   `dependence_id` del expediente sigue siendo DEM. Confirmado por `demo-junco` (2026-11-03): ningún
   código, vista ni reporte de junco usa el origen del primer movimiento ni asume que sea DEM (solo un test
   arma movimientos a mano, y no se ve afectado).
+
+## IDEA 14 - Historial de cambios de fojas del expediente (pedido del usuario, 2026-11-17)
+
+> Registrada 2026-11-17. **Solo idea: el usuario no quiere implementarla por ahora.**
+
+### Resumen
+
+Cuando el Responsable corrija las fojas de ingreso (EPIC-007/TASK-014) no queda rastro de quién cambió qué. La idea
+es un registro de cambios, tipo historial, en una pestaña del formulario del expediente, como el *Process History*
+de junco, visible solo para el Responsable de ME (`me.group_manager`).
+
+### Cómo se haría (lo más simple)
+
+- Modelo propio de solo lectura, como `junco.process_log` (no `mail.thread`, no `auditlog`): expediente, fecha,
+  usuario y un mensaje de texto libre (valor viejo → valor nuevo).
+- Solo cambios de fojas; el mensaje de texto libre permite sumar otros después.
+- Pestaña con `groups="me.group_manager"`; entradas inmutables (sin ACL de escritura).
+- Se registra por backend (en el `write()` de `me.document_exp`), así que también queda si el cambio viene por
+  ORM/API.
+
+### Preguntas abiertas
+
+- [ ] ¿Se implementa? (decisión pendiente del usuario; por ahora no)
+- [ ] Si se hace: ¿solo fojas o todos los cambios del expediente? (hoy: solo fojas)
